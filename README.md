@@ -1,10 +1,12 @@
 # vitalBayes <img src="man/figures/logo.png" align="right" height="139" />
+## Bayesian Life History Parameter Estimation for Elasmobranchs
+
 <!-- badges: start -->
 [![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen.svg)](https://github.com/your-username/vitalBayes)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-**Bayesian Life History Parameter Estimation for Elasmobranchs**
+
 vitalBayes provides a coherent statistical framework for estimating birth size, maturity, and growth parameters in sharks and rays using Bayesian methods. 
 The package implements hierarchical models via [Stan](https://mc-stan.org/) with precompiled models for fast, reliable inference. 
 
