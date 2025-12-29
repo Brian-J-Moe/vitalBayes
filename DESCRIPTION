@@ -40,3 +40,5 @@ Suggests:
     rmarkdown,
     tidytex
 VignetteBuilder: knitr
+URL: https://github.com/Brian-J-Moe/vitalBayes
+BugReports: https://github.com/Brian-J-Moe/vitalBayes/issues
