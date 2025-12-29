@@ -21,6 +21,8 @@ jobs:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # Set additional repos as environment variable for pak
+      PKG_SYSREQS: false
     permissions:
       contents: write
     steps:
@@ -32,27 +34,20 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Install cmdstanr from Stan's r-universe before other dependencies
-      - name: Install cmdstanr
+      # Set repos option before dependency resolution
+      - name: Configure package repositories
         run: |
-          install.packages("cmdstanr", repos = c("https://stan-dev.r-universe.dev", "https://cloud.r-project.org"))
+          options(repos = c(
+            stan = "https://stan-dev.r-universe.dev",
+            CRAN = "https://cloud.r-project.org"
+          ))
+          writeLines(sprintf("R_PKG_REPOS=%s", paste(getOption("repos"), collapse = "|")), Sys.getenv("GITHUB_ENV"))
         shell: Rscript {0}
-
-      # Optional: Install CmdStan backend (uncomment if vignettes need to compile models)
-      # - name: Install CmdStan
-      #   run: |
-      #     cmdstanr::check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
-      #     cmdstanr::install_cmdstan(cores = 2, quiet = TRUE)
-      #   shell: Rscript {0}
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::pkgdown, local::.
           needs: website
-          # Specify additional repositories for non-CRAN packages
-          repos: |
-            https://stan-dev.r-universe.dev
-            https://cloud.r-project.org
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
