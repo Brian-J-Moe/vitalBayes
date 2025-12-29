@@ -1,8 +1,7 @@
 ---
 title: "Understanding vitalBayes: The Statistics Behind Elasmobranch Life History Modeling"
 subtitle: "A Deep Dive into Bayesian Methods for Birth, Maturity, and Growth Estimation"
-author: "vitalBayes Development Team"
-date: "`r Sys.Date()`"
+author: "Brian J. Moe"
 output:
   html_document:
     toc: true
