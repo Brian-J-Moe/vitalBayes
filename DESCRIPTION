@@ -1,0 +1,42 @@
+Package: vitalBayes
+Title: Bayesian Life History Parameter Estimation for Elasmobranchs
+Version: 0.2.1
+Authors@R: 
+    person(given = c("Brian", "J"), family = "Moe", email = "brian.moe@MYFWC.com", role = c("aut", "cre"))
+Description: `vitalBayes` is an R package implementing innovative Bayesian 
+    hierarchical models for estimating life history parameters in elasmobranch 
+    populations. The package addresses critical methodological challenges in 
+    shark and ray research, including sparse datasets, imbalanced sex ratios, 
+    and the need for biologically coherent parameter estimation.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports: 
+    bayesplot,
+    cmdstanr,
+    data.table,
+    ggplot2,
+    grDevices,
+    instantiate,
+    loo,
+    methods,
+    parallel,
+    Rcpp (>= 0.12.0),
+    RcppParallel (>= 5.0.1),
+    stats
+Biarch: true
+Depends: 
+    R (>= 4.1.0)
+LinkingTo: 
+    BH (>= 1.66.0),
+    Rcpp (>= 0.12.0),
+    RcppEigen (>= 0.3.3.3.0),
+    RcppParallel (>= 5.0.1),
+SystemRequirements: C++17, GNU make
+LazyData: true
+Suggests: 
+    knitr,
+    rmarkdown,
+    tidytex
+VignetteBuilder: knitr
