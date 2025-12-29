@@ -13,7 +13,7 @@ template:
       menu:
         - text: "Understanding vitalBayes"
         - text: "The Statistics Behind Elasmobranch Life History Modeling"
-          href: articles/vitalBayes_stats_explained.html
+          href: articles/Understanding_vitalBayes.html
         - text: ------- # A menu separator
         - text: "vitalBayes Functions"
         - text: "Estimating Birth Size with fit_bayesian_birth()"
