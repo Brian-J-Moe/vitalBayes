@@ -1,0 +1,5 @@
+url: https://brian-j-moe.github.io/vitalBayes/
+template:
+  bootstrap: 5
+  math-rendering: mathjax
+
