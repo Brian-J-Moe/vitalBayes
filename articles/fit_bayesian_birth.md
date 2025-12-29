@@ -1,0 +1,134 @@
+# Estimating Birth Size with fit_bayesian_birth()
+
+## Overview
+
+The
+[`fit_bayesian_birth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_birth.md)
+function estimates birth size (\\b\_{50}\\) by comparing length
+distributions of embryos and free-swimming individuals using Bayesian
+probit regression.
+
+**Key output**: The length at which 50% of individuals have transitioned
+from embryo to free-swimming status.
+
+## The Model
+
+The probability of being free-swimming follows a probit model:
+
+\\P(\text{free-swimming}\_i) = \Phi\[\beta \cdot (L_i - b\_{50})\]\\
+
+where:
+
+- \\\Phi(\cdot)\\ is the standard normal CDF
+- \\b\_{50}\\ is the length at 50% transition probability
+- \\\beta \> 0\\ controls the sharpness of the transition
+
+**Why probit?** The probit link assumes that underlying developmental
+readiness is normally distributed across individuals—a biologically
+intuitive interpretation. For a detailed derivation, see the [Probit
+Link
+section](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#probit)
+in the Statistical Methods guide.
+
+## Basic Usage
+
+``` r
+library(vitalBayes)
+library(data.table)
+
+# Load example data
+data(gulper_data)
+
+# Separate embryo and free-swimming lengths
+embryo_lengths <- gulper_data[embryo == TRUE, fl]
+freeswim_lengths <- gulper_data[embryo == FALSE, fl]
+
+# Fit the birth model
+birth_fit <- fit_bayesian_birth(
+ embryo_lts        = embryo_lengths,
+ free_swimming_lts = freeswim_lengths,
+ chains            = 4,
+ parallel          = TRUE
+)
+```
+
+## Examining Results
+
+``` r
+# Core parameter estimates
+birth_fit$summary(c("b50", "slope", "transition_width"))
+
+# Posterior predictive checks
+birth_fit$summary(c("mean_p_embryo", "mean_p_freeswim", "prop_correct_rep"))
+```
+
+**Key diagnostics to check:**
+
+- `mean_p_embryo`: Should be low (~0.1-0.3) — embryos have low
+  probability of being classified as free-swimming
+- `mean_p_freeswim`: Should be high (~0.7-0.9) — free-swimmers have high
+  probability
+- `prop_correct_rep`: Overall classification accuracy (aim for \>80%)
+
+## Customizing Priors
+
+The function automatically derives prior centers from the data, but you
+can override:
+
+``` r
+birth_fit <- fit_bayesian_birth(
+ embryo_lts        = embryo_lengths,
+ free_swimming_lts = freeswim_lengths,
+ mean_b50          = 35,      # Prior mean for b50 (cm)
+ sd_b50            = 5,       # Prior SD
+ mean_slope        = 0,       # Prior mean for log(slope)
+ sd_slope          = 1,       # Prior SD for log(slope)
+ adapt_delta       = 0.95     # Increase if divergences occur
+)
+```
+
+## Visualization
+
+``` r
+# Quick visualization
+plot_birth_ogive(birth_fit, embryo_lengths, freeswim_lengths)
+
+# Extract b50 for reporting
+b50_summary <- birth_fit$summary("b50")
+cat(sprintf("b50 = %.1f cm (95%% CI: %.1f – %.1f)\n",
+           b50_summary$median, b50_summary$q5, b50_summary$q95))
+```
+
+## Using Output in Downstream Models
+
+The \\b\_{50}\\ estimate serves as the prior for birth length (\\L_0\\)
+in growth models:
+
+``` r
+# The birth fit can be passed directly to growth models
+growth_fit <- fit_bayesian_growth(
+ lt        = "fl",
+ age       = "age1", 
+ sex       = "sex",
+ data      = gulper_data[embryo == FALSE],
+ birth_fit = birth_fit  # Automatically extracts L0 prior
+)
+```
+
+## Troubleshooting
+
+| Issue                   | Solution                                                 |
+|-------------------------|----------------------------------------------------------|
+| Divergent transitions   | Increase `adapt_delta` (0.95 → 0.99)                     |
+| Wide credible intervals | Check for data overlap; consider more informative priors |
+| Poor classification     | Verify embryo/free-swimming labels in data               |
+
+## See Also
+
+- [Statistical Methods: Birth Size
+  Estimation](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#birth)
+  — Full mathematical derivation
+- [`plot_birth_ogive()`](https://brian-j-moe.github.io/vitalBayes/reference/plot_birth_ogive.md)
+  — Visualization function
+- [`fit_bayesian_maturity()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md)
+  — Similar approach for maturity estimation

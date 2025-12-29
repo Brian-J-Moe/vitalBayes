@@ -1,0 +1,346 @@
+# Growth Modeling with fit_bayesian_growth()
+
+## Overview
+
+The
+[`fit_bayesian_growth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)
+function fits von Bertalanffy, Gompertz, or Logistic growth models using
+Bayesian methods. A key innovation is the **maturity-based
+parameterization**, which derives the growth coefficient \\k\\ from
+observable maturity metrics rather than estimating it directly.
+
+## Growth Model Equations
+
+**von Bertalanffy** (`model = "vb"`): \\L(t) = L\_\infty - (L\_\infty -
+L_0) e^{-kt}\\
+
+**Gompertz** (`model = "gompertz"`): \\L(t) = L\_\infty
+\exp\left\[-\ln\left(\frac{L\_\infty}{L_0}\right) e^{-kt}\right\]\\
+
+**Logistic** (`model = "logistic"`): \\L(t) = \frac{L\_\infty}{1 +
+\left(\frac{L\_\infty}{L_0} - 1\right) e^{-kt}}\\
+
+## Two Parameterization Approaches
+
+### 1. K-Based (Traditional)
+
+Directly estimates the growth coefficient \\k\\:
+
+``` r
+library(vitalBayes)
+library(data.table)
+
+data(gulper_data)
+
+growth_data <- gulper_data[embryo == FALSE & !is.na(age1)]
+
+# Traditional k-based von Bertalanffy
+growth_k <- fit_bayesian_growth(
+ lt      = "fl",
+ age     = "age1",
+ sex     = "sex",
+ data    = growth_data,
+ model   = "vb",
+ k_based = TRUE,
+ CV_k    = 0.5,        # 50% CV on k prior (high uncertainty)
+ parallel = TRUE
+)
+
+growth_k$summary(c("Linf", "L0", "k", "sigma"))
+```
+
+### 2. Maturity-Based (Recommended)
+
+Derives \\k\\ from maturity parameters (\\L\_{mat}\\, \\t\_{mat}\\),
+ensuring biological consistency:
+
+\\k = \frac{1}{t\_{mat}} \ln\left(\frac{L\_\infty - L_0}{L\_\infty -
+L\_{mat}}\right)\\
+
+``` r
+# First, fit maturity models
+L50_fit <- fit_bayesian_maturity(
+ maturity = "mat", lt = "fl", sex = "sex",
+ data = gulper_data[embryo == FALSE & !is.na(mat)]
+)
+
+t50_fit <- fit_bayesian_maturity(
+ maturity = "mat", age = "age1", sex = "sex",
+ data = gulper_data[embryo == FALSE & !is.na(mat) & !is.na(age1)]
+)
+
+# Optional: fit birth model for L0 prior
+birth_fit <- fit_bayesian_birth(
+ embryo_lts = gulper_data[embryo == TRUE, fl],
+ free_swimming_lts = gulper_data[embryo == FALSE, fl]
+)
+
+# Maturity-based growth model
+growth_mat <- fit_bayesian_growth(
+ lt        = "fl",
+ age       = "age1",
+ sex       = "sex",
+ data      = growth_data,
+ model     = "vb",
+ k_based   = FALSE,          # Use maturity-based parameterization
+ L50_fit   = L50_fit,        # Provides Lmat prior
+ t50_fit   = t50_fit,        # Provides tmat prior
+ birth_fit = birth_fit,      # Provides L0 prior
+ parallel  = TRUE
+)
+
+# k is now a derived quantity
+growth_mat$summary(c("Linf", "L0", "Lmat", "tmat", "k", "sigma"))
+```
+
+**Why maturity-based?**
+
+1.  **Reduced correlation**: \\(L\_\infty, k)\\ are notoriously
+    correlated; maturity parameters break this
+2.  **Observable anchoring**: Maturity milestones fall within the data
+    range, unlike \\L\_\infty\\
+3.  **Prior propagation**: Uncertainty from maturity models flows into
+    growth estimates
+4.  **Biological coherence**: The growth curve *must* pass through
+    \\(t\_{mat}, L\_{mat})\\
+
+For the full derivation, see the [Maturity-Based Parameterization
+section](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#maturity-param)
+in the Statistical Methods guide.
+
+## The \\L\_\infty\\ Constraint
+
+A critical issue: unconstrained \\L\_\infty\\ often converges to values
+*below* the largest observed individuals—biologically impossible.
+
+**vitalBayes enforces** \\L\_\infty \> L\_{max}\\ (the maximum observed
+length). For the biological and statistical rationale, see [Why
+\\L\_\infty\\ Must Exceed Maximum Observed
+Length](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#linf)
+in the Statistical Methods guide.
+
+``` r
+# Lmax is auto-detected from data
+growth_fit <- fit_bayesian_growth(
+ lt   = "fl",
+ age  = "age1",
+ data = growth_data
+)
+# Message: "Lmax from data: 98.5 cm"
+
+# Or specify manually (e.g., if you have length data without age)
+growth_fit <- fit_bayesian_growth(
+ lt   = "fl",
+ age  = "age1",
+ data = growth_data,
+ Lmax = c(100, 95)  # Female, Male
+)
+```
+
+## Two-Sex Models with Partial Pooling
+
+When sample sizes are imbalanced between sexes (common in elasmobranch
+research), partial pooling borrows strength across sexes to reduce
+uncertainty for the sparse group:
+
+``` r
+growth_2sex <- fit_bayesian_growth(
+ lt          = "fl",
+ age         = "age1",
+ sex         = "sex",
+ data        = growth_data,
+ model       = "vb",
+ k_based     = FALSE,
+ L50_fit     = L50_fit,
+ t50_fit     = t50_fit,
+ use_pooling = TRUE,    # Partial pooling between sexes
+ prior_tau   = 0.2,     # Half-normal scale for between-sex SD
+ parallel    = TRUE
+)
+
+# Sex-specific estimates
+growth_2sex$summary("Linf")
+growth_2sex$summary("k")
+
+# Sex differences
+growth_2sex$summary(c("Linf_diff", "k_diff"))
+```
+
+For a comprehensive treatment of partial pooling mechanics, shrinkage
+effects, and when to use it, see
+[`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md).
+
+## Comparing Growth Models
+
+``` r
+# Fit all three models
+vb_fit <- fit_bayesian_growth(
+ lt = "fl", age = "age1", sex = "sex", data = growth_data,
+ model = "vb", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+)
+
+gomp_fit <- fit_bayesian_growth(
+ lt = "fl", age = "age1", sex = "sex", data = growth_data,
+ model = "gompertz", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+)
+
+logis_fit <- fit_bayesian_growth(
+ lt = "fl", age = "age1", sex = "sex", data = growth_data,
+ model = "logistic", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+)
+
+# Compare via LOO-CV
+loo_vb <- compute_loo(vb_fit)
+loo_gomp <- compute_loo(gomp_fit)
+loo_logis <- compute_loo(logis_fit)
+
+compare_loo(
+ "von Bertalanffy" = loo_vb,
+ "Gompertz" = loo_gomp,
+ "Logistic" = loo_logis
+)
+```
+
+## CV-Based Prior Specification
+
+Priors are specified via coefficient of variation for intuitive scaling:
+
+``` r
+growth_fit <- fit_bayesian_growth(
+ lt   = "fl",
+ age  = "age1",
+ data = growth_data,
+ 
+ # Prior CVs (proportion of mean)
+ CV_Linf = 0.20,    # 20% uncertainty on Linf
+ CV_L0   = 0.30,    # 30% uncertainty on L0
+ CV_k    = 0.50,    # 50% uncertainty on k (if k_based = TRUE)
+ CV_Lmat = 0.20,    # 20% uncertainty on Lmat
+ CV_tmat = 0.30,    # 30% uncertainty on tmat
+ 
+ # Linf prior mean = 1.05 * Lmax by default
+ Linf_multiplier = 1.05
+)
+```
+
+## Visualization
+
+``` r
+# Basic growth curve
+plot_growth_curve(
+ fit        = growth_2sex,
+ data       = growth_data,
+ age_col    = "age1",
+ length_col = "fl",
+ sex_col    = "sex"
+)
+
+# Multilingual support
+plot_growth_curve(
+ fit        = growth_2sex,
+ data       = growth_data,
+ sex_labels = c("1" = "Hembra", "2" = "Macho"),
+ x_lab      = "Edad (años)",
+ y_lab      = "Longitud (cm)"
+)
+
+# Compare models visually
+compare_growth_models(
+ "von Bertalanffy" = vb_fit,
+ "Gompertz" = gomp_fit,
+ "Logistic" = logis_fit,
+ data = growth_data,
+ age_col = "age1",
+ length_col = "fl"
+)
+```
+
+## Posterior Predictive Checks
+
+``` r
+# Built-in PPC metrics
+growth_2sex$summary(c("rmse", "mae", "prop_in_95ci"))
+
+# Residual diagnostics
+plot_residuals(
+ fit        = growth_2sex,
+ data       = growth_data,
+ age_col    = "age1",
+ length_col = "fl",
+ type       = "all"
+)
+```
+
+## Complete Workflow Example
+
+``` r
+# ---- Stage 1: Birth ----
+birth_fit <- fit_bayesian_birth(
+ embryo_lts = gulper_data[embryo == TRUE, fl],
+ free_swimming_lts = gulper_data[embryo == FALSE, fl]
+)
+
+# ---- Stage 2: Maturity ----
+mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
+
+L50_fit <- fit_bayesian_maturity(
+ maturity = "mat", lt = "fl", sex = "sex",
+ data = mat_data, use_pooling = TRUE
+)
+
+t50_fit <- fit_bayesian_maturity(
+ maturity = "mat", age = "age1", sex = "sex",
+ data = mat_data[!is.na(age1)], use_pooling = TRUE
+)
+
+# ---- Stage 3: Growth ----
+growth_fit <- fit_bayesian_growth(
+ lt        = "fl",
+ age       = "age1",
+ sex       = "sex",
+ data      = gulper_data[embryo == FALSE & !is.na(age1)],
+ model     = "vb",
+ k_based   = FALSE,
+ birth_fit = birth_fit,
+ L50_fit   = L50_fit,
+ t50_fit   = t50_fit,
+ use_pooling = TRUE
+)
+
+# ---- Summary ----
+create_parameter_table(
+ birth = birth_fit,
+ L50 = L50_fit,
+ t50 = t50_fit,
+ growth = growth_fit
+)
+```
+
+## Troubleshooting
+
+| Issue                    | Solution                                                              |
+|--------------------------|-----------------------------------------------------------------------|
+| Divergent transitions    | Increase `adapt_delta` (0.95 → 0.99)                                  |
+| \\k\\ hitting boundaries | Check that \\L\_{mat} \< L\_\infty\\ and \\L_0 \< L\_{mat}\\          |
+| \\L\_\infty\\ too low    | Increase `Lmax` or `Linf_multiplier`                                  |
+| Poor fit at young ages   | Consider different growth model (Gompertz often better for juveniles) |
+
+## See Also
+
+- [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
+  — When and how to use hierarchical structure for imbalanced sex ratios
+- [Statistical Methods: Growth
+  Models](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#growth)
+  — Full mathematical derivation
+- [Statistical Methods: Maturity-Based
+  Parameterization](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#maturity-param)
+  — The key innovation
+- [Statistical Methods: CV-Based
+  Priors](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#cv-priors)
+  — How priors are specified
+- [`plot_growth_curve()`](https://brian-j-moe.github.io/vitalBayes/reference/plot_growth_curve.md),
+  [`compare_growth_models()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_growth_models.md)
+  — Visualization
+- [`compute_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_loo.md),
+  [`compare_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_loo.md)
+  — Model comparison
