@@ -21,8 +21,6 @@ jobs:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      # Set additional repos as environment variable for pak
-      PKG_SYSREQS: false
     permissions:
       contents: write
     steps:
@@ -34,14 +32,11 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Set repos option before dependency resolution
-      - name: Configure package repositories
+      # Install cmdstanr BEFORE dependency resolution
+      - name: Install cmdstanr from r-universe
         run: |
-          options(repos = c(
-            stan = "https://stan-dev.r-universe.dev",
-            CRAN = "https://cloud.r-project.org"
-          ))
-          writeLines(sprintf("R_PKG_REPOS=%s", paste(getOption("repos"), collapse = "|")), Sys.getenv("GITHUB_ENV"))
+          install.packages("pak")
+          pak::pkg_install("stan-dev/cmdstanr", ask = FALSE)
         shell: Rscript {0}
 
       - uses: r-lib/actions/setup-r-dependencies@v2
