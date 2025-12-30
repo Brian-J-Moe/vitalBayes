@@ -2,7 +2,7 @@
 
 ## Bayesian Life History Parameter Estimation for Elasmobranchs
 
-‘vitalBayes’ provides a coherent statistical framework for estimating
+`vitalBayes` provides a coherent statistical framework for estimating
 birth size, maturity, and growth parameters in sharks and rays using
 Bayesian methods. The package implements hierarchical models via
 [Stan](https://mc-stan.org/) with precompiled models for fast, reliable
