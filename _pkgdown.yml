@@ -9,7 +9,7 @@ navbar:
   components:
     home: ~
     articles:
-      text: Articles menu # Custom text for the main "Articles" tab
+      text: Articles Menu # Custom text for the main "Articles" tab
       menu:
         - text: "Understanding vitalBayes"
         - text: "The Statistics Behind Modeling Elasmobranch Life History"
