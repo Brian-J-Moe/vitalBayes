@@ -32,7 +32,7 @@ where:
 - $b_{50}$ is the length at 50% transition probability
 - $\beta > 0$ controls the sharpness of the transition
 
-**Why probit?** The probit link assumes that underlying developmental readiness is normally distributed across individuals—a biologically intuitive interpretation. For a detailed derivation, see the [Probit Link section](vitalBayes_stats_explained.html#probit) in the Statistical Methods guide.
+**Why probit?** The probit link assumes that underlying developmental readiness is normally distributed across individuals—a biologically intuitive interpretation. For a detailed derivation, see the [Probit Link section](Understanding_vitalBayes.html#probit) in the Statistical Methods guide.
 
 ## Basic Usage
 
@@ -40,12 +40,12 @@ where:
 library(vitalBayes)
 library(data.table)
 
-# Load example data
-data(gulper_data)
+# Load example data (simulated von Bertalanffy growth data)
+data(growth_data)
 
 # Separate embryo and free-swimming lengths
-embryo_lengths <- gulper_data[embryo == TRUE, fl]
-freeswim_lengths <- gulper_data[embryo == FALSE, fl]
+embryo_lengths <- growth_data[embryo == TRUE, fl]
+freeswim_lengths <- growth_data[embryo == FALSE, fl]
 
 # Fit the birth model
 birth_fit <- fit_bayesian_birth(
@@ -107,10 +107,26 @@ The $b_{50}$ estimate serves as the prior for birth length ($L_0$) in growth mod
 # The birth fit can be passed directly to growth models
 growth_fit <- fit_bayesian_growth(
  lt        = "fl",
- age       = "age1", 
+ age       = "age", 
  sex       = "sex",
- data      = gulper_data[embryo == FALSE],
+ data      = growth_data[embryo == FALSE],
  birth_fit = birth_fit  # Automatically extracts L0 prior
+)
+```
+
+## Working with Limited Data
+
+For datasets with few embryos, consider using the `limited_data` example dataset to explore prior sensitivity:
+
+```{r limited}
+# Load the small sample dataset (24F, 18M, 5 embryos)
+data(limited_data)
+
+# With sparse embryo data, priors become more influential
+birth_fit_limited <- fit_bayesian_birth(
+ embryo_lts        = limited_data[embryo == TRUE, fl],
+ free_swimming_lts = limited_data[embryo == FALSE, fl],
+ cv_b50            = 0.2  # Tighter prior when data are sparse
 )
 ```
 
@@ -124,6 +140,6 @@ growth_fit <- fit_bayesian_growth(
 
 ## See Also
 
-- [Statistical Methods: Birth Size Estimation](vitalBayes_stats_explained.html#birth) — Full mathematical derivation
+- [Statistical Methods: Birth Size Estimation](Understanding_vitalBayes.html#birth) — Full mathematical derivation
 - `plot_birth_ogive()` — Visualization function
 - `fit_bayesian_maturity()` — Similar approach for maturity estimation

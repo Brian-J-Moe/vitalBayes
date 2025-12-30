@@ -72,15 +72,15 @@ Each stage produces posterior distributions that become informative priors for t
 library(vitalBayes)
 library(data.table)
 
-# Load example data (little gulper shark)
-data(gulper_data)
+# Load example data (simulated von Bertalanffy growth data)
+data(growth_data)
 
 # ─────────────────────────────────────────────────────────────
 # Stage 1: Birth Size
 # ─────────────────────────────────────────────────────────────
 birth_fit <- fit_bayesian_birth(
-  embryo_lts        = gulper_data[embryo == TRUE, fl],
-  free_swimming_lts = gulper_data[embryo == FALSE, fl]
+  embryo_lts        = growth_data[embryo == TRUE, fl],
+  free_swimming_lts = growth_data[embryo == FALSE, fl]
 )
 
 birth_fit$summary(c("b50", "transition_width"))
@@ -88,7 +88,7 @@ birth_fit$summary(c("b50", "transition_width"))
 # ─────────────────────────────────────────────────────────────
 # Stage 2: Maturity
 # ─────────────────────────────────────────────────────────────
-mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
+mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
 # Length-at-maturity with partial pooling for imbalanced sexes
 L50_fit <- fit_bayesian_maturity(
@@ -104,9 +104,9 @@ L50_fit$summary(c("L50", "L50_diff"))
 # Age-at-maturity
 t50_fit <- fit_bayesian_maturity(
   maturity    = "mat",
-  age         = "age1",
+  age         = "age",
   sex         = "sex",
-  data        = mat_data[!is.na(age1)],
+  data        = mat_data[!is.na(age)],
   use_pooling = TRUE
 )
 
@@ -115,9 +115,9 @@ t50_fit <- fit_bayesian_maturity(
 # ─────────────────────────────────────────────────────────────
 growth_fit <- fit_bayesian_growth(
   lt        = "fl",
-  age       = "age1",
+  age       = "age",
   sex       = "sex",
-  data      = gulper_data[embryo == FALSE & !is.na(age1)],
+  data      = growth_data[embryo == FALSE & !is.na(age)],
   model     = "vb",
   k_based   = FALSE,        # Use maturity-based parameterization
   birth_fit = birth_fit,    # L₀ prior from birth model
@@ -129,6 +129,18 @@ growth_fit <- fit_bayesian_growth(
 growth_fit$summary(c("Linf", "L0", "k", "Lmat", "tmat"))
 ```
 
+## Example Datasets
+
+vitalBayes includes three simulated datasets for demonstrations and testing:
+
+| Dataset | Description | Sample Sizes | Best For |
+|---------|-------------|--------------|----------|
+| `growth_data` | Balanced, comprehensive | 189F, 176M, 26 embryos | Main workflow, documentation |
+| `imbalanced_data` | Imbalanced sex ratio | 150F, 34M, 13 embryos | Partial pooling demonstrations |
+| `limited_data` | Small sample sizes | 24F, 18M, 5 embryos | Prior sensitivity analysis |
+
+All datasets share the same structure with columns: `sex`, `mat`, `fl`, `age`, `embryo`.
+
 ## Visualization
 
 vitalBayes includes publication-ready plotting functions with a distinctive retro-wave color palette:
@@ -136,8 +148,8 @@ vitalBayes includes publication-ready plotting functions with a distinctive retr
 # Growth curves with credible intervals
 plot_growth_curve(
   fit        = growth_fit,
-  data       = gulper_data[embryo == FALSE & !is.na(age1)],
-  age_col    = "age1",
+  data       = growth_data[embryo == FALSE & !is.na(age)],
+  age_col    = "age",
   length_col = "fl",
   sex_col    = "sex"
 )
@@ -157,7 +169,7 @@ compare_growth_models(
   "von Bertalanffy" = vb_fit,
   "Gompertz"        = gomp_fit,
   "Logistic"        = logis_fit,
-  data = growth_data
+  data = growth_data[embryo == FALSE & !is.na(age)]
 )
 ```
 
@@ -214,83 +226,29 @@ create_loo_table(
 
 ### 1. Maturity-Based Growth Parameterization
 
-**The problem:** Traditional growth models estimate the growth coefficient *k* directly, but *k* is notoriously difficult to estimate. It exhibits strong negative correlation with *L*<sub>∞</sub> (often *r* < -0.9), and in datasets that don't extend to ages approaching asymptotic size, both parameters become poorly identified. Small changes in one can be compensated by changes in the other, inflating posterior uncertainty.
+Traditional growth models estimate *k* directly, but *k* and *L*<sub>∞</sub> are strongly negatively correlated (often *r* < −0.9), making both poorly identified when data don't extend to near-asymptotic sizes.
 
-**Our solution:** Rather than estimating *k* directly, vitalBayes derives it from observable maturity milestones. The key insight is that any growth curve must pass through the point (*t*<sub>mat</sub>, *L*<sub>mat</sub>)—the age and length at which an individual reaches maturity. We solve each growth equation for *k*:
+**Our solution:** Derive *k* from observable maturity milestones:
 
-#### von Bertalanffy
-
-At maturity, $L(t_{mat}) = L_{mat}$:
-$$L_{mat} = L_\infty - (L_\infty - L_0) e^{-k \cdot t_{mat}}$$
-
-Solving for *k*:
 $$k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)$$
 
-#### Gompertz
-
-At maturity:
-$$L_{mat} = L_\infty \exp\left[-\ln\left(\frac{L_\infty}{L_0}\right) e^{-k \cdot t_{mat}}\right]$$
-
-Solving for *k*:
-$$k = \frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_0)}{\ln(L_\infty / L_{mat})}\right)$$
-
-#### Logistic
-
-At maturity:
-$$L_{mat} = \frac{L_\infty}{1 + \left(\frac{L_\infty}{L_0} - 1\right) e^{-k \cdot t_{mat}}}$$
-
-Solving for *k*:
-$$k = \frac{1}{t_{mat}} \ln\left(\frac{L_{mat}(L_\infty - L_0)}{L_0(L_\infty - L_{mat})}\right)$$
-
-
-**Why this matters:**
-
-| Aspect        | Traditional (*k*-based) | Maturity-based |
-|-----------|------------------------|----------------|
-| Parameter correlation        | Strong (*L*<sub>∞</sub>, *k* ~ -0.9) | Reduced (maturity params observable) |
-| Data requirements        | Ages near asymptote | Maturity data within observed range |
-| Prior information        | Difficult to specify | Informed by maturity analysis |
-| Uncertainty propagation        | Independent | Flows from upstream models |
-| Biological coherence        | Not enforced | Curve passes through maturity |
-
-The maturity parameters (*L*<sub>mat</sub>, *t*<sub>mat</sub>) typically fall well within the observed data range, making them far more identifiable than asymptotic parameters. By anchoring the growth curve at this observable milestone, we transform a poorly-identified parameter (*k*) into a derived quantity constrained by well-informed inputs.
-
-```r
-# Maturity-based parameterization (recommended)
-growth_fit <- fit_bayesian_growth(
-  lt      = "fl",
-  age     = "age1",
-  sex     = "sex",
-  data    = growth_data,
-  k_based = FALSE,      # Derive k from maturity parameters
-  L50_fit = L50_fit,    # Posterior for Lmat
-  t50_fit = t50_fit     # Posterior for tmat
-)
-
-# k is now a derived quantity with appropriate uncertainty
-growth_fit$summary("k")
-```
+This parameterization:
+- Uses quantities that fall within the data range (*L*<sub>mat</sub>, *t*<sub>mat</sub>)
+- Ensures biological consistency: the growth curve passes through the maturity point
+- Propagates uncertainty from upstream maturity models
 
 ### 2. Probit Link for Threshold Models
 
-**The problem:** Maturity and birth-status models are typically fitted using logistic regression (logit link). While computationally convenient, the logit link implies that the log-odds of maturity change linearly with size—a mathematical abstraction without clear biological meaning.
+Both birth and maturity models use a probit link function rather than the more common logit. The probit link assumes that underlying developmental readiness is normally distributed across individuals. An individual transitions (births or matures) when this latent readiness crosses a threshold.
 
-**Our solution:** vitalBayes uses the probit link, which has a natural **threshold-crossing interpretation**. The probit model assumes there exists a latent continuous variable (developmental readiness, reproductive investment) that is normally distributed across individuals. An individual transitions when this latent variable crosses a threshold:
-
-$$P(\text{mature}_i) = \Phi[\beta \cdot (L_i - L_{50})]$$
-
-where Φ(·) is the standard normal CDF.
-
-**Biological justification:** Developmental readiness is influenced by many factors—maternal condition, temperature, food availability, genetic variation, sibling competition (for embryos). The central limit theorem suggests that the aggregate effect of many small, independent factors tends toward normality. The probit link formalizes this intuition.
-
-**Practical implications:**
-- The slope parameter β has units of inverse length (or inverse time), representing how quickly transition probability changes
-- The transition width (5% to 95% probability) equals 3.29/β, providing an intuitive measure of individual variation
+**Why probit?**
+- **Biological interpretation:** Normal variation in developmental readiness is biologically plausible
+- **Consistent reporting:** The transition width (*x*<sub>95</sub> − *x*<sub>05</sub>) has units of the predictor (cm or years)
 - Derived quantities (*L*<sub>05</sub>, *L*<sub>95</sub>) have direct biological interpretation
 
 ### 3. Partial Pooling for Imbalanced Sex Ratios
 
-**The problem:** Elasmobranch sampling frequently yields imbalanced sex ratios. A dataset might contain 150 females but only 23 males. Fitting separate models produces:
+**The problem:** Elasmobranch sampling frequently yields imbalanced sex ratios. A dataset might contain 150 females but only 34 males. Fitting separate models produces:
 - Wide, unreliable credible intervals for the sparse sex
 - Estimates driven by a few influential observations  
 - Inefficient use of information (both sexes are the same species)
@@ -312,12 +270,14 @@ where μ is the population mean, τ is between-sex standard deviation, and η<su
 **Half-normal prior on τ:** We place τ ~ Half-Normal(0, σ<sub>τ</sub>) rather than the commonly-used half-Cauchy. The half-Cauchy's heavy tails can pull τ toward implausibly large values, especially with only two groups (sexes). The half-normal provides gentle regularization while still allowing substantial between-sex variation when warranted.
 
 ```r
-# Enable partial pooling
+# Enable partial pooling (especially useful for imbalanced data)
+data(imbalanced_data)  # 150 females, 34 males
+
 fit <- fit_bayesian_maturity(
   maturity    = "mat",
   lt          = "fl", 
   sex         = "sex",
-  data        = mat_data,
+  data        = imbalanced_data[embryo == FALSE],
   use_pooling = TRUE,    # Hierarchical structure
   prior_tau   = 0.5      # Half-normal scale (on log scale)
 )
@@ -350,16 +310,16 @@ This ensures *L*<sub>∞</sub> always exceeds the maximum observed length while 
 # Lmax is auto-detected from data
 growth_fit <- fit_bayesian_growth(
   lt   = "fl",
-  age  = "age1",
-  data = growth_data
+  age  = "age",
+  data = growth_data[embryo == FALSE]
 )
 # Message: "Lmax from data: 98.5 cm (female), 87.2 cm (male)"
 
 # Or specify manually
 growth_fit <- fit_bayesian_growth(
   lt   = "fl",
-  age  = "age1",
-  data = growth_data,
+  age  = "age",
+  data = growth_data[embryo == FALSE],
   Lmax = c(100, 90)  # Female, Male
 )
 ```
@@ -383,8 +343,8 @@ This is far more interpretable than specifying σ = 0.2 on log(*L*<sub>∞</sub>
 ```r
 growth_fit <- fit_bayesian_growth(
   lt   = "fl",
-  age  = "age1",
-  data = growth_data,
+  age  = "age",
+  data = growth_data[embryo == FALSE],
   
   # Intuitive CV-based priors
   CV_Linf = 0.20,    # 20% uncertainty on asymptotic length
@@ -420,12 +380,12 @@ When you pass `birth_fit`, `L50_fit`, and `t50_fit` to `fit_bayesian_growth()`, 
 # Complete integrated workflow
 birth_fit <- fit_bayesian_birth(embryo_lts, freeswim_lts)
 L50_fit   <- fit_bayesian_maturity(maturity = "mat", lt = "fl", ...)
-t50_fit   <- fit_bayesian_maturity(maturity = "mat", age = "age1", ...)
+t50_fit   <- fit_bayesian_maturity(maturity = "mat", age = "age", ...)
 
 growth_fit <- fit_bayesian_growth(
   lt        = "fl",
-  age       = "age1",
-  data      = growth_data,
+  age       = "age",
+  data      = growth_data[embryo == FALSE],
   birth_fit = birth_fit,  # Informs L₀
   L50_fit   = L50_fit,    # Informs Lmat
   t50_fit   = t50_fit,    # Informs tmat
@@ -462,7 +422,7 @@ vitalBayes automatically detects sex coding in 11+ languages:
 | `vignette("visualization")` | Plotting functions and color palettes |
 | `vignette("model_diagnostics")` | Convergence, PPC, and LOO-CV |
 
-For comprehensive statistical background, see the [Statistical Methods Guide](articles/vitalBayes_stats_explained.html).
+For comprehensive statistical background, see the [Statistical Methods Guide](articles/Understanding_vitalBayes.html).
 
 ## Citation
 
