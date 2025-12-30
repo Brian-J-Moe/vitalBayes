@@ -34,7 +34,7 @@ vitalBayes addresses these challenges through:
 | Prior specification | **CV-based priors** offer scale-invariant, intuitive parameter uncertainty |
 | Reproducibility | **Precompiled Stan models** ensure consistent, fast inference |
 
-<!--do not render-->
+<!--
 ## Interactive Demo
 
 Explore how the three growth models (von Bertalanffy, Gompertz, Logistic) respond to changes in life history parameters. 
@@ -50,7 +50,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 </iframe>
 </div>
 <p align="center"><em>First load may take 10-20 seconds while WebR initializes</em></p>
-<!--end do not render-->
+-->
 
 ## Installation
 vitalBayes requires a working C++ toolchain for Stan. See the [RStan Getting Started Guide](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for setup instructions.
