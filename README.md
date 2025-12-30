@@ -54,14 +54,14 @@ pak::pak("Brian-J-Moe/vitalBayes")
 vitalBayes implements an integrated workflow where information flows forward through life history stages:
 
 ```
-        Birth      ───▶      Maturity      ───▶      Growth    
-        (b₅₀)               (L₅₀, t₅₀)              (L∞, k, L₀) 
+  Birth      ───▶      Maturity      ───▶      Growth    
+  (b₅₀)               (L₅₀, t₅₀)              (L∞, k, L₀) 
 
-          │                     │                       │
-          │                     │                       │
-          ▼                     ▼                       ▼
-      Informs L₀             Informs               Derived from
-        prior              Lmat, tmat             maturity params
+    │                     │                       │
+    │                     │                       │
+    ▼                     ▼                       ▼
+ Informs L₀             Informs               Derived from
+  prior              Lmat, tmat             maturity params
 ```
 
 Each stage produces posterior distributions that become informative priors for the next, creating a biologically coherent analysis.
