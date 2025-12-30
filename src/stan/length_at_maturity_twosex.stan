@@ -36,17 +36,12 @@ transformed data {
 }
 
 parameters {
-  // Population mean (only used if pooling)
-  array[use_pooling] real mu_L50;
+  // For pooling: population mean and between-sex SD
+  real mu_L50;
+  real<lower=0> tau_L50;
   
-  // Between-sex SD (half-normal, only used if pooling)
-  array[use_pooling] real<lower=0> tau_L50;
-  
-  // Raw deviates for non-centered (only if pooling)
-  array[use_pooling] vector[2] raw_L50;
-  
-  // Direct parameters (only if not pooling)
-  array[1 - use_pooling] vector[2] log_L50_direct;
+  // Raw deviates for non-centered parameterization (always present)
+  vector[2] raw_L50;
   
   // Slope parameters (not pooled - often genuinely differ between sexes)
   vector[2] log_slope;
@@ -56,12 +51,15 @@ transformed parameters {
   // Construct log-scale L50
   vector[2] log_L50;
   
-  if (use_pooling) {
+  if (use_pooling == 1) {
+    // Non-centered: log_L50[s] = mu + tau * raw[s]
     for (s in 1:2) {
-      log_L50[s] = mu_L50[1] + tau_L50[1] * raw_L50[1][s];
+      log_L50[s] = mu_L50 + tau_L50 * raw_L50[s];
     }
   } else {
-    log_L50 = log_L50_direct[1];
+    // No pooling: use raw values directly as log(L50)
+    // raw_L50 serves as log_L50_direct in this case
+    log_L50 = raw_L50;
   }
   
   // Transform to natural scale
@@ -80,20 +78,24 @@ transformed parameters {
 
 model {
   // Priors
-  if (use_pooling) {
+  if (use_pooling == 1) {
     // Hyperprior for population mean
-    mu_L50[1] ~ normal(mean(prior_L50_mu), mean(prior_L50_sigma));
+    mu_L50 ~ normal(mean(prior_L50_mu), mean(prior_L50_sigma));
     
     // Half-normal prior on between-sex SD
-    tau_L50[1] ~ normal(0, prior_tau_L50);
+    tau_L50 ~ normal(0, prior_tau_L50);
     
     // Standard normal for non-centered deviates
-    raw_L50[1] ~ std_normal();
+    raw_L50 ~ std_normal();
   } else {
-    // Independent priors per sex
+    // Independent priors per sex (raw_L50 is log_L50 directly)
     for (s in 1:2) {
-      log_L50_direct[1][s] ~ normal(prior_L50_mu[s], prior_L50_sigma[s]);
+      raw_L50[s] ~ normal(prior_L50_mu[s], prior_L50_sigma[s]);
     }
+    
+    // Weakly constrain unused params to avoid sampling issues
+    mu_L50 ~ normal(0, 1);
+    tau_L50 ~ normal(0, 1);
   }
   
   // Slope priors (same for both sexes but estimated separately)

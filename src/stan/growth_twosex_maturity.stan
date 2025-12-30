@@ -57,31 +57,23 @@ transformed data {
 }
 
 parameters {
-  // When pooling: non-centered parameterization
+  // Population means (for pooling)
+  real mu_Linf;
+  real mu_L0;
+  real mu_Lmat;
+  real mu_tmat;
   
-  // Population means (only used if pooling)
-  array[use_pooling] real mu_Linf;
-  array[use_pooling] real mu_L0;
-  array[use_pooling] real mu_Lmat;
-  array[use_pooling] real mu_tmat;
+  // Between-sex standard deviations (for pooling)
+  real<lower=0> tau_Linf;
+  real<lower=0> tau_L0;
+  real<lower=0> tau_Lmat;
+  real<lower=0> tau_tmat;
   
-  // Between-sex standard deviations (half-normal, only used if pooling)
-  array[use_pooling] real<lower=0> tau_Linf;
-  array[use_pooling] real<lower=0> tau_L0;
-  array[use_pooling] real<lower=0> tau_Lmat;
-  array[use_pooling] real<lower=0> tau_tmat;
-  
-  // Raw deviates for non-centered parameterization (only used if pooling)
-  array[use_pooling] vector[2] raw_Linf;
-  array[use_pooling] vector[2] raw_L0;
-  array[use_pooling] vector[2] raw_Lmat;
-  array[use_pooling] vector[2] raw_tmat;
-  
-  // Direct parameters (only used if not pooling)
-  array[1 - use_pooling] vector[2] log_Linf_direct;
-  array[1 - use_pooling] vector[2] log_L0_direct;
-  array[1 - use_pooling] vector[2] log_Lmat_direct;
-  array[1 - use_pooling] vector[2] log_tmat_direct;
+  // Raw deviates (always present)
+  vector[2] raw_Linf;
+  vector[2] raw_L0;
+  vector[2] raw_Lmat;
+  vector[2] raw_tmat;
   
   // Sex-specific observation error
   vector<lower=0>[2] sigma;
@@ -97,19 +89,20 @@ transformed parameters {
   vector[2] log_Lmat;
   vector[2] log_tmat;
   
-  if (use_pooling) {
+  if (use_pooling == 1) {
     // Non-centered: log_param = mu + tau * raw
     for (s in 1:2) {
-      log_Linf[s] = mu_Linf[1] + tau_Linf[1] * raw_Linf[1][s];
-      log_L0[s] = mu_L0[1] + tau_L0[1] * raw_L0[1][s];
-      log_Lmat[s] = mu_Lmat[1] + tau_Lmat[1] * raw_Lmat[1][s];
-      log_tmat[s] = mu_tmat[1] + tau_tmat[1] * raw_tmat[1][s];
+      log_Linf[s] = mu_Linf + tau_Linf * raw_Linf[s];
+      log_L0[s] = mu_L0 + tau_L0 * raw_L0[s];
+      log_Lmat[s] = mu_Lmat + tau_Lmat * raw_Lmat[s];
+      log_tmat[s] = mu_tmat + tau_tmat * raw_tmat[s];
     }
   } else {
-    log_Linf = log_Linf_direct[1];
-    log_L0 = log_L0_direct[1];
-    log_Lmat = log_Lmat_direct[1];
-    log_tmat = log_tmat_direct[1];
+    // No pooling: raw values are direct log parameters
+    log_Linf = raw_Linf;
+    log_L0 = raw_L0;
+    log_Lmat = raw_Lmat;
+    log_tmat = raw_tmat;
   }
   
   // Transform to natural scale
@@ -181,33 +174,43 @@ transformed parameters {
 
 model {
   // Priors
-  if (use_pooling) {
+  if (use_pooling == 1) {
     // Hyperpriors for population means
-    mu_Linf[1] ~ normal(mean(prior_Linf_mu), 1);
-    mu_L0[1] ~ normal(mean(prior_L0_mu), 1);
-    mu_Lmat[1] ~ normal(mean(prior_Lmat_mu), 1);
-    mu_tmat[1] ~ normal(mean(prior_tmat_mu), 1);
+    mu_Linf ~ normal(mean(prior_Linf_mu), 1);
+    mu_L0 ~ normal(mean(prior_L0_mu), 1);
+    mu_Lmat ~ normal(mean(prior_Lmat_mu), 1);
+    mu_tmat ~ normal(mean(prior_tmat_mu), 1);
     
     // Half-normal priors on between-sex SD
-    tau_Linf[1] ~ normal(0, prior_tau_Linf);
-    tau_L0[1] ~ normal(0, prior_tau_L0);
-    tau_Lmat[1] ~ normal(0, prior_tau_Lmat);
-    tau_tmat[1] ~ normal(0, prior_tau_tmat);
+    tau_Linf ~ normal(0, prior_tau_Linf);
+    tau_L0 ~ normal(0, prior_tau_L0);
+    tau_Lmat ~ normal(0, prior_tau_Lmat);
+    tau_tmat ~ normal(0, prior_tau_tmat);
     
     // Standard normal for non-centered raw deviates
-    raw_Linf[1] ~ std_normal();
-    raw_L0[1] ~ std_normal();
-    raw_Lmat[1] ~ std_normal();
-    raw_tmat[1] ~ std_normal();
+    raw_Linf ~ std_normal();
+    raw_L0 ~ std_normal();
+    raw_Lmat ~ std_normal();
+    raw_tmat ~ std_normal();
     
   } else {
-    // Independent priors per sex
+    // Independent priors per sex (raw values are log parameters)
     for (s in 1:2) {
-      log_Linf_direct[1][s] ~ normal(prior_Linf_mu[s], prior_Linf_sigma[s]);
-      log_L0_direct[1][s] ~ normal(prior_L0_mu[s], prior_L0_sigma[s]);
-      log_Lmat_direct[1][s] ~ normal(prior_Lmat_mu[s], prior_Lmat_sigma[s]);
-      log_tmat_direct[1][s] ~ normal(prior_tmat_mu[s], prior_tmat_sigma[s]);
+      raw_Linf[s] ~ normal(prior_Linf_mu[s], prior_Linf_sigma[s]);
+      raw_L0[s] ~ normal(prior_L0_mu[s], prior_L0_sigma[s]);
+      raw_Lmat[s] ~ normal(prior_Lmat_mu[s], prior_Lmat_sigma[s]);
+      raw_tmat[s] ~ normal(prior_tmat_mu[s], prior_tmat_sigma[s]);
     }
+    
+    // Weakly constrain unused params
+    mu_Linf ~ normal(0, 1);
+    mu_L0 ~ normal(0, 1);
+    mu_Lmat ~ normal(0, 1);
+    mu_tmat ~ normal(0, 1);
+    tau_Linf ~ normal(0, 1);
+    tau_L0 ~ normal(0, 1);
+    tau_Lmat ~ normal(0, 1);
+    tau_tmat ~ normal(0, 1);
   }
   
   // Observation error priors
