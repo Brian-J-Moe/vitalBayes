@@ -258,7 +258,7 @@ main {
     font-weight: 800;
     letter-spacing: 2px;
     text-transform: uppercase;
-    animation: neon-pulse 2s ease-in-out infinite;
+    animation: neon-pulse 4s ease-in-out infinite;
     cursor: pointer !important;
     pointer-events: auto !important;
     text-decoration: none !important;
@@ -960,6 +960,8 @@ img[alt*="hex"] {
   padding: 0 !important;
   border-radius: 0 !important;
   filter: drop-shadow(0 0 15px rgba($bayes-blue, 0.4)) !important;
+  position: relative !important;
+  z-index: 100 !important; // Ensure logo appears above decorative lines
 
   &:hover {
     filter: drop-shadow(0 0 25px rgba($vital-pink, 0.8)) !important;
@@ -1000,15 +1002,20 @@ aside,
 // pkgdown specific: the logo appears in a float-end div on article pages
 .template-article .float-end,
 .template-reference .float-end,
-.template-reference-topic .float-end {
+.template-reference-topic .float-end,
+.template-home .float-end {
   background: transparent !important;
   background-color: transparent !important;
+  position: relative !important;
+  z-index: 100 !important; // Ensure container is above decorative lines
 
   img {
     background: transparent !important;
     background-color: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    position: relative !important;
+    z-index: 101 !important;
   }
 }
 
@@ -1111,10 +1118,21 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
 // Homepage Specific Enhancements
 // -----------------------------------------------------------------------------
 .template-home {
+  // Ensure logo/hex sticker is above decorative lines
+  .page-header {
+    position: relative;
+    z-index: 10;
+
+    img, .logo, img[src*="logo"] {
+      position: relative !important;
+      z-index: 100 !important;
+    }
+  }
+
   // Title glow animation
   .page-header h1 {
     font-size: 3rem;
-    animation: neon-pulse 2s ease-in-out infinite;
+    animation: neon-pulse 4s ease-in-out infinite;
   }
 
   // Feature sections
@@ -1930,7 +1948,6 @@ mjx-container[display="true"] {
   mjx-script, mjx-row, mjx-cell, mjx-mrow, mjx-c {
     color: $bayes-blue !important;
   }
-}
 }
 
 // Specific mobile breakpoint adjustments

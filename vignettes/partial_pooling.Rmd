@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ## The Problem: Imbalanced Sex Ratios
 
-Elasmobranch datasets frequently have unequal sample sizes between sexes. In the gulper shark data, we have 150 females but only 23 males with maturity data. Fitting separate models for each sex leads to:
+Elasmobranch datasets frequently have unequal sample sizes between sexes. In the gulper shark data, we have 121 males but only 65 females with maturity data. Fitting separate models for each sex leads to:
 - **Wide credible intervals** for the sparse sex (males)
 - **Unstable estimates** driven by a few influential observations
 - **Inefficient use of information** — we ignore the fact that both sexes are *the same species*
@@ -27,13 +27,13 @@ Elasmobranch datasets frequently have unequal sample sizes between sexes. In the
 library(vitalBayes)
 library(data.table)
 
-data(gulper_data)
-mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
+data(growth_data)
+mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
 mat_data[, .N, by = sex]
 #    sex   N
-# 1:   1 150  (females)
-# 2:   2  23  (males)
+# 1:   1  65  (females)
+# 2:   2  121 (males)
 ```
 
 ## Three Estimation Strategies
@@ -200,7 +200,7 @@ The same principles apply to growth parameters:
 # Partial pooling on Linf, L0, k, Lmat, tmat
 growth_pooled <- fit_bayesian_growth(
  lt          = "fl",
- age         = "age1",
+ age         = "age",
  sex         = "sex",
  data        = growth_data,
  use_pooling = TRUE,
@@ -275,9 +275,9 @@ For two-sex elasmobranch models with typical sample sizes, yes. The only case to
 
 ```{r full-example}
 # ---- Data Prep ----
-data(gulper_data)
-mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
-growth_data <- gulper_data[embryo == FALSE & !is.na(age1)]
+data(growth_data)
+mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
+growth_data <- growth_data[embryo == FALSE & !is.na(age)]
 
 # ---- Maturity with Pooling ----
 L50_fit <- fit_bayesian_maturity(
@@ -288,15 +288,15 @@ L50_fit <- fit_bayesian_maturity(
 )
 
 t50_fit <- fit_bayesian_maturity(
- maturity = "mat", age = "age1", sex = "sex",
- data = mat_data[!is.na(age1)],
+ maturity = "mat", age = "age", sex = "sex",
+ data = mat_data[!is.na(age)],
  use_pooling = TRUE,
  prior_tau = 0.5
 )
 
 # ---- Growth with Pooling ----
 growth_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex",
+ lt = "fl", age = "age", sex = "sex",
  data = growth_data,
  k_based = FALSE,
  L50_fit = L50_fit,
