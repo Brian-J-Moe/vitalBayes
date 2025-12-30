@@ -171,66 +171,55 @@ linearization method is used to provide a reasonable starting value.
 }
 \examples{
 \dontrun{
-# Load simulated data
-data(growth_data)
-
 # Workflow: birth -> maturity -> growth
 
 # Step 1: Fit birth model
 birth_fit <- fit_bayesian_birth(
-  embryo_lts = growth_data[embryo == TRUE, fl],
-  free_swimming_lts = growth_data[embryo == FALSE, fl]
+  embryo_lts = sharks[embryo == TRUE, length],
+  free_swimming_lts = sharks[embryo == FALSE, length]
 )
 
 # Step 2: Fit maturity models
-mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
-L50_fit <- fit_bayesian_maturity(
-  maturity = "mat", lt = "fl", sex = "sex",
-  data = mat_data, use_pooling = TRUE
-)
-t50_fit <- fit_bayesian_maturity(
-  maturity = "mat", age = "age", sex = "sex",
-  data = mat_data[!is.na(age)], use_pooling = TRUE
+mat_fits <- fit_bayesian_maturity(
+  maturity = mat, lt = length, age = age, sex = sex,
+  data = sharks[embryo == FALSE]
 )
 
 # Step 3: Fit growth model (maturity-based, pooled)
 growth_fit <- fit_bayesian_growth(
-  lt = "fl", age = "age", sex = "sex",
-  data = growth_data[embryo == FALSE & !is.na(age)],
-  model = "vb",
+  lt = length, age = age, sex = sex,
+  data = sharks,  # Can include incomplete cases for Lmax
+  model = "v",
   k_based = FALSE,
-  birth_fit = birth_fit,
-  L50_fit = L50_fit,
-  t50_fit = t50_fit,
-  use_pooling = TRUE
+  birth_stanfit = birth_fit,
+  length.mature_stanfit = mat_fits$length,
+  age.mature_stanfit = mat_fits$age,
+  use_pooling = TRUE,
+  robust = TRUE
 )
 
-# View key parameters
-growth_fit$summary(c("Linf", "L0", "k", "Lmat", "tmat"))
-
-# Example with imbalanced data
-data(imbalanced_data)
-gdata <- imbalanced_data[embryo == FALSE & !is.na(age)]
-growth_imbal <- fit_bayesian_growth(
-  lt = "fl", age = "age", sex = "sex",
-  data = gdata,
-  use_pooling = TRUE  # Important for sparse male data
+# Alternative: Specify Lmax if you know it exceeds observed data
+growth_fit <- fit_bayesian_growth(
+  lt = length, age = age, sex = sex,
+  data = sharks[!is.na(age)],  # Complete cases only
+  Lmax = c(150, 140),  # Known max: females, males
+  ...
 )
 }
 
 }
 \seealso{
-\code{vignette("fit_bayesian_growth")} for usage examples.
+\code{vignette("fit_bayesian_growth")} for usage examples with gulper shark data.
 
 \code{vignette("partial_pooling")} for hierarchical modeling of imbalanced sex ratios.
 
-\href{../doc/Understanding_vitalBayes.html#growth}{Statistical Methods: Growth Models}
+\href{../doc/vitalBayes_stats_explained.html#growth}{Statistical Methods: Growth Models}
 for equations and model comparison.
 
-\href{../doc/Understanding_vitalBayes.html#maturity-param}{Statistical Methods: Maturity-Based Parameterization}
+\href{../doc/vitalBayes_stats_explained.html#maturity-param}{Statistical Methods: Maturity-Based Parameterization}
 for the derivation of k from maturity parameters.
 
-\href{../doc/Understanding_vitalBayes.html#linf}{Statistical Methods: L-infinity Constraint}
+\href{../doc/vitalBayes_stats_explained.html#linf}{Statistical Methods: L-infinity Constraint}
 for why Linf must exceed maximum observed length.
 
 \code{\link{fit_bayesian_birth}}, \code{\link{fit_bayesian_maturity}},

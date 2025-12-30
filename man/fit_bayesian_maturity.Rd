@@ -114,56 +114,55 @@ start near the high-probability region of the posterior.
 
 \examples{
 \dontrun{
-# Load simulated data
-data(growth_data)
+data(gulper_data)
 
 # Single-sex length-at-maturity (females only)
 L50_fit <- fit_bayesian_maturity(
   maturity = "mat",
   lt       = "fl",
-  data     = growth_data[sex == "female" & embryo == FALSE]
+  data     = gulper_data[sex == 1 & embryo == FALSE]
 )
 
-# Two-sex model with partial pooling
+# Two-sex model with partial pooling (integer sex auto-detected)
 L50_fit_2sex <- fit_bayesian_maturity(
   maturity    = "mat",
   lt          = "fl",
   sex         = "sex",
-  data        = growth_data[embryo == FALSE],
+  data        = gulper_data[embryo == FALSE],
   use_pooling = TRUE
 )
 
-# Example with imbalanced data (150F, 34M) - pooling is especially helpful
-data(imbalanced_data)
-L50_imbalanced <- fit_bayesian_maturity(
-  maturity    = "mat",
-  lt          = "fl",
-  sex         = "sex",
-  data        = imbalanced_data[embryo == FALSE],
-  use_pooling = TRUE  # Borrows strength across sexes
+# Explicit sex coding for non-standard data
+L50_fit_explicit <- fit_bayesian_maturity(
+  maturity = "mat",
+  lt       = "fl",
+  sex      = "sex",
+  female   = 1,
+  male     = 2,
+  data     = gulper_data[embryo == FALSE]
 )
 
 # Fit both length and age maturity models
 mat_fits <- fit_bayesian_maturity(
   maturity = "mat",
   lt       = "fl",
-  age      = "age",
+  age      = "age1",
   sex      = "sex",
-  data     = growth_data[embryo == FALSE]
+  data     = gulper_data[embryo == FALSE]
 )
 }
 
 }
 \seealso{
-\code{vignette("fit_bayesian_maturity")} for usage examples.
+\code{vignette("fit_bayesian_maturity")} for usage examples with gulper shark data.
 
 \code{vignette("partial_pooling")} for detailed explanation of hierarchical
 modeling for imbalanced sex ratios.
 
-\href{../doc/Understanding_vitalBayes.html#maturity}{Statistical Methods: Maturity Estimation}
+\href{../doc/vitalBayes_stats_explained.html#maturity}{Statistical Methods: Maturity Estimation}
 for mathematical derivation including partial pooling.
 
-\href{../doc/Understanding_vitalBayes.html#probit}{Statistical Methods: Probit Link}
+\href{../doc/vitalBayes_stats_explained.html#probit}{Statistical Methods: Probit Link}
 for justification of probit over logit.
 
 \code{\link{fit_bayesian_birth}}, \code{\link{fit_bayesian_growth}},
