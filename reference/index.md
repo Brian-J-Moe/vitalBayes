@@ -20,8 +20,6 @@
   : Fit Bayesian Individual Growth Models
 - [`fit_bayesian_maturity()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md)
   : Fit Bayesian Maturity Models
-- [`gulper_data`](https://brian-j-moe.github.io/vitalBayes/reference/gulper_data.md)
-  : Gulper Shark Life History Data
 - [`is_colorblind_safe()`](https://brian-j-moe.github.io/vitalBayes/reference/is_colorblind_safe.md)
   : Check if Palette is Colorblind-Friendly
 - [`list_vital_palettes()`](https://brian-j-moe.github.io/vitalBayes/reference/list_vital_palettes.md)

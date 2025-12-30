@@ -160,18 +160,18 @@ chains start near the high-probability region of the posterior.
 ## See also
 
 [`vignette("fit_bayesian_maturity")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md)
-for usage examples.
+for usage examples with gulper shark data.
 
 [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
 for detailed explanation of hierarchical modeling for imbalanced sex
 ratios.
 
 [Statistical Methods: Maturity
-Estimation](https://brian-j-moe.github.io/vitalBayes/doc/Understanding_vitalBayes.html#maturity)
+Estimation](https://brian-j-moe.github.io/vitalBayes/doc/vitalBayes_stats_explained.html#maturity)
 for mathematical derivation including partial pooling.
 
 [Statistical Methods: Probit
-Link](https://brian-j-moe.github.io/vitalBayes/doc/Understanding_vitalBayes.html#probit)
+Link](https://brian-j-moe.github.io/vitalBayes/doc/vitalBayes_stats_explained.html#probit)
 for justification of probit over logit.
 
 [`fit_bayesian_birth`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_birth.md),
@@ -182,42 +182,41 @@ for justification of probit over logit.
 
 ``` r
 if (FALSE) { # \dontrun{
-# Load simulated data
-data(growth_data)
+data(gulper_data)
 
 # Single-sex length-at-maturity (females only)
 L50_fit <- fit_bayesian_maturity(
   maturity = "mat",
   lt       = "fl",
-  data     = growth_data[sex == "female" & embryo == FALSE]
+  data     = gulper_data[sex == 1 & embryo == FALSE]
 )
 
-# Two-sex model with partial pooling
+# Two-sex model with partial pooling (integer sex auto-detected)
 L50_fit_2sex <- fit_bayesian_maturity(
   maturity    = "mat",
   lt          = "fl",
   sex         = "sex",
-  data        = growth_data[embryo == FALSE],
+  data        = gulper_data[embryo == FALSE],
   use_pooling = TRUE
 )
 
-# Example with imbalanced data (150F, 34M) - pooling is especially helpful
-data(imbalanced_data)
-L50_imbalanced <- fit_bayesian_maturity(
-  maturity    = "mat",
-  lt          = "fl",
-  sex         = "sex",
-  data        = imbalanced_data[embryo == FALSE],
-  use_pooling = TRUE  # Borrows strength across sexes
+# Explicit sex coding for non-standard data
+L50_fit_explicit <- fit_bayesian_maturity(
+  maturity = "mat",
+  lt       = "fl",
+  sex      = "sex",
+  female   = 1,
+  male     = 2,
+  data     = gulper_data[embryo == FALSE]
 )
 
 # Fit both length and age maturity models
 mat_fits <- fit_bayesian_maturity(
   maturity = "mat",
   lt       = "fl",
-  age      = "age",
+  age      = "age1",
   sex      = "sex",
-  data     = growth_data[embryo == FALSE]
+  data     = gulper_data[embryo == FALSE]
 )
 } # }
 ```
