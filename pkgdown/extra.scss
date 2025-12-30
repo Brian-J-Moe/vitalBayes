@@ -1,0 +1,1133 @@
+// =============================================================================
+// vitalBayes SYNTHWAVE Theme for pkgdown
+// =============================================================================
+// An immersive retro-futuristic theme inspired by 80s synthwave aesthetics
+// Featuring: Neon glows, retro grid horizon, scan lines, chrome effects
+// 
+// Colors from hex sticker:
+//   Pink: #FF1D8E | Cyan: #00D9FF | Purple: #5B3A8F | Navy: #1A1F3A
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Color Variables
+// -----------------------------------------------------------------------------
+$vital-pink: #FF1D8E;
+$bayes-blue: #00D9FF;
+$sunset-purple: #5B3A8F;
+$deep-ocean: #1A1F3A;
+$coral-orange: #FF6B35;
+$teal-accent: #4ECDC4;
+
+// Extended palette
+$neon-pink: #FF2E9F;
+$hot-pink: #FF6AC1;
+$electric-blue: #00E5FF;
+$deep-purple: #2D1B4E;
+$midnight: #0D0221;
+$horizon-purple: #1A0533;
+
+// Background gradient stops
+$bg-top: #0D0221;
+$bg-mid: #1A0533;
+$bg-bottom: #2D1B4E;
+
+// Text colors
+$text-primary: #F0E6FF;
+$text-secondary: #B8A9C9;
+$text-muted: #7A6B8A;
+
+// Glow effects
+$glow-pink: 0 0 10px rgba($vital-pink, 0.8), 0 0 20px rgba($vital-pink, 0.6), 0 0 30px rgba($vital-pink, 0.4);
+$glow-cyan: 0 0 10px rgba($bayes-blue, 0.8), 0 0 20px rgba($bayes-blue, 0.6), 0 0 30px rgba($bayes-blue, 0.4);
+$glow-purple: 0 0 10px rgba($sunset-purple, 0.6), 0 0 20px rgba($sunset-purple, 0.4);
+
+// -----------------------------------------------------------------------------
+// Keyframe Animations
+// -----------------------------------------------------------------------------
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow: 0 0 5px rgba($bayes-blue, 0.8), 0 0 10px rgba($bayes-blue, 0.6), 0 0 20px rgba($bayes-blue, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 10px rgba($bayes-blue, 1), 0 0 20px rgba($bayes-blue, 0.8), 0 0 40px rgba($bayes-blue, 0.6), 0 0 60px rgba($bayes-blue, 0.4);
+  }
+}
+
+@keyframes pink-pulse {
+  0%, 100% {
+    text-shadow: 0 0 5px rgba($vital-pink, 0.8), 0 0 10px rgba($vital-pink, 0.6), 0 0 20px rgba($vital-pink, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 10px rgba($vital-pink, 1), 0 0 20px rgba($vital-pink, 0.8), 0 0 40px rgba($vital-pink, 0.6);
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes grid-scroll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 50px;
+  }
+}
+
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba($vital-pink, 0.5), 0 0 10px rgba($vital-pink, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba($bayes-blue, 0.5), 0 0 20px rgba($bayes-blue, 0.3);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Base Body with Gradient Background
+// -----------------------------------------------------------------------------
+body {
+  background: linear-gradient(180deg, 
+    $bg-top 0%, 
+    $bg-mid 40%, 
+    $horizon-purple 70%,
+    $deep-purple 100%
+  ) !important;
+  background-attachment: fixed !important;
+  color: $text-primary !important;
+  min-height: 100vh;
+  position: relative;
+  
+  // Subtle noise texture overlay
+  &::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Retro Grid Horizon Effect (appears at bottom of pages)
+// -----------------------------------------------------------------------------
+.template-home main::after,
+.template-article main::after {
+  content: "";
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40vh;
+  pointer-events: none;
+  z-index: -1;
+  background: 
+    // Horizontal lines
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 49px,
+      rgba($vital-pink, 0.15) 49px,
+      rgba($vital-pink, 0.15) 50px
+    ),
+    // Vertical lines with perspective
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba($sunset-purple, 0.1) 50%,
+      rgba($vital-pink, 0.2) 100%
+    );
+  mask-image: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
+  animation: grid-scroll 3s linear infinite;
+}
+
+// Sun/horizon glow
+.template-home main::before {
+  content: "";
+  position: fixed;
+  bottom: 15vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 150px;
+  border-radius: 50% 50% 0 0;
+  background: linear-gradient(
+    to top,
+    rgba($vital-pink, 0.4) 0%,
+    rgba($coral-orange, 0.3) 30%,
+    rgba($bayes-blue, 0.1) 60%,
+    transparent 100%
+  );
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: -2;
+}
+
+// -----------------------------------------------------------------------------
+// Scan Line Effect (subtle CRT feel)
+// -----------------------------------------------------------------------------
+main {
+  position: relative;
+  
+  &::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.1) 0px,
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    opacity: 0.3;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Navbar - Floating Neon Bar
+// -----------------------------------------------------------------------------
+.navbar {
+  background: linear-gradient(180deg, 
+    rgba($deep-ocean, 0.95) 0%, 
+    rgba($midnight, 0.9) 100%
+  ) !important;
+  border-bottom: 2px solid $vital-pink;
+  box-shadow: 
+    0 2px 20px rgba($vital-pink, 0.4),
+    0 0 40px rgba($vital-pink, 0.2),
+    inset 0 -1px 0 rgba($bayes-blue, 0.3);
+  backdrop-filter: blur(10px);
+  
+  .navbar-brand {
+    color: $bayes-blue !important;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: neon-pulse 2s ease-in-out infinite;
+    
+    &:hover {
+      color: $electric-blue !important;
+      animation: flicker 0.5s ease-in-out;
+    }
+  }
+  
+  .nav-link {
+    color: $text-primary !important;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    position: relative;
+    
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: $bayes-blue;
+      box-shadow: $glow-cyan;
+      transition: all 0.3s ease;
+      transform: translateX(-50%);
+    }
+    
+    &:hover, &:focus {
+      color: $vital-pink !important;
+      text-shadow: $glow-pink;
+      
+      &::after {
+        width: 80%;
+        background: $vital-pink;
+        box-shadow: $glow-pink;
+      }
+    }
+    
+    &.active {
+      color: $bayes-blue !important;
+      text-shadow: $glow-cyan;
+      
+      &::after {
+        width: 80%;
+      }
+    }
+  }
+  
+  // Dropdown menus
+  .dropdown-menu {
+    background: rgba($midnight, 0.95);
+    border: 1px solid $sunset-purple;
+    box-shadow: 
+      0 10px 40px rgba(0, 0, 0, 0.5),
+      0 0 20px rgba($sunset-purple, 0.3),
+      inset 0 1px 0 rgba($bayes-blue, 0.1);
+    backdrop-filter: blur(10px);
+    
+    .dropdown-item {
+      color: $text-primary;
+      transition: all 0.2s ease;
+      
+      &:hover, &:focus {
+        background: linear-gradient(90deg, rgba($vital-pink, 0.2) 0%, transparent 100%);
+        color: $vital-pink;
+        padding-left: 1.5rem;
+      }
+    }
+    
+    .dropdown-divider {
+      border-color: rgba($sunset-purple, 0.5);
+    }
+    
+    .dropdown-header {
+      color: $bayes-blue;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+    }
+  }
+}
+
+// Version number styling
+.navbar .text-muted, .navbar .version {
+  color: $teal-accent !important;
+  font-family: 'Courier New', monospace;
+}
+
+// -----------------------------------------------------------------------------
+// Main Content Area
+// -----------------------------------------------------------------------------
+main {
+  background: transparent;
+}
+
+.page-header {
+  background: linear-gradient(135deg, 
+    rgba($deep-ocean, 0.8) 0%, 
+    rgba($sunset-purple, 0.3) 100%
+  );
+  border-bottom: 1px solid rgba($vital-pink, 0.3);
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  position: relative;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      $vital-pink 20%, 
+      $bayes-blue 50%, 
+      $vital-pink 80%, 
+      transparent 100%
+    );
+    box-shadow: 0 0 10px rgba($vital-pink, 0.5);
+  }
+  
+  h1 {
+    color: $bayes-blue;
+    text-shadow: $glow-cyan;
+    animation: neon-pulse 3s ease-in-out infinite;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Typography with Neon Effects
+// -----------------------------------------------------------------------------
+h1 {
+  color: $bayes-blue;
+  text-shadow: 
+    0 0 5px rgba($bayes-blue, 0.8),
+    0 0 10px rgba($bayes-blue, 0.5);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+h2 {
+  color: $vital-pink;
+  text-shadow: 
+    0 0 5px rgba($vital-pink, 0.6),
+    0 0 10px rgba($vital-pink, 0.3);
+  border-bottom: 1px solid rgba($vital-pink, 0.3);
+  padding-bottom: 0.75rem;
+  margin-top: 2rem;
+  position: relative;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100px;
+    height: 2px;
+    background: $vital-pink;
+    box-shadow: $glow-pink;
+  }
+}
+
+h3 {
+  color: $teal-accent;
+  text-shadow: 0 0 5px rgba($teal-accent, 0.4);
+}
+
+h4 {
+  color: $coral-orange;
+}
+
+h5, h6 {
+  color: $text-secondary;
+}
+
+// Links with glow hover
+a {
+  color: $bayes-blue;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: $vital-pink;
+    text-shadow: $glow-pink;
+  }
+}
+
+// Paragraphs
+p, li, td, th, dd {
+  color: $text-primary;
+  line-height: 1.7;
+}
+
+strong, b {
+  color: $hot-pink;
+}
+
+em, i {
+  color: $teal-accent;
+}
+
+// -----------------------------------------------------------------------------
+// Cards with Glass Morphism
+// -----------------------------------------------------------------------------
+.card {
+  background: linear-gradient(135deg, 
+    rgba($deep-ocean, 0.6) 0%, 
+    rgba($sunset-purple, 0.3) 100%
+  );
+  border: 1px solid rgba($sunset-purple, 0.5);
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: $vital-pink;
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba($vital-pink, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .card-header {
+    background: linear-gradient(90deg, 
+      rgba($sunset-purple, 0.5) 0%, 
+      rgba($deep-ocean, 0.5) 100%
+    );
+    border-bottom: 1px solid rgba($vital-pink, 0.3);
+    color: $bayes-blue;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  
+  .card-body {
+    color: $text-primary;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Code Blocks - Terminal Style
+// -----------------------------------------------------------------------------
+pre {
+  background: linear-gradient(180deg, 
+    rgba($midnight, 0.95) 0%, 
+    rgba($deep-ocean, 0.95) 100%
+  ) !important;
+  border: 1px solid $sunset-purple;
+  border-left: 4px solid $bayes-blue;
+  border-radius: 8px;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    inset 0 0 30px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba($bayes-blue, 0.1);
+  position: relative;
+  overflow: hidden;
+  
+  // Terminal dots decoration
+  &::before {
+    content: "● ● ●";
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    font-size: 8px;
+    letter-spacing: 4px;
+    color: rgba($vital-pink, 0.6);
+    text-shadow: 
+      8px 0 0 rgba($coral-orange, 0.6),
+      16px 0 0 rgba($teal-accent, 0.6);
+  }
+  
+  code {
+    color: $text-primary !important;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    padding-top: 1.5rem;
+    display: block;
+  }
+}
+
+// Inline code
+code {
+  background: rgba($sunset-purple, 0.3);
+  color: $coral-orange !important;
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9em;
+  border: 1px solid rgba($sunset-purple, 0.5);
+}
+
+// Syntax highlighting
+.sourceCode {
+  background: transparent !important;
+  
+  .co { color: #6A6A8A; font-style: italic; }  // Comments
+  .st { color: $teal-accent; }                   // Strings
+  .dv, .fl, .bn { color: $coral-orange; }        // Numbers
+  .kw { color: $vital-pink; font-weight: 600; }  // Keywords
+  .fu { color: $bayes-blue; }                    // Functions
+  .op { color: $text-secondary; }                // Operators
+  .cf { color: $hot-pink; }                      // Control flow
+  .dt { color: $teal-accent; }                   // Data types
+  .sc { color: $coral-orange; }                  // Special char
+  .va { color: $electric-blue; }                 // Variables
+  .at { color: $hot-pink; }                      // Attributes
+  .cn { color: $coral-orange; }                  // Constants
+}
+
+// R output styling
+pre .r-out, pre .r-msg, pre .r-wrn, pre .r-err {
+  border-left-color: $sunset-purple;
+  color: $text-secondary;
+  background: rgba($sunset-purple, 0.1);
+}
+
+pre .r-err {
+  border-left-color: $vital-pink;
+  background: rgba($vital-pink, 0.1);
+}
+
+// -----------------------------------------------------------------------------
+// Tables - Cyberpunk Data Grid
+// -----------------------------------------------------------------------------
+table {
+  background: rgba($deep-ocean, 0.5);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba($sunset-purple, 0.5);
+  
+  th {
+    background: linear-gradient(180deg, 
+      rgba($sunset-purple, 0.8) 0%, 
+      rgba($deep-purple, 0.8) 100%
+    );
+    color: $bayes-blue;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    padding: 1rem;
+    border-bottom: 2px solid $vital-pink;
+    text-shadow: 0 0 5px rgba($bayes-blue, 0.5);
+  }
+  
+  td {
+    background: rgba($midnight, 0.5);
+    border-bottom: 1px solid rgba($sunset-purple, 0.2);
+    padding: 0.75rem 1rem;
+    color: $text-primary;
+    transition: all 0.2s ease;
+  }
+  
+  tr:hover td {
+    background: rgba($vital-pink, 0.1);
+    box-shadow: inset 0 0 20px rgba($vital-pink, 0.05);
+  }
+  
+  tr:nth-child(even) td {
+    background: rgba($sunset-purple, 0.1);
+  }
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: rgba($sunset-purple, 0.1);
+  --bs-table-hover-bg: rgba($vital-pink, 0.1);
+  color: $text-primary;
+}
+
+// -----------------------------------------------------------------------------
+// Sidebar Navigation
+// -----------------------------------------------------------------------------
+.sidebar, .toc {
+  background: linear-gradient(180deg, 
+    rgba($midnight, 0.8) 0%, 
+    rgba($deep-ocean, 0.6) 100%
+  );
+  border: 1px solid rgba($sunset-purple, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  backdrop-filter: blur(5px);
+  
+  .nav-link, a {
+    color: $text-secondary;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border-left: 2px solid transparent;
+    
+    &:hover {
+      color: $bayes-blue;
+      background: rgba($bayes-blue, 0.1);
+      border-left-color: $bayes-blue;
+      padding-left: 1.25rem;
+    }
+    
+    &.active {
+      color: $vital-pink;
+      background: rgba($vital-pink, 0.1);
+      border-left-color: $vital-pink;
+      text-shadow: 0 0 5px rgba($vital-pink, 0.5);
+    }
+  }
+  
+  // Section headers
+  .toc-heading, h5, h6 {
+    color: $bayes-blue;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    margin-top: 1rem;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Reference Pages
+// -----------------------------------------------------------------------------
+.ref-index {
+  .icon {
+    color: $bayes-blue;
+    text-shadow: $glow-cyan;
+  }
+  
+  .name {
+    color: $vital-pink;
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba($vital-pink, 0.3);
+  }
+  
+  .title {
+    color: $text-secondary;
+  }
+}
+
+.template-reference-topic {
+  dt, .ref-arguments dt {
+    color: $vital-pink;
+    font-weight: 600;
+  }
+  
+  dd, .ref-arguments dd {
+    color: $text-primary;
+  }
+  
+  .ref-heading {
+    color: $bayes-blue;
+    border-bottom: 1px solid rgba($bayes-blue, 0.3);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Footer - Horizon Line
+// -----------------------------------------------------------------------------
+.footer, footer {
+  background: linear-gradient(180deg, 
+    transparent 0%,
+    rgba($midnight, 0.9) 30%,
+    $midnight 100%
+  );
+  border-top: 2px solid $vital-pink;
+  box-shadow: 0 -5px 30px rgba($vital-pink, 0.3);
+  color: $text-secondary;
+  padding: 2rem 0;
+  position: relative;
+  
+  &::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      $vital-pink 20%, 
+      $bayes-blue 50%, 
+      $vital-pink 80%, 
+      transparent 100%
+    );
+  }
+  
+  a {
+    color: $bayes-blue;
+    
+    &:hover {
+      color: $vital-pink;
+      text-shadow: $glow-pink;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Buttons - Neon Style
+// -----------------------------------------------------------------------------
+.btn-primary {
+  background: linear-gradient(135deg, $vital-pink 0%, $sunset-purple 100%);
+  border: none;
+  box-shadow: 
+    0 4px 15px rgba($vital-pink, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: linear-gradient(135deg, lighten($vital-pink, 10%) 0%, lighten($sunset-purple, 10%) 100%);
+    box-shadow: 
+      0 6px 25px rgba($vital-pink, 0.6),
+      0 0 30px rgba($vital-pink, 0.3);
+    transform: translateY(-2px);
+  }
+}
+
+.btn-secondary, .btn-outline-primary {
+  background: transparent;
+  border: 2px solid $bayes-blue;
+  color: $bayes-blue;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  
+  &:hover {
+    background: rgba($bayes-blue, 0.2);
+    border-color: $electric-blue;
+    color: $electric-blue;
+    box-shadow: $glow-cyan;
+  }
+}
+
+// Copy button
+.btn-copy-ex, .btn-copy {
+  background: rgba($sunset-purple, 0.5);
+  border: 1px solid rgba($bayes-blue, 0.3);
+  color: $bayes-blue;
+  
+  &:hover {
+    background: rgba($vital-pink, 0.3);
+    border-color: $vital-pink;
+    color: $vital-pink;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Search - Holographic Input
+// -----------------------------------------------------------------------------
+.form-control {
+  background: rgba($midnight, 0.8);
+  border: 1px solid rgba($sunset-purple, 0.5);
+  color: $text-primary;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    background: rgba($deep-ocean, 0.9);
+    border-color: $bayes-blue;
+    box-shadow: 
+      0 0 0 2px rgba($bayes-blue, 0.2),
+      0 0 20px rgba($bayes-blue, 0.3);
+    color: $text-primary;
+  }
+  
+  &::placeholder {
+    color: $text-muted;
+  }
+}
+
+// Search dropdown
+.search-results, .algolia-autocomplete .aa-dropdown-menu {
+  background: rgba($midnight, 0.95);
+  border: 1px solid $sunset-purple;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  
+  .search-result, .aa-suggestion {
+    border-bottom: 1px solid rgba($sunset-purple, 0.2);
+    
+    &:hover, &.aa-cursor {
+      background: rgba($vital-pink, 0.15);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Badges and Labels
+// -----------------------------------------------------------------------------
+.badge {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  padding: 0.4em 0.8em;
+  
+  &.bg-primary {
+    background: linear-gradient(135deg, $vital-pink, $sunset-purple) !important;
+    box-shadow: 0 2px 10px rgba($vital-pink, 0.4);
+  }
+  
+  &.bg-secondary {
+    background: linear-gradient(135deg, $sunset-purple, $deep-ocean) !important;
+  }
+  
+  &.bg-success {
+    background: linear-gradient(135deg, $teal-accent, darken($teal-accent, 20%)) !important;
+  }
+  
+  &.bg-info {
+    background: linear-gradient(135deg, $bayes-blue, darken($bayes-blue, 20%)) !important;
+  }
+  
+  &.bg-warning {
+    background: linear-gradient(135deg, $coral-orange, darken($coral-orange, 15%)) !important;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Alerts - Neon Bordered
+// -----------------------------------------------------------------------------
+.alert {
+  border-radius: 8px;
+  border-left-width: 4px;
+  background: rgba($midnight, 0.8);
+  backdrop-filter: blur(5px);
+  
+  &.alert-info {
+    border-color: $bayes-blue;
+    box-shadow: 0 0 15px rgba($bayes-blue, 0.2);
+    
+    &::before {
+      content: "ℹ ";
+      color: $bayes-blue;
+    }
+  }
+  
+  &.alert-warning {
+    border-color: $coral-orange;
+    box-shadow: 0 0 15px rgba($coral-orange, 0.2);
+  }
+  
+  &.alert-danger {
+    border-color: $vital-pink;
+    box-shadow: 0 0 15px rgba($vital-pink, 0.2);
+  }
+  
+  &.alert-success {
+    border-color: $teal-accent;
+    box-shadow: 0 0 15px rgba($teal-accent, 0.2);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Images and Logo
+// -----------------------------------------------------------------------------
+.logo, img[src*="logo"] {
+  filter: drop-shadow(0 0 15px rgba($bayes-blue, 0.6));
+  transition: all 0.3s ease;
+  
+  &:hover {
+    filter: drop-shadow(0 0 25px rgba($vital-pink, 0.8));
+  }
+}
+
+// README badges
+img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
+  filter: brightness(1.1) drop-shadow(0 0 3px rgba($bayes-blue, 0.3));
+}
+
+// -----------------------------------------------------------------------------
+// Custom Scrollbar
+// -----------------------------------------------------------------------------
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: $midnight;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, $sunset-purple, $vital-pink);
+  border-radius: 5px;
+  
+  &:hover {
+    background: linear-gradient(180deg, $vital-pink, $sunset-purple);
+    box-shadow: 0 0 10px rgba($vital-pink, 0.5);
+  }
+}
+
+// Firefox
+* {
+  scrollbar-width: thin;
+  scrollbar-color: $sunset-purple $midnight;
+}
+
+// -----------------------------------------------------------------------------
+// Selection Highlight
+// -----------------------------------------------------------------------------
+::selection {
+  background: rgba($vital-pink, 0.6);
+  color: white;
+  text-shadow: none;
+}
+
+::-moz-selection {
+  background: rgba($vital-pink, 0.6);
+  color: white;
+}
+
+// -----------------------------------------------------------------------------
+// Light/Dark Toggle - Force Dark
+// -----------------------------------------------------------------------------
+.lightswitch {
+  color: $bayes-blue;
+  
+  &:hover {
+    color: $vital-pink;
+  }
+}
+
+// Override any light mode
+[data-bs-theme="light"] {
+  --bs-body-bg: #{$bg-top} !important;
+  --bs-body-color: #{$text-primary} !important;
+}
+
+// -----------------------------------------------------------------------------
+// Homepage Specific Enhancements
+// -----------------------------------------------------------------------------
+.template-home {
+  // Title glow animation
+  .page-header h1 {
+    font-size: 3rem;
+    animation: neon-pulse 2s ease-in-out infinite;
+  }
+  
+  // Feature sections
+  section {
+    padding: 2rem 0;
+    border-bottom: 1px solid rgba($sunset-purple, 0.2);
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Article Specific
+// -----------------------------------------------------------------------------
+.template-article {
+  .article-heading {
+    color: $bayes-blue;
+    text-shadow: $glow-cyan;
+  }
+  
+  // Block quotes
+  blockquote {
+    border-left: 4px solid $vital-pink;
+    background: rgba($sunset-purple, 0.2);
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 0 8px 8px 0;
+    
+    p {
+      color: $text-secondary;
+      font-style: italic;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Special "Why vitalBayes" Section Enhancement
+// -----------------------------------------------------------------------------
+#why-vitalbayes, #key-innovations {
+  position: relative;
+  padding: 2rem;
+  margin: 2rem 0;
+  background: linear-gradient(135deg, 
+    rgba($deep-ocean, 0.4) 0%, 
+    rgba($sunset-purple, 0.2) 100%
+  );
+  border-radius: 12px;
+  border: 1px solid rgba($vital-pink, 0.2);
+  animation: border-glow 4s ease-in-out infinite;
+  
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    padding: 1px;
+    background: linear-gradient(135deg, $vital-pink, $bayes-blue, $sunset-purple);
+    -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.3;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Mathematical Formulas (if using MathJax)
+// -----------------------------------------------------------------------------
+.MathJax {
+  color: $teal-accent !important;
+}
+
+mjx-container {
+  color: $teal-accent !important;
+}
+
+// -----------------------------------------------------------------------------
+// Responsive Adjustments
+// -----------------------------------------------------------------------------
+@media (max-width: 991px) {
+  .navbar {
+    .navbar-collapse {
+      background: rgba($midnight, 0.98);
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      padding: 1rem;
+      border: 1px solid $sunset-purple;
+    }
+    
+    .nav-link {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba($sunset-purple, 0.2);
+      
+      &::after {
+        display: none;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .template-home main::before,
+  .template-home main::after {
+    opacity: 0.5;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Print Styles (override for readability)
+// -----------------------------------------------------------------------------
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  * {
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+  
+  pre {
+    background: #f5f5f5 !important;
+    border-color: #ccc !important;
+  }
+  
+  a {
+    color: #0066cc !important;
+  }
+}

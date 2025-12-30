@@ -1,28 +1,49 @@
 url: https://brian-j-moe.github.io/vitalBayes/
+
 template:
   bootstrap: 5
-  bootswatch: vapor
   math-rendering: mathjax
+  light-switch: false
+  bslib:
+    # Force dark theme
+    preset: "shiny"
+    bg: "#0D0221"
+    fg: "#F0E6FF"
+    primary: "#FF1D8E"
+    secondary: "#5B3A8F"
+    success: "#4ECDC4"
+    info: "#00D9FF"
+    warning: "#FF6B35"
+    danger: "#FF1D8E"
+    # Typography
+    base_font: {google: "Inter"}
+    heading_font: {google: "Orbitron"}
+    code_font: {google: "JetBrains Mono"}
+  includes:
+    in_header: |
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
 navbar:
   structure:
-    left: [home, articles, reference, news] # Order of items on the left
-    right: [search, github] # Order of items on the right
+    left: [home, articles, reference]
+    right: [search, github]
   components:
     home: ~
     articles:
-      text: Articles Menu # Custom text for the main "Articles" tab
+      text: Articles
       menu:
         - text: "Understanding vitalBayes"
-        - text: "The Statistics Behind Modeling Elasmobranch Life History"
+        - text: "The Statistics Behind Elasmobranch Life History Modeling"
           href: articles/Understanding_vitalBayes.html
-        - text: ------- # A menu separator
-        - text: ""
+        - text: "-------"
         - text: "vitalBayes Functions"
-        - text: "Estimating Birth Size"
+        - text: "Estimating Birth Size with fit_bayesian_birth()"
           href: articles/fit_bayesian_birth.html
-        - text: "Estimating Maturity Ogives"
+        - text: "Maturity Ogive Estimation with fit_bayesian_maturity()"
           href: articles/fit_bayesian_maturity.html
-        - text: "Modeling Individual Growth"
+        - text: "Growth Modeling with fit_bayesian_growth()"
           href: articles/fit_bayesian_growth.html
         - text: "Partial Pooling for Imbalanced Sex Ratios"
           href: articles/partial_pooling.html
@@ -31,3 +52,21 @@ navbar:
         - text: "Visualizing vitalBayes Results"
           href: articles/visualization.html
 
+home:
+  title: "vitalBayes"
+  description: "Bayesian Life History Parameter Estimation for Elasmobranchs"
+
+footer:
+  structure:
+    left: developed_by
+    right: built_with
+  components:
+    developed_by:
+      text: "Developed by Brian J Moe"
+    built_with:
+      text: "Built with pkgdown"
+      href: https://pkgdown.r-lib.org/
+
+authors:
+  Brian J Moe:
+    href: https://github.com/Brian-J-Moe
