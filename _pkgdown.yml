@@ -2,30 +2,30 @@ url: https://brian-j-moe.github.io/vitalBayes/
 template:
   bootstrap: 5
   math-rendering: mathjax
-  navbar:
-    structure:
-      left: [home, articles, reference, news] # Order of items on the left
-      right: [search, github] # Order of items on the right
-    components:
-    home: ~
-    articles:
-      text: Articles menu # Custom text for the main "Articles" tab
-      menu:
-        - text: "Understanding vitalBayes"
-        - text: "The Statistics Behind Elasmobranch Life History Modeling"
-          href: articles/Understanding_vitalBayes.html
-        - text: ------- # A menu separator
-        - text: "vitalBayes Functions"
-        - text: "Estimating Birth Size with fit_bayesian_birth()"
-          href: articles/fit_bayesian_birth.html
-        - text: "Maturity Ogive Estimation with fit_bayesian_maturity()"
-          href: articles/fit_bayesian_maturity.html
-        - text: "Growth Modeling with fit_bayesian_growth()"
-          href: articles/fit_bayesian_growth.html
-        - text: "Partial Pooling for Imbalanced Sex Ratios"
-          href: articles/partial_pooling.html
-        - text: "Model Diagnostics and Comparison"
-          href: articles/model_diagnostics.html
-        - text: "Visualizing vitalBayes Results"
-          href: articles/visualization.html
+navbar:
+  structure:
+    left: [home, articles, reference, news] # Order of items on the left
+    right: [search, github] # Order of items on the right
+  components:
+  home: ~
+  articles:
+    text: Articles menu # Custom text for the main "Articles" tab
+    menu:
+      - text: "Understanding vitalBayes"
+      - text: "The Statistics Behind Elasmobranch Life History Modeling"
+        href: articles/Understanding_vitalBayes.html
+      - text: ------- # A menu separator
+      - text: "vitalBayes Functions"
+      - text: "Estimating Birth Size with fit_bayesian_birth()"
+        href: articles/fit_bayesian_birth.html
+      - text: "Maturity Ogive Estimation with fit_bayesian_maturity()"
+        href: articles/fit_bayesian_maturity.html
+      - text: "Growth Modeling with fit_bayesian_growth()"
+        href: articles/fit_bayesian_growth.html
+      - text: "Partial Pooling for Imbalanced Sex Ratios"
+        href: articles/partial_pooling.html
+      - text: "Model Diagnostics and Comparison"
+        href: articles/model_diagnostics.html
+      - text: "Visualizing vitalBayes Results"
+        href: articles/visualization.html
 
