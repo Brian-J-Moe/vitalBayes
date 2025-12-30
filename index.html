@@ -101,7 +101,7 @@
 <li>
 <strong>Imbalanced sex ratios</strong> lead to unreliable parameter estimates for the undersampled sex</li>
 <li>
-<strong>Strong parameter correlations</strong> (especially <em>L</em><sub>∞</sub> and <em>k</em>) complicate growth model inference</li>
+<strong>Strong parameter correlations</strong> (especially <span class="math inline">\(L_\infty\)</span> and <span class="math inline">\(k\)</span>) complicate growth model inference</li>
 <li>
 <strong>Data limitations</strong> may result in unrealistic parameters estimates using traditional modeling approaches</li>
 </ul>
@@ -124,7 +124,7 @@
 <tr class="even">
 <td>Parameter correlation</td>
 <td>
-<strong>Maturity-based parameterization</strong> derives <em>k</em> from observable maturity milestones</td>
+<strong>Maturity-based parameterization</strong> derives <span class="math inline">\(k\)</span> from observable maturity milestones</td>
 </tr>
 <tr class="odd">
 <td>Threshold estimation</td>
@@ -143,11 +143,12 @@
 </tr>
 </tbody>
 </table>
+<!--do not render-->
 </div>
 <div class="section level2">
 <h2 id="interactive-demo">Interactive Demo<a class="anchor" aria-label="anchor" href="#interactive-demo"></a>
 </h2>
-<p>Explore how the three growth models (von Bertalanffy, Gompertz, Logistic) respond to changes in life history parameters. All curves pass through the same maturity point (<em>t</em><sub>mat</sub>, <em>L</em><sub>mat</sub>) — the growth coefficient <em>k</em> is derived from these observable milestones rather than estimated directly.</p>
+<p>Explore how the three growth models (von Bertalanffy, Gompertz, Logistic) respond to changes in life history parameters. All curves pass through the same maturity point (<span class="math inline">\(t_{mat}\)</span>, <span class="math inline">\(L_{mat}\)</span>) — the growth coefficient <span class="math inline">\(k\)</span> is derived from these observable milestones rather than estimated directly.</p>
 <div align="center">
 <iframe src="growth_explorer.html" width="100%" height="650" style="border: 2px solid #3D4466; border-radius: 12px; max-width: 1000px;" loading="lazy">
 </iframe>
@@ -155,6 +156,7 @@
 <p align="center">
 <em>First load may take 10-20 seconds while WebR initializes</em>
 </p>
+<!--end do not render-->
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -375,16 +377,16 @@
 <div class="section level3">
 <h3 id="id_1-maturity-based-growth-parameterization">1. Maturity-Based Growth Parameterization<a class="anchor" aria-label="anchor" href="#id_1-maturity-based-growth-parameterization"></a>
 </h3>
-<p>Traditional growth models estimate <em>k</em> directly, but <em>k</em> and <em>L</em><sub>∞</sub> are strongly negatively correlated (often <em>r</em> &lt; −0.9), making both poorly identified when data don’t extend to near-asymptotic sizes.</p>
-<p><strong>Our solution:</strong> Derive <em>k</em> from observable maturity milestones:</p>
+<p>Traditional growth models estimate <span class="math inline">\(k\)</span> directly, but <span class="math inline">\(k\)</span> and <span class="math inline">\(L_\infty\)</span> are strongly negatively correlated (often <em>r</em> &lt; −0.9), making both poorly identified when data don’t extend to near-asymptotic sizes.</p>
+<p><strong>Our solution:</strong> Derive <span class="math inline">\(k\)</span> from observable maturity milestones:</p>
 <p><span class="math display">\[k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
-<p>This parameterization: - Uses quantities that fall within the data range (<em>L</em><sub>mat</sub>, <em>t</em><sub>mat</sub>) - Ensures biological consistency: the growth curve passes through the maturity point - Propagates uncertainty from upstream maturity models</p>
+<p>This parameterization: - Uses quantities that fall within the data range (<span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span>) - Ensures biological consistency: the growth curve passes through the maturity point - Propagates uncertainty from upstream maturity models</p>
 </div>
 <div class="section level3">
 <h3 id="id_2-probit-link-for-threshold-models">2. Probit Link for Threshold Models<a class="anchor" aria-label="anchor" href="#id_2-probit-link-for-threshold-models"></a>
 </h3>
 <p>Both birth and maturity models use a probit link function rather than the more common logit. The probit link assumes that underlying developmental readiness is normally distributed across individuals. An individual transitions (births or matures) when this latent readiness crosses a threshold.</p>
-<p><strong>Why probit?</strong> - <strong>Biological interpretation:</strong> Normal variation in developmental readiness is biologically plausible - <strong>Consistent reporting:</strong> The transition width (<em>x</em><sub>95</sub> − <em>x</em><sub>05</sub>) has units of the predictor (cm or years) - Derived quantities (<em>L</em><sub>05</sub>, <em>L</em><sub>95</sub>) have direct biological interpretation</p>
+<p><strong>Why probit?</strong> - <strong>Biological interpretation:</strong> Normal variation in developmental readiness is biologically plausible - <strong>Consistent reporting:</strong> The transition width (<span class="math inline">\(x_{95}\)</span> − <span class="math inline">\(x_{05}\)</span>) has units of the predictor (cm or years) - Derived quantities (<span class="math inline">\(L_{05}\)</span>, <span class="math inline">\(L_{95}\)</span>) have direct biological interpretation</p>
 </div>
 <div class="section level3">
 <h3 id="id_3-partial-pooling-for-imbalanced-sex-ratios">3. Partial Pooling for Imbalanced Sex Ratios<a class="anchor" aria-label="anchor" href="#id_3-partial-pooling-for-imbalanced-sex-ratios"></a>
@@ -423,12 +425,12 @@
 <p>See <code><a href="articles/partial_pooling.html">vignette("partial_pooling")</a></code> for a comprehensive treatment.</p>
 </div>
 <div class="section level3">
-<h3 id="id_4-constrained-asymptotic-length-l--lmax">4. Constrained Asymptotic Length (<em>L</em><sub>∞</sub> &gt; <em>L</em><sub>max</sub>)<a class="anchor" aria-label="anchor" href="#id_4-constrained-asymptotic-length-l--lmax"></a>
+<h3 id="id_4-constrained-asymptotic-length-l_infty--l_max">4. Constrained Asymptotic Length (<span class="math inline">\(L_\infty\)</span> &gt; <span class="math inline">\(L_{max}\)</span>)<a class="anchor" aria-label="anchor" href="#id_4-constrained-asymptotic-length-l_infty--l_max"></a>
 </h3>
-<p><strong>The problem:</strong> Unconstrained growth models frequently converge on <em>L</em><sub>∞</sub> values <em>below</em> the largest observed individuals. This is biologically impossible—asymptotic length must exceed any realized length—yet it occurs regularly when: - Data don’t extend to ages near asymptotic size - Older individuals are undersampled (fishing selectivity, natural mortality) - Strong <em>L</em><sub>∞</sub>–<em>k</em> correlation allows trade-offs</p>
-<p><strong>Our solution:</strong> vitalBayes enforces <em>L</em><sub>∞</sub> &gt; <em>L</em><sub>max</sub> through a shifted lognormal prior:</p>
+<p><strong>The problem:</strong> Unconstrained growth models frequently converge on <span class="math inline">\(L_\infty\)</span> values <em>below</em> the largest observed individuals. This is biologically impossible—asymptotic length must exceed any realized length—yet it occurs regularly when: - Data don’t extend to ages near asymptotic size - Older individuals are undersampled (fishing selectivity, natural mortality) - Strong <span class="math inline">\(L_\infty\)</span>–<span class="math inline">\(k\)</span> correlation allows trade-offs</p>
+<p><strong>Our solution:</strong> vitalBayes enforces <span class="math inline">\(L_\infty\)</span> &gt; <span class="math inline">\(L_{max}\)</span> through a shifted lognormal prior:</p>
 <p><span class="math display">\[L_\infty = L_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu_\nu, \sigma_\nu)\]</span></p>
-<p>This ensures <em>L</em><sub>∞</sub> always exceeds the maximum observed length while still allowing uncertainty about <em>how much</em> it exceeds it.</p>
+<p>This ensures <span class="math inline">\(L_\infty\)</span> always exceeds the maximum observed length while still allowing uncertainty about <em>how much</em> it exceeds it.</p>
 <p><strong>Biological rationale:</strong> The largest individual we’ve observed represents a lower bound on the species’ potential size. Natural mortality, fishing pressure, and sampling limitations virtually guarantee we haven’t captured the true maximum. Our prior should encode this biological reality rather than allowing impossible values.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Lmax is auto-detected from data</span></span>
@@ -453,8 +455,8 @@
 <p><strong>The problem:</strong> Bayesian models require prior distributions, but specifying priors on log-transformed parameters is unintuitive. What does σ = 0.5 on log(<em>L</em><sub>50</sub>) mean in practical terms? Researchers often resort to “weakly informative” priors without considering whether they encode reasonable biological information.</p>
 <p><strong>Our solution:</strong> vitalBayes uses <strong>coefficient of variation (CV)</strong> for prior specification. The CV expresses uncertainty as a proportion of the mean—a scale-invariant, intuitive quantity.</p>
 <p>For a parameter θ with prior mean μ and CV = c: - The prior SD on the original scale is σ<sub>θ</sub> = μ · c - Approximately 95% of prior mass falls within μ ± 2μc</p>
-<p><strong>Example:</strong> Setting <code>CV_Linf = 0.2</code> for a species with expected <em>L</em><sub>∞</sub> ≈ 100 cm means: - Prior SD ≈ 20 cm - 95% prior interval ≈ 60–140 cm</p>
-<p>This is far more interpretable than specifying σ = 0.2 on log(<em>L</em><sub>∞</sub>).</p>
+<p><strong>Example:</strong> Setting <code>CV_Linf = 0.2</code> for a species with expected <span class="math inline">\(L_\infty\)</span> ≈ 100 cm means: - Prior SD ≈ 20 cm - 95% prior interval ≈ 60–140 cm</p>
+<p>This is far more interpretable than specifying σ = 0.2 on log(<span class="math inline">\(L_\infty\)</span>).</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>

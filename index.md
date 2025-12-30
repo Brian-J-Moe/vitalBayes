@@ -20,7 +20,7 @@ Elasmobranch life history estimation presents unique challenges:
 - **Sparse embryo samples** make birth size estimation uncertain
 - **Imbalanced sex ratios** lead to unreliable parameter estimates for
   the undersampled sex
-- **Strong parameter correlations** (especially *L*_(∞) and *k*)
+- **Strong parameter correlations** (especially \\L\_\infty\\ and \\k\\)
   complicate growth model inference
 - **Data limitations** may result in unrealistic parameters estimates
   using traditional modeling approaches
@@ -30,7 +30,7 @@ vitalBayes addresses these challenges through:
 | Challenge             | Solution                                                                               |
 |-----------------------|----------------------------------------------------------------------------------------|
 | Sparse data           | **Partial pooling** borrows strength across sexes without forcing identical parameters |
-| Parameter correlation | **Maturity-based parameterization** derives *k* from observable maturity milestones    |
+| Parameter correlation | **Maturity-based parameterization** derives \\k\\ from observable maturity milestones  |
 | Threshold estimation  | **Probit link** provides biologically intuitive interpretation for birth and maturity  |
 | Prior specification   | **CV-based priors** offer scale-invariant, intuitive parameter uncertainty             |
 | Reproducibility       | **Precompiled Stan models** ensure consistent, fast inference                          |
@@ -39,9 +39,9 @@ vitalBayes addresses these challenges through:
 
 Explore how the three growth models (von Bertalanffy, Gompertz,
 Logistic) respond to changes in life history parameters. All curves pass
-through the same maturity point (*t*_(mat), *L*_(mat)) — the growth
-coefficient *k* is derived from these observable milestones rather than
-estimated directly.
+through the same maturity point (\\t\_{mat}\\, \\L\_{mat}\\) — the
+growth coefficient \\k\\ is derived from these observable milestones
+rather than estimated directly.
 
 *First load may take 10-20 seconds while WebR initializes*
 
@@ -247,19 +247,20 @@ create_loo_table(
 
 ### 1. Maturity-Based Growth Parameterization
 
-Traditional growth models estimate *k* directly, but *k* and *L*_(∞) are
-strongly negatively correlated (often *r* \< −0.9), making both poorly
-identified when data don’t extend to near-asymptotic sizes.
+Traditional growth models estimate \\k\\ directly, but \\k\\ and
+\\L\_\infty\\ are strongly negatively correlated (often *r* \< −0.9),
+making both poorly identified when data don’t extend to near-asymptotic
+sizes.
 
-**Our solution:** Derive *k* from observable maturity milestones:
+**Our solution:** Derive \\k\\ from observable maturity milestones:
 
 \\k = \frac{1}{t\_{mat}} \ln\left(\frac{L\_\infty - L_0}{L\_\infty -
 L\_{mat}}\right)\\
 
 This parameterization: - Uses quantities that fall within the data range
-(*L*_(mat), *t*_(mat)) - Ensures biological consistency: the growth
-curve passes through the maturity point - Propagates uncertainty from
-upstream maturity models
+(\\L\_{mat}\\, \\t\_{mat}\\) - Ensures biological consistency: the
+growth curve passes through the maturity point - Propagates uncertainty
+from upstream maturity models
 
 ### 2. Probit Link for Threshold Models
 
@@ -271,9 +272,9 @@ crosses a threshold.
 
 **Why probit?** - **Biological interpretation:** Normal variation in
 developmental readiness is biologically plausible - **Consistent
-reporting:** The transition width (*x*₉₅ − *x*₀₅) has units of the
-predictor (cm or years) - Derived quantities (*L*₀₅, *L*₉₅) have direct
-biological interpretation
+reporting:** The transition width (\\x\_{95}\\ − \\x\_{05}\\) has units
+of the predictor (cm or years) - Derived quantities (\\L\_{05}\\,
+\\L\_{95}\\) have direct biological interpretation
 
 ### 3. Partial Pooling for Imbalanced Sex Ratios
 
@@ -336,24 +337,24 @@ See
 [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
 for a comprehensive treatment.
 
-### 4. Constrained Asymptotic Length (*L*_(∞) \> *L*_(max))
+### 4. Constrained Asymptotic Length (\\L\_\infty\\ \> \\L\_{max}\\)
 
 **The problem:** Unconstrained growth models frequently converge on
-*L*_(∞) values *below* the largest observed individuals. This is
+\\L\_\infty\\ values *below* the largest observed individuals. This is
 biologically impossible—asymptotic length must exceed any realized
 length—yet it occurs regularly when: - Data don’t extend to ages near
 asymptotic size - Older individuals are undersampled (fishing
-selectivity, natural mortality) - Strong *L*_(∞)–*k* correlation allows
-trade-offs
+selectivity, natural mortality) - Strong \\L\_\infty\\–\\k\\ correlation
+allows trade-offs
 
-**Our solution:** vitalBayes enforces *L*_(∞) \> *L*_(max) through a
-shifted lognormal prior:
+**Our solution:** vitalBayes enforces \\L\_\infty\\ \> \\L\_{max}\\
+through a shifted lognormal prior:
 
 \\L\_\infty = L\_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu\_\nu,
 \sigma\_\nu)\\
 
-This ensures *L*_(∞) always exceeds the maximum observed length while
-still allowing uncertainty about *how much* it exceeds it.
+This ensures \\L\_\infty\\ always exceeds the maximum observed length
+while still allowing uncertainty about *how much* it exceeds it.
 
 **Biological rationale:** The largest individual we’ve observed
 represents a lower bound on the species’ potential size. Natural
@@ -395,10 +396,12 @@ For a parameter θ with prior mean μ and CV = c: - The prior SD on the
 original scale is σ_(θ) = μ · c - Approximately 95% of prior mass falls
 within μ ± 2μc
 
-**Example:** Setting `CV_Linf = 0.2` for a species with expected *L*_(∞)
-≈ 100 cm means: - Prior SD ≈ 20 cm - 95% prior interval ≈ 60–140 cm
+**Example:** Setting `CV_Linf = 0.2` for a species with expected
+\\L\_\infty\\ ≈ 100 cm means: - Prior SD ≈ 20 cm - 95% prior interval ≈
+60–140 cm
 
-This is far more interpretable than specifying σ = 0.2 on log(*L*_(∞)).
+This is far more interpretable than specifying σ = 0.2 on
+log(\\L\_\infty\\).
 
 ``` r
 growth_fit <- fit_bayesian_growth(
