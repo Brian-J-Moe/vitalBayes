@@ -5,7 +5,7 @@ inst/doc
 .httr-oauth
 .DS_Store
 .quarto
-#docs/
+docs/
 /doc/
 /Meta/
 canadian-journal-of-fisheries-and-aquatic-sciences.csl
