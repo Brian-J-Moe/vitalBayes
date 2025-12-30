@@ -1,6 +1,7 @@
 url: https://brian-j-moe.github.io/vitalBayes/
 template:
   bootstrap: 5
+  bootswatch: vapor
   math-rendering: mathjax
 navbar:
   structure:
