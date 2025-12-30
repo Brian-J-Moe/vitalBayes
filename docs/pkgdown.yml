@@ -1,0 +1,15 @@
+pandoc: 3.6.3
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  fit_bayesian_birth: fit_bayesian_birth.html
+  fit_bayesian_growth: fit_bayesian_growth.html
+  fit_bayesian_maturity: fit_bayesian_maturity.html
+  model_diagnostics: model_diagnostics.html
+  partial_pooling: partial_pooling.html
+  articles/Understanding_vitalBayes: Understanding_vitalBayes.html
+  visualization: visualization.html
+last_built: 2025-12-30T19:50Z
+urls:
+  reference: https://brian-j-moe.github.io/vitalBayes/reference
+  article: https://brian-j-moe.github.io/vitalBayes/articles

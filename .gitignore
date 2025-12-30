@@ -5,7 +5,8 @@ inst/doc
 .httr-oauth
 .DS_Store
 .quarto
-docs
-!docs/growth_explorer.html
+#docs/
 /doc/
 /Meta/
+canadian-journal-of-fisheries-and-aquatic-sciences.csl
+references.bib
