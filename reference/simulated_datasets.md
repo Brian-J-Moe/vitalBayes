@@ -1,10 +1,20 @@
-# Simulated datasets
+# Simulated von Bertalanffy datasets
 
 Three example datasets generated with
 [`simulate_vb_growth_data()`](https://brian-j-moe.github.io/vitalBayes/reference/simulate_vb_growth_data.md)
 to illustrate common sample-size scenarios (imbalanced, larger balanced,
 and limited sample sizes) for fitting and testing von Bertalanffy growth
 and maturity relationships.
+
+## Usage
+
+``` r
+imbalanced_data
+
+growth_data
+
+limited_data
+```
 
 ## Format
 
@@ -35,6 +45,15 @@ with 5 columns:
 - embryo:
 
   Logical. `TRUE` for embryo observations; `FALSE` otherwise.
+
+An object of class `data.table` (inherits from `data.frame`) with 197
+rows and 5 columns.
+
+An object of class `data.table` (inherits from `data.frame`) with 391
+rows and 5 columns.
+
+An object of class `data.table` (inherits from `data.frame`) with 47
+rows and 5 columns.
 
 ## Details
 

@@ -22,7 +22,7 @@ Elasmobranch life history estimation presents unique challenges:
   the undersampled sex
 - **Strong parameter correlations** (especially \\L\_\infty\\ and \\k\\)
   complicate growth model inference
-- **Data limitations** may result in unrealistic parameters estimates
+- **Data limitations** may result in unrealistic parameter estimates
   using traditional modeling approaches
 
 vitalBayes addresses these challenges through:
