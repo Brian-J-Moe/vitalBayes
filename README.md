@@ -22,7 +22,7 @@ Elasmobranch life history estimation presents unique challenges:
 - **Sparse embryo samples** make birth size estimation uncertain
 - **Imbalanced sex ratios** lead to unreliable parameter estimates for the undersampled sex
 - **Strong parameter correlations** (especially *L*<sub>∞</sub> and *k*) complicate growth model inference
-- **Multiple aging methods** may yield different biological conclusions
+- **Data limitations** may result in unrealistic parameters estimates using traditional modeling approaches
 
 vitalBayes addresses these challenges through:
 
