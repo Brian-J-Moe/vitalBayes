@@ -1563,23 +1563,44 @@ mjx-container {
   svg {
     color: $teal-accent !important;
 
-    // SVG text and paths
-    g, path, rect, use {
+    // SVG text and paths - ALL elements
+    g, path, rect, use, text, tspan {
       fill: $teal-accent !important;
       stroke: $teal-accent !important;
     }
   }
 
-  // CHTML rendering fallback
+  // CHTML rendering fallback - include ALL math elements
   mjx-math {
     color: $teal-accent !important;
   }
 
+  // Main math elements
   mjx-mi, mjx-mo, mjx-mn, mjx-mtext, mjx-mspace, mjx-ms {
     color: $teal-accent !important;
   }
 
+  // Subscripts, superscripts, and their contents
+  mjx-msub, mjx-msup, mjx-msubsup, mjx-mmultiscripts {
+    color: $teal-accent !important;
+
+    mjx-mi, mjx-mo, mjx-mn, mjx-script, * {
+      color: $teal-accent !important;
+    }
+  }
+
+  // Script elements (subscript/superscript containers)
+  mjx-script, mjx-row, mjx-cell, mjx-mrow, mjx-texatom {
+    color: $teal-accent !important;
+  }
+
+  // Character containers
   mjx-c {
+    color: $teal-accent !important;
+  }
+
+  // Force all descendants
+  * {
     color: $teal-accent !important;
   }
 }
@@ -1594,10 +1615,24 @@ mjx-container[display="true"] {
   margin: 1.5rem 0 !important;
   overflow-x: auto;
 
+  // Force ALL elements to use bayes-blue for display math
+  &, * {
+    color: $bayes-blue !important;
+  }
+
   svg {
-    g, path, rect, use {
+    g, path, rect, use, text, tspan {
       fill: $bayes-blue !important;
       stroke: none !important;
+    }
+  }
+
+  // Subscripts and superscripts in display math
+  mjx-msub, mjx-msup, mjx-msubsup, mjx-script, mjx-row, mjx-cell {
+    color: $bayes-blue !important;
+
+    * {
+      color: $bayes-blue !important;
     }
   }
 }
@@ -1608,10 +1643,17 @@ mjx-container:not([display="true"]) {
   vertical-align: baseline !important;
   margin: 0 0.1em !important;
 
+  // Ensure ALL elements including subscripts/superscripts have same color
+  &, *, mjx-mi, mjx-mo, mjx-mn, mjx-msub, mjx-msup, mjx-msubsup,
+  mjx-script, mjx-row, mjx-cell, mjx-mrow, mjx-texatom {
+    color: $teal-accent !important;
+  }
+
   svg {
-    g, path, rect, use {
+    g, path, rect, use, text, tspan {
       fill: $teal-accent !important;
       stroke: none !important;
+      color: $teal-accent !important;
     }
   }
 }
@@ -1869,6 +1911,12 @@ mjx-container:not([display="true"]) {
   overflow-y: visible !important;
   margin: 0 0.15em !important;
   vertical-align: baseline !important;
+
+  // Ensure consistent color for all math elements including subscripts
+  &, *, mjx-mi, mjx-mo, mjx-mn, mjx-msub, mjx-msup, mjx-msubsup,
+  mjx-script, mjx-row, mjx-cell, mjx-mrow, mjx-c {
+    color: $teal-accent !important;
+  }
 }
 
 // Display/block math can be block-level
@@ -1876,6 +1924,13 @@ mjx-container[display="true"] {
   display: block !important;
   overflow-x: auto !important;
   margin: 1rem auto !important;
+
+  // Ensure consistent color for all math elements including subscripts
+  &, *, mjx-mi, mjx-mo, mjx-mn, mjx-msub, mjx-msup, mjx-msubsup,
+  mjx-script, mjx-row, mjx-cell, mjx-mrow, mjx-c {
+    color: $bayes-blue !important;
+  }
+}
 }
 
 // Specific mobile breakpoint adjustments
