@@ -4,7 +4,7 @@ template:
   math-rendering: mathjax
 navbar:
   structure:
-    left: [home, articles, reference, news] # Order of items on the left
+    left: [home, articles, reference] # Order of items on the left
     right: [search, github] # Order of items on the right
   components:
     home: ~
