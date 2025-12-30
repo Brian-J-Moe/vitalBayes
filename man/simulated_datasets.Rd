@@ -6,7 +6,7 @@
 \alias{imbalanced_data}
 \alias{growth_data}
 \alias{limited_data}
-\title{Simulated datasets}
+\title{Simulated von Bertalanffy datasets}
 \format{
 A \link[data.table:data.table]{data.table::data.table} with 5 columns:
 \describe{
@@ -16,6 +16,19 @@ A \link[data.table:data.table]{data.table::data.table} with 5 columns:
 \item{age}{Numeric. Age (years) for non-embryo observations; \code{NA} for embryo rows.}
 \item{embryo}{Logical. \code{TRUE} for embryo observations; \code{FALSE} otherwise.}
 }
+
+An object of class \code{data.table} (inherits from \code{data.frame}) with 197 rows and 5 columns.
+
+An object of class \code{data.table} (inherits from \code{data.frame}) with 391 rows and 5 columns.
+
+An object of class \code{data.table} (inherits from \code{data.frame}) with 47 rows and 5 columns.
+}
+\usage{
+imbalanced_data
+
+growth_data
+
+limited_data
 }
 \description{
 Three example datasets generated with \code{\link[=simulate_vb_growth_data]{simulate_vb_growth_data()}} to illustrate
