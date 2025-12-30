@@ -42,7 +42,7 @@
   [`imbalanced_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
   [`growth_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
   [`limited_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
-  : Simulated von Bertalanffy growth datasets
+  : Simulated datasets
 - [`theme_vital()`](https://brian-j-moe.github.io/vitalBayes/reference/theme_vital.md)
   : vitalBayes ggplot2 Theme
 - [`vital_colors()`](https://brian-j-moe.github.io/vitalBayes/reference/vital_colors.md)

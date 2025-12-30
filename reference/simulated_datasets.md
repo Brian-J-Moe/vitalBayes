@@ -1,4 +1,4 @@
-# Simulated von Bertalanffy growth datasets
+# Simulated datasets
 
 Three example datasets generated with
 [`simulate_vb_growth_data()`](https://brian-j-moe.github.io/vitalBayes/reference/simulate_vb_growth_data.md)
