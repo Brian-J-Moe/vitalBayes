@@ -243,6 +243,14 @@ main {
     letter-spacing: 2px;
     text-transform: uppercase;
     animation: neon-pulse 2s ease-in-out infinite;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    text-decoration: none !important;
+
+    // Ensure the brand is a clickable link
+    &, & * {
+      pointer-events: auto !important;
+    }
 
     &:hover {
       color: $electric-blue !important;
@@ -905,9 +913,117 @@ table {
 .logo, img[src*="logo"] {
   filter: drop-shadow(0 0 15px rgba($bayes-blue, 0.6));
   transition: all 0.3s ease;
+  cursor: pointer;
 
   &:hover {
     filter: drop-shadow(0 0 25px rgba($vital-pink, 0.8));
+  }
+}
+
+// Package logo in articles/reference pages - remove background, make clickable
+.page-header .logo,
+.template-article .logo,
+.template-reference .logo,
+.template-reference-topic .logo,
+article .logo,
+img.logo,
+img[src*="logo.png"],
+img[src*="logo.svg"],
+a img[src*="logo"],
+.pkgdown-header .logo,
+.col-md-9 img[src*="logo"],
+main img[src*="logo"],
+// Target any image that might be the hex sticker
+img[src*="hex"],
+img[alt*="logo"],
+img[alt*="hex"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  filter: drop-shadow(0 0 15px rgba($bayes-blue, 0.4)) !important;
+
+  &:hover {
+    filter: drop-shadow(0 0 25px rgba($vital-pink, 0.8)) !important;
+    transform: scale(1.02);
+  }
+}
+
+// Remove any container background around the logo - more aggressive targeting
+.page-header,
+.template-article .page-header,
+.pkgdown-header,
+.col-md-3,
+.sidebar,
+aside,
+// Target the float-right container pkgdown uses for logos
+.float-end,
+.float-right,
+[style*="float: right"],
+[style*="float:right"] {
+  // Ensure logo container has no background
+  img, img[src*="logo"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  // Any wrapper div around logo
+  .logo-container, .pkg-logo, div:has(> img[src*="logo"]) {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}
+
+// pkgdown specific: the logo appears in a float-end div on article pages
+.template-article .float-end,
+.template-reference .float-end,
+.template-reference-topic .float-end {
+  background: transparent !important;
+  background-color: transparent !important;
+
+  img {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// Override any Bootstrap card or img styling
+.card img, .card-img, .card-img-top {
+  &[src*="logo"] {
+    background: transparent !important;
+    border: none !important;
+  }
+}
+
+// Remove the light background that appears on some browsers
+img {
+  &[src*="logo"], &.logo {
+    // Force transparency
+    -webkit-appearance: none;
+    mix-blend-mode: normal;
+    isolation: isolate;
+  }
+}
+
+// Make logo a clickable link to homepage
+a:has(img[src*="logo"]),
+a.logo-link,
+.logo-wrapper a {
+  cursor: pointer !important;
+  display: inline-block;
+  text-decoration: none !important;
+
+  &:hover {
+    opacity: 1;
   }
 }
 
@@ -1453,6 +1569,7 @@ mjx-container {
 
 // MathJax display math (block equations)
 mjx-container[display="true"] {
+  display: block !important;
   background: rgba($deep-ocean, 0.4) !important;
   padding: 1rem 1.5rem !important;
   border-radius: 8px;
@@ -1470,6 +1587,10 @@ mjx-container[display="true"] {
 
 // MathJax inline math
 mjx-container:not([display="true"]) {
+  display: inline !important;
+  vertical-align: baseline !important;
+  margin: 0 0.1em !important;
+
   svg {
     g, path, rect, use {
       fill: $teal-accent !important;
@@ -1629,6 +1750,7 @@ pre, pre code, .sourceCode {
   overflow-x: auto !important;
   white-space: pre !important; // Keep code formatting
   word-wrap: normal !important; // Don't break code words
+  position: relative; // For copy button positioning
 
   @media (max-width: 768px) {
     font-size: 0.8em !important;
@@ -1645,6 +1767,48 @@ pre, pre code, .sourceCode {
     background-size: 20px 100%, 20px 100%, 10px 100%, 10px 100%;
     background-attachment: local, local, scroll, scroll;
   }
+}
+
+// Copy button styling
+.btn-copy, .copy-btn, button[data-clipboard-copy], .code-copy-button,
+.sourceCode .btn, pre .btn, .highlight .btn,
+[class*="copy-button"], [class*="copy-code"] {
+  position: absolute !important;
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  background: rgba($sunset-purple, 0.8) !important;
+  border: 1px solid $bayes-blue !important;
+  border-radius: 4px !important;
+  color: $bayes-blue !important;
+  cursor: pointer !important;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  z-index: 10 !important;
+
+  &:hover {
+    opacity: 1;
+    background: rgba($bayes-blue, 0.3) !important;
+    color: $text-primary !important;
+    box-shadow: 0 0 10px rgba($bayes-blue, 0.5);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  // Icon inside button
+  svg, i {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+}
+
+// Ensure pre blocks have relative positioning for copy button
+pre, .sourceCode, .cell, .highlight {
+  position: relative !important;
 }
 
 // Tables - responsive scrolling
@@ -1675,11 +1839,26 @@ mjx-container {
   max-width: 100% !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  display: block !important;
 
   @media (max-width: 768px) {
     font-size: 0.9em !important;
   }
+}
+
+// CRITICAL: Inline math must stay inline with text
+mjx-container:not([display="true"]) {
+  display: inline !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  margin: 0 0.15em !important;
+  vertical-align: baseline !important;
+}
+
+// Display/block math can be block-level
+mjx-container[display="true"] {
+  display: block !important;
+  overflow-x: auto !important;
+  margin: 1rem auto !important;
 }
 
 // Specific mobile breakpoint adjustments
