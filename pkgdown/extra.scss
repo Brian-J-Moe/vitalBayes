@@ -1563,6 +1563,170 @@ mjx-container, .MathJax, .MathJax_Display, .katex, .katex-display {
 }
 
 // -----------------------------------------------------------------------------
+// Mobile Overflow & Text Wrapping Fixes
+// -----------------------------------------------------------------------------
+// Ensure all content boxes don't overflow on mobile
+
+// Global overflow prevention
+main, .contents, article, .col-md-9, #main {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+// All callout/highlight boxes - mobile friendly
+.key-concept, .why-box, .math-note, .thinking-question,
+.note, .warning, .tip, .important, .caution, .info,
+.callout, .alert, .rmdnote, .rmdwarning, .rmdtip,
+blockquote, aside,
+div.key-concept, div.why-box, div.math-note, div.thinking-question,
+div.note, div.warning, div.tip, div.important, div.caution, div.info {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  hyphens: auto !important;
+  -webkit-hyphens: auto !important;
+  -ms-hyphens: auto !important;
+  box-sizing: border-box !important;
+
+  // Ensure child elements also respect boundaries
+  * {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+  }
+
+  // Tables inside boxes should scroll horizontally
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    max-width: 100%;
+
+    @media (max-width: 768px) {
+      font-size: 0.85em;
+    }
+  }
+
+  // Code inside boxes
+  code {
+    word-break: break-all !important;
+  }
+
+  // Pre blocks inside boxes should scroll
+  pre {
+    overflow-x: auto !important;
+    max-width: 100% !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+  }
+}
+
+// Code blocks - horizontal scroll on mobile
+pre, pre code, .sourceCode {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  white-space: pre !important; // Keep code formatting
+  word-wrap: normal !important; // Don't break code words
+
+  @media (max-width: 768px) {
+    font-size: 0.8em !important;
+    padding: 0.75rem !important;
+
+    // Add scroll hint shadow
+    background:
+      linear-gradient(to right, rgba($midnight, 0.95), rgba($midnight, 0.95)),
+      linear-gradient(to right, rgba($midnight, 0.95), rgba($midnight, 0.95)),
+      linear-gradient(to right, rgba($bayes-blue, 0.3), transparent),
+      linear-gradient(to left, rgba($bayes-blue, 0.3), transparent);
+    background-position: left center, right center, left center, right center;
+    background-repeat: no-repeat;
+    background-size: 20px 100%, 20px 100%, 10px 100%, 10px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+}
+
+// Tables - responsive scrolling
+table {
+  display: block !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+
+  @media (max-width: 768px) {
+    font-size: 0.85em;
+
+    th, td {
+      padding: 0.5rem 0.75rem !important;
+      white-space: nowrap;
+    }
+  }
+}
+
+// Images - responsive
+img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+// MathJax equations - allow horizontal scroll on mobile
+mjx-container {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  display: block !important;
+
+  @media (max-width: 768px) {
+    font-size: 0.9em !important;
+  }
+}
+
+// Specific mobile breakpoint adjustments
+@media (max-width: 576px) {
+  // Reduce padding on small screens
+  .key-concept, .why-box, .math-note, .thinking-question,
+  .note, .warning, .tip, .important, .caution,
+  blockquote, .callout, .alert {
+    padding: 0.75rem 1rem !important;
+    margin: 1rem 0 !important;
+    border-radius: 0 6px 6px 0 !important;
+  }
+
+  // Smaller fonts on mobile
+  body {
+    font-size: 15px !important;
+  }
+
+  h1 {
+    font-size: 1.6rem !important;
+  }
+
+  h2 {
+    font-size: 1.3rem !important;
+  }
+
+  h3 {
+    font-size: 1.15rem !important;
+  }
+
+  // Code blocks even smaller
+  pre, code {
+    font-size: 0.75em !important;
+  }
+
+  // Reduce glow effects on mobile (performance)
+  h1, h2, h3, a {
+    text-shadow: none !important;
+  }
+
+  .navbar-brand {
+    animation: none !important;
+    text-shadow: 0 0 5px rgba($bayes-blue, 0.5) !important;
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Catch-All Text Visibility Fixes
 // -----------------------------------------------------------------------------
 // Ensure no text defaults to dark/black on our dark background
@@ -1752,6 +1916,7 @@ span[style*="background"] {
 div.note, div.warning, div.tip, div.important, div.caution, div.info {
   background: rgba($bg-mid, 0.7) !important;
   border: 1px solid rgba($sunset-purple, 0.4) !important;
+  border-left: 4px solid $bayes-blue !important;
   border-radius: 0 8px 8px 0 !important;
   padding: 1rem 1.5rem !important;
   margin: 1.5rem 0 !important;
@@ -1780,6 +1945,216 @@ div.note, div.warning, div.tip, div.important, div.caution, div.info {
 
   a {
     color: $bayes-blue !important;
+  }
+
+  li {
+    color: $text-primary !important;
+
+    &::marker {
+      color: $vital-pink !important;
+    }
+  }
+}
+
+// =============================================================================
+// VITALBAYES CUSTOM CALLOUT CLASSES (from Understanding_vitalBayes.Rmd)
+// =============================================================================
+// These override the embedded <style> in the Rmd file
+
+// Key Concept boxes (blue accent)
+.key-concept, div.key-concept {
+  background: rgba($bg-mid, 0.7) !important;
+  background-color: rgba($bg-mid, 0.7) !important;
+  border: 1px solid rgba($sunset-purple, 0.4) !important;
+  border-left: 4px solid $bayes-blue !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 1rem 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  color: $text-primary !important;
+
+  &, * {
+    color: $text-primary !important;
+  }
+
+  strong, b {
+    color: $hot-pink !important;
+  }
+
+  em, i {
+    color: $teal-accent !important;
+  }
+
+  code {
+    color: $coral-orange !important;
+    background: rgba($midnight, 0.5) !important;
+  }
+
+  a {
+    color: $bayes-blue !important;
+  }
+
+  // Table styling inside key-concept
+  table {
+    background: transparent !important;
+
+    th {
+      background: rgba($sunset-purple, 0.5) !important;
+      color: $bayes-blue !important;
+    }
+
+    td {
+      background: transparent !important;
+      color: $text-primary !important;
+    }
+  }
+}
+
+// Why boxes (orange/warning accent)
+.why-box, div.why-box {
+  background: rgba($bg-mid, 0.7) !important;
+  background-color: rgba($bg-mid, 0.7) !important;
+  border: 1px solid rgba($sunset-purple, 0.4) !important;
+  border-left: 4px solid $coral-orange !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 1rem 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  color: $text-primary !important;
+
+  &, * {
+    color: $text-primary !important;
+  }
+
+  strong, b {
+    color: $coral-orange !important;
+  }
+
+  em, i {
+    color: $teal-accent !important;
+  }
+
+  code {
+    color: $coral-orange !important;
+    background: rgba($midnight, 0.5) !important;
+  }
+
+  a {
+    color: $bayes-blue !important;
+  }
+}
+
+// Math note boxes (neutral accent)
+.math-note, div.math-note {
+  background: rgba($bg-mid, 0.7) !important;
+  background-color: rgba($bg-mid, 0.7) !important;
+  border: 1px solid rgba($sunset-purple, 0.5) !important;
+  border-radius: 8px !important;
+  padding: 1rem 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  color: $text-primary !important;
+  font-size: 0.95em;
+
+  &, * {
+    color: $text-primary !important;
+  }
+
+  strong, b {
+    color: $hot-pink !important;
+  }
+
+  em, i {
+    color: $teal-accent !important;
+  }
+
+  code {
+    color: $coral-orange !important;
+    background: rgba($midnight, 0.5) !important;
+  }
+
+  a {
+    color: $bayes-blue !important;
+  }
+}
+
+// Thinking question boxes (green/teal accent)
+.thinking-question, div.thinking-question {
+  background: rgba($bg-mid, 0.7) !important;
+  background-color: rgba($bg-mid, 0.7) !important;
+  border: 1px solid rgba($sunset-purple, 0.4) !important;
+  border-left: 4px solid $teal-accent !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 1rem 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  color: $text-primary !important;
+  font-style: italic;
+
+  &, * {
+    color: $text-primary !important;
+  }
+
+  strong, b {
+    color: $teal-accent !important;
+  }
+
+  em, i {
+    color: $text-secondary !important;
+    font-style: normal; // Reset since container is italic
+  }
+
+  code {
+    color: $coral-orange !important;
+    background: rgba($midnight, 0.5) !important;
+  }
+
+  a {
+    color: $bayes-blue !important;
+  }
+}
+
+// Generic concept/definition/example boxes (catch-all)
+.concept, .definition, .example, .solution, .problem,
+.theorem, .proof, .lemma, .corollary, .remark, .exercise,
+div.concept, div.definition, div.example, div.solution, div.problem,
+div.theorem, div.proof, div.lemma, div.corollary, div.remark, div.exercise {
+  background: rgba($bg-mid, 0.7) !important;
+  background-color: rgba($bg-mid, 0.7) !important;
+  border: 1px solid rgba($sunset-purple, 0.4) !important;
+  border-left: 4px solid $bayes-blue !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 1rem 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  color: $text-primary !important;
+
+  &, * {
+    color: $text-primary !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: $vital-pink !important;
+  }
+
+  strong, b {
+    color: $hot-pink !important;
+  }
+
+  em, i {
+    color: $teal-accent !important;
+  }
+
+  code {
+    color: $coral-orange !important;
+    background: rgba($midnight, 0.5) !important;
+  }
+
+  a {
+    color: $bayes-blue !important;
+  }
+
+  li {
+    color: $text-primary !important;
+
+    &::marker {
+      color: $vital-pink !important;
+    }
   }
 }
 
@@ -2008,5 +2383,154 @@ figcaption, .figure-caption, .wp-caption-text {
 
   a {
     color: #0066cc !important;
+  }
+}
+
+// =============================================================================
+// NUCLEAR OVERRIDE: Ensure synthwave styling wins over embedded Rmd styles
+// =============================================================================
+// This section uses higher specificity selectors to override any inline <style>
+// blocks that might be embedded in vignettes
+
+html body main .key-concept,
+html body main div.key-concept,
+html body .contents .key-concept,
+html body .contents div.key-concept,
+.template-article .key-concept,
+.template-article div.key-concept,
+article .key-concept,
+article div.key-concept {
+  background: rgba(26, 5, 51, 0.7) !important; // $bg-mid
+  background-color: rgba(26, 5, 51, 0.7) !important;
+  border: 1px solid rgba(91, 58, 143, 0.4) !important; // $sunset-purple
+  border-left: 4px solid #00D9FF !important; // $bayes-blue
+  color: #F0E6FF !important; // $text-primary
+
+  &, *, p, span, div, li {
+    color: #F0E6FF !important;
+  }
+
+  strong, b {
+    color: #FF6AC1 !important; // $hot-pink
+  }
+
+  em, i {
+    color: #4ECDC4 !important; // $teal-accent
+  }
+
+  code {
+    color: #FF6B35 !important; // $coral-orange
+    background: rgba(13, 2, 33, 0.5) !important;
+  }
+
+  a {
+    color: #00D9FF !important;
+  }
+}
+
+html body main .why-box,
+html body main div.why-box,
+html body .contents .why-box,
+html body .contents div.why-box,
+.template-article .why-box,
+.template-article div.why-box,
+article .why-box,
+article div.why-box {
+  background: rgba(26, 5, 51, 0.7) !important;
+  background-color: rgba(26, 5, 51, 0.7) !important;
+  border: 1px solid rgba(91, 58, 143, 0.4) !important;
+  border-left: 4px solid #FF6B35 !important; // $coral-orange
+  color: #F0E6FF !important;
+
+  &, *, p, span, div, li {
+    color: #F0E6FF !important;
+  }
+
+  strong, b {
+    color: #FF6B35 !important;
+  }
+
+  em, i {
+    color: #4ECDC4 !important;
+  }
+
+  code {
+    color: #FF6B35 !important;
+    background: rgba(13, 2, 33, 0.5) !important;
+  }
+
+  a {
+    color: #00D9FF !important;
+  }
+}
+
+html body main .math-note,
+html body main div.math-note,
+html body .contents .math-note,
+html body .contents div.math-note,
+.template-article .math-note,
+.template-article div.math-note,
+article .math-note,
+article div.math-note {
+  background: rgba(26, 5, 51, 0.7) !important;
+  background-color: rgba(26, 5, 51, 0.7) !important;
+  border: 1px solid rgba(91, 58, 143, 0.5) !important;
+  color: #F0E6FF !important;
+
+  &, *, p, span, div, li {
+    color: #F0E6FF !important;
+  }
+
+  strong, b {
+    color: #FF6AC1 !important;
+  }
+
+  em, i {
+    color: #4ECDC4 !important;
+  }
+
+  code {
+    color: #FF6B35 !important;
+    background: rgba(13, 2, 33, 0.5) !important;
+  }
+
+  a {
+    color: #00D9FF !important;
+  }
+}
+
+html body main .thinking-question,
+html body main div.thinking-question,
+html body .contents .thinking-question,
+html body .contents div.thinking-question,
+.template-article .thinking-question,
+.template-article div.thinking-question,
+article .thinking-question,
+article div.thinking-question {
+  background: rgba(26, 5, 51, 0.7) !important;
+  background-color: rgba(26, 5, 51, 0.7) !important;
+  border: 1px solid rgba(91, 58, 143, 0.4) !important;
+  border-left: 4px solid #4ECDC4 !important; // $teal-accent
+  color: #F0E6FF !important;
+
+  &, *, p, span, div, li {
+    color: #F0E6FF !important;
+  }
+
+  strong, b {
+    color: #4ECDC4 !important;
+  }
+
+  em, i {
+    color: #B8A9C9 !important; // $text-secondary
+  }
+
+  code {
+    color: #FF6B35 !important;
+    background: rgba(13, 2, 33, 0.5) !important;
+  }
+
+  a {
+    color: #00D9FF !important;
   }
 }
