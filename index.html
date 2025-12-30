@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Bayesian Life History Parameter Estimation for Elasmobranchs • vitalBayes</title>
+<title>vitalBayes • vitalBayes</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -19,18 +19,24 @@
   };
 </script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/Inter-0.4.10/font.css" rel="stylesheet">
+<link href="deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet">
+<link href="deps/Orbitron-0.4.10/font.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Bayesian Life History Parameter Estimation for Elasmobranchs">
-<meta name="description" content="`vitalBayes` is an R package implementing innovative Bayesian hierarchical models for estimating life history parameters in elasmobranch populations. The package addresses critical methodological challenges in shark and ray research, including sparse datasets, imbalanced sex ratios, and the need for biologically coherent parameter estimation.">
-<meta property="og:description" content="`vitalBayes` is an R package implementing innovative Bayesian hierarchical models for estimating life history parameters in elasmobranch populations. The package addresses critical methodological challenges in shark and ray research, including sparse datasets, imbalanced sex ratios, and the need for biologically coherent parameter estimation.">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="vitalBayes">
+<meta name="description" content="Bayesian Life History Parameter Estimation for Elasmobranchs">
+<meta property="og:description" content="Bayesian Life History Parameter Estimation for Elasmobranchs">
 <meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="index.html">vitalBayes</a>
 
@@ -44,16 +50,15 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles-menu" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles Menu</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles-menu">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><h6 class="dropdown-header" data-toc-skip>Understanding vitalBayes</h6></li>
-    <li><a class="dropdown-item" href="articles/Understanding_vitalBayes.html">The Statistics Behind Modeling Elasmobranch Life History</a></li>
+    <li><a class="dropdown-item" href="articles/Understanding_vitalBayes.html">The Statistics Behind Elasmobranch Life History Modeling</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip></h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>vitalBayes Functions</h6></li>
-    <li><a class="dropdown-item" href="articles/fit_bayesian_birth.html">Estimating Birth Size</a></li>
-    <li><a class="dropdown-item" href="articles/fit_bayesian_maturity.html">Estimating Maturity Ogives</a></li>
-    <li><a class="dropdown-item" href="articles/fit_bayesian_growth.html">Modeling Individual Growth</a></li>
+    <li><a class="dropdown-item" href="articles/fit_bayesian_birth.html">Estimating Birth Size with fit_bayesian_birth()</a></li>
+    <li><a class="dropdown-item" href="articles/fit_bayesian_maturity.html">Maturity Ogive Estimation with fit_bayesian_maturity()</a></li>
+    <li><a class="dropdown-item" href="articles/fit_bayesian_growth.html">Growth Modeling with fit_bayesian_growth()</a></li>
     <li><a class="dropdown-item" href="articles/partial_pooling.html">Partial Pooling for Imbalanced Sex Ratios</a></li>
     <li><a class="dropdown-item" href="articles/model_diagnostics.html">Model Diagnostics and Comparison</a></li>
     <li><a class="dropdown-item" href="articles/visualization.html">Visualizing vitalBayes Results</a></li>
@@ -630,7 +635,8 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Brian J Moe <br><small class="roles"> Author, maintainer </small>   </li>
+<li>
+<a href="https://github.com/Brian-J-Moe" class="external-link">Brian J Moe</a> <br><small class="roles"> Author, maintainer </small>   </li>
 </ul>
 </div>
 
@@ -647,11 +653,11 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Brian J Moe.</p>
+  <p>list(text = “Developed by Brian J Moe”)</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>list(text = “Built with pkgdown”, href = “<a href="https://pkgdown.r-lib.org/" class="external-link uri">https://pkgdown.r-lib.org/</a>”)</p>
 </div>
 
     </footer>

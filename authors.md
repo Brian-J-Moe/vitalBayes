@@ -2,7 +2,7 @@
 
 ## Authors
 
-- **Brian J Moe**. Author, maintainer.
+- **[Brian J Moe](https://github.com/Brian-J-Moe)**. Author, maintainer.
 
 ## Citation
 
