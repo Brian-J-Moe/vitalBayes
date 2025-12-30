@@ -15,6 +15,7 @@ navbar:
         - text: "The Statistics Behind Modeling Elasmobranch Life History"
           href: articles/Understanding_vitalBayes.html
         - text: ------- # A menu separator
+        - text: ""
         - text: "vitalBayes Functions"
         - text: "Estimating Birth Size"
           href: articles/fit_bayesian_birth.html
