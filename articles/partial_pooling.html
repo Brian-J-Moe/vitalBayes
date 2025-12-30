@@ -93,23 +93,33 @@
 <h2 id="the-problem-imbalanced-sex-ratios">The Problem: Imbalanced Sex Ratios<a class="anchor" aria-label="anchor" href="#the-problem-imbalanced-sex-ratios"></a>
 </h2>
 <p>Elasmobranch datasets frequently have unequal sample sizes between
-sexes. In the gulper shark data, we have 150 females but only 23 males
-with maturity data. Fitting separate models for each sex leads to: -
-<strong>Wide credible intervals</strong> for the sparse sex (males) -
+sexes. The <code>imbalanced_data</code> example dataset illustrates this
+common scenario with 150 females but only 34 males. Fitting separate
+models for each sex leads to:</p>
+<ul>
+<li>
+<strong>Wide credible intervals</strong> for the sparse sex
+(males)</li>
+<li>
 <strong>Unstable estimates</strong> driven by a few influential
-observations - <strong>Inefficient use of information</strong> — we
-ignore the fact that both sexes are <em>the same species</em></p>
+observations</li>
+<li>
+<strong>Inefficient use of information</strong> — we ignore the fact
+that both sexes are <em>the same species</em>
+</li>
+</ul>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">gulper_data</span><span class="op">)</span></span>
-<span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co"># Load the imbalanced dataset (150F, 34M, 13 embryos)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">imbalanced_data</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">mat_data</span><span class="op">[</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">sex</span><span class="op">]</span></span>
+<span><span class="co"># Check the sex ratio</span></span>
+<span><span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">sex</span><span class="op">]</span></span>
 <span><span class="co">#    sex   N</span></span>
-<span><span class="co"># 1:   1 150  (females)</span></span>
-<span><span class="co"># 2:   2  23  (males)</span></span></code></pre></div>
+<span><span class="co"># 1: female  150</span></span>
+<span><span class="co"># 2: male     34</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="three-estimation-strategies">Three Estimation Strategies<a class="anchor" aria-label="anchor" href="#three-estimation-strategies"></a>
@@ -189,7 +199,10 @@ divergences</li>
 <h3 id="enabling-partial-pooling">Enabling Partial Pooling<a class="anchor" aria-label="anchor" href="#enabling-partial-pooling"></a>
 </h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># With partial pooling (recommended for imbalanced data)</span></span>
+<code class="sourceCode R"><span><span class="co"># Prepare maturity data from the imbalanced dataset</span></span>
+<span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># With partial pooling (recommended for imbalanced data)</span></span>
 <span><span class="va">L50_pooled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
 <span> maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
 <span> lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
@@ -267,14 +280,15 @@ shrinkage</li>
 <span><span class="va">draws_pooled</span> <span class="op">&lt;-</span> <span class="va">L50_pooled</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"L50"</span>, format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span></span>
 <span><span class="va">draws_unpooled</span> <span class="op">&lt;-</span> <span class="va">L50_unpooled</span><span class="op">$</span><span class="fu">draws</span><span class="op">(</span><span class="st">"L50"</span>, format <span class="op">=</span> <span class="st">"df"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Compare male estimates</span></span>
+<span><span class="co"># Compare male estimates (the sparse sex)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">draws_unpooled</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">`L50[2]`</span>, fill <span class="op">=</span> <span class="st">"Unpooled"</span><span class="op">)</span>, </span>
 <span>              alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
 <span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">draws_pooled</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">`L50[2]`</span>, fill <span class="op">=</span> <span class="st">"Pooled"</span><span class="op">)</span>, </span>
 <span>              alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
 <span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Male L50 (cm)"</span>, y <span class="op">=</span> <span class="st">"Density"</span>, </span>
-<span>      title <span class="op">=</span> <span class="st">"Effect of Partial Pooling on Male L50 Estimate"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>      title <span class="op">=</span> <span class="st">"Effect of Partial Pooling on Male L50 Estimate"</span>,</span>
+<span>      subtitle <span class="op">=</span> <span class="st">"Note the narrower credible interval with pooling"</span><span class="op">)</span> <span class="op">+</span></span>
 <span> <span class="fu"><a href="../reference/theme_vital.html">theme_vital</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -286,7 +300,8 @@ shrinkage</li>
 </h3>
 <ul>
 <li>
-<strong>Imbalanced sample sizes</strong> between sexes</li>
+<strong>Imbalanced sample sizes</strong> between sexes (like the
+<code>imbalanced_data</code> example)</li>
 <li>
 <strong>Moderate expected differences</strong> between sexes</li>
 <li>
@@ -302,7 +317,7 @@ population models)</li>
 <ul>
 <li>
 <strong>Balanced sample sizes</strong> and adequate data for both
-sexes</li>
+sexes (like the <code>growth_data</code> example)</li>
 <li>
 <strong>Strong prior belief</strong> that sexes are very
 different</li>
@@ -317,12 +332,15 @@ without shrinkage</li>
 </h2>
 <p>The same principles apply to growth parameters:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Partial pooling on Linf, L0, k, Lmat, tmat</span></span>
+<code class="sourceCode R"><span><span class="co"># Prepare growth data from imbalanced dataset</span></span>
+<span><span class="va">gdata</span> <span class="op">&lt;-</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Partial pooling on Linf, L0, k, Lmat, tmat</span></span>
 <span><span class="va">growth_pooled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span> lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span> age         <span class="op">=</span> <span class="st">"age1"</span>,</span>
+<span> age         <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span> sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data        <span class="op">=</span> <span class="va">growth_data</span>,</span>
+<span> data        <span class="op">=</span> <span class="va">gdata</span>,</span>
 <span> use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span> prior_tau   <span class="op">=</span> <span class="fl">0.2</span>     <span class="co"># Tighter for growth (less between-sex variation expected)</span></span>
 <span><span class="op">)</span></span>
@@ -430,7 +448,8 @@ pooling converges to no pooling.</p>
 </h3>
 <p>For two-sex elasmobranch models with typical sample sizes, yes. The
 only case to avoid pooling is when you have abundant, balanced data for
-both sexes AND strong prior belief in very different parameters.</p>
+both sexes (like the <code>growth_data</code> example with 189F, 176M)
+AND strong prior belief in very different parameters.</p>
 </div>
 </div>
 <div class="section level2">
@@ -438,9 +457,10 @@ both sexes AND strong prior belief in very different parameters.</p>
 </h2>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># ---- Data Prep ----</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">gulper_data</span><span class="op">)</span></span>
-<span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">growth_data</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age1</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co"># Use the imbalanced dataset to demonstrate pooling benefits</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">imbalanced_data</span><span class="op">)</span></span>
+<span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">gdata</span> <span class="op">&lt;-</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># ---- Maturity with Pooling ----</span></span>
 <span><span class="va">L50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
@@ -451,16 +471,16 @@ both sexes AND strong prior belief in very different parameters.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">t50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
-<span> maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age1"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age1</span><span class="op">)</span><span class="op">]</span>,</span>
+<span> maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span> data <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
 <span> use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span> prior_tau <span class="op">=</span> <span class="fl">0.5</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># ---- Growth with Pooling ----</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span> lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age1"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data <span class="op">=</span> <span class="va">growth_data</span>,</span>
+<span> lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span> data <span class="op">=</span> <span class="va">gdata</span>,</span>
 <span> k_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span> L50_fit <span class="op">=</span> <span class="va">L50_fit</span>,</span>
 <span> t50_fit <span class="op">=</span> <span class="va">t50_fit</span>,</span>
@@ -474,6 +494,24 @@ both sexes AND strong prior belief in very different parameters.</p>
 <span></span>
 <span><span class="co"># Credible sex differences</span></span>
 <span><span class="va">growth_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Linf_diff"</span>, <span class="st">"k_diff"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="comparing-datasets-balanced-vs-imbalanced">Comparing Datasets: Balanced vs Imbalanced<a class="anchor" aria-label="anchor" href="#comparing-datasets-balanced-vs-imbalanced"></a>
+</h2>
+<p>The package includes datasets that illustrate when pooling matters
+most:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Imbalanced data (150F, 34M) - pooling helps</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">imbalanced_data</span><span class="op">)</span></span>
+<span><span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">sex</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Balanced data (189F, 176M) - pooling still works but less critical</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">growth_data</span><span class="op">)</span></span>
+<span><span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">sex</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Limited data (24F, 18M) - pooling essential for both sexes</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">limited_data</span><span class="op">)</span></span>
+<span><span class="va">limited_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">sex</span><span class="op">]</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
@@ -520,11 +558,11 @@ is the recommended default</strong> when fitting two-sex models.</p>
 </h2>
 <ul>
 <li>
-<a href="vitalBayes_stats_explained.html#maturity">Statistical
+<a href="Understanding_vitalBayes.html#maturity">Statistical
 Methods: Partial Pooling</a> — Full mathematical derivation with
 non-centered parameterization details</li>
 <li>
-<a href="vitalBayes_stats_explained.html#cv-priors">Statistical
+<a href="Understanding_vitalBayes.html#cv-priors">Statistical
 Methods: CV-Based Priors</a> — How prior_tau works</li>
 <li>
 <code><a href="../articles/fit_bayesian_maturity.html">vignette("fit_bayesian_maturity")</a></code> — Maturity model

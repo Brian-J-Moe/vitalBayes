@@ -28,10 +28,11 @@ the value at which 50% of individuals are mature.
 library(vitalBayes)
 library(data.table)
 
-data(gulper_data)
+# Load simulated data
+data(growth_data)
 
 # Filter to free-swimming females only
-female_data <- gulper_data[embryo == FALSE & sex == 1]
+female_data <- growth_data[embryo == FALSE & sex == "female"]
 
 # Fit length-at-maturity
 L50_fit <- fit_bayesian_maturity(
@@ -52,7 +53,7 @@ When sex data are available, fit both sexes simultaneously:
 
 ``` r
 # Prepare data (both sexes)
-mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
+mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
 # Two-sex model with partial pooling (recommended)
 L50_fit_2sex <- fit_bayesian_maturity(
@@ -74,7 +75,7 @@ L50_fit_2sex$summary("L50_diff")
 ### Why Partial Pooling?
 
 Elasmobranch datasets often have imbalanced sex ratios. With 150 females
-but only 23 males, the male estimate would have very wide credible
+but only 34 males, the male estimate would have very wide credible
 intervals if fit independently.
 
 **Partial pooling** addresses this by modeling sex-specific parameters
@@ -93,20 +94,20 @@ data:
 For a comprehensive treatment, see
 [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
 or the [Partial Pooling
-section](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#maturity)
+section](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity)
 in the Statistical Methods guide.
 
 ## Fitting Both Length and Age Maturity
 
 ``` r
 # Filter to individuals with both maturity and age data
-mat_aged <- gulper_data[embryo == FALSE & !is.na(mat) & !is.na(age1)]
+mat_aged <- growth_data[embryo == FALSE & !is.na(mat) & !is.na(age)]
 
 # Fit both models simultaneously
 mat_fits <- fit_bayesian_maturity(
  maturity = "mat",
  lt       = "fl",
- age      = "age1",
+ age      = "age",
  sex      = "sex",
  data     = mat_aged,
  use_pooling = TRUE
@@ -125,6 +126,7 @@ The function auto-detects common sex coding conventions:
 # All of these work automatically:
 # sex = c("F", "M")           # English
 # sex = c("Female", "Male")   # English full
+# sex = c("female", "male")   # lowercase (used in simulated data)
 # sex = c(1, 2)               # Numeric (1=female, 2=male)
 # sex = c("Hembra", "Macho")  # Spanish
 # sex = c("Femelle", "Mâle")  # French
@@ -176,7 +178,7 @@ plot_maturity_ogive(
  fit        = L50_fit_2sex,
  type       = "length",
  data       = mat_data,
- sex_labels = c("1" = "Femelle", "2" = "Mâle"),
+ sex_labels = c("female" = "Femelle", "male" = "Mâle"),
  x_lab      = "Longueur (cm)",
  y_lab      = "Probabilité de maturité"
 )
@@ -202,7 +204,7 @@ the maturity-based growth parameterization:
 # Fit t50 for age-at-maturity
 t50_fit <- fit_bayesian_maturity(
  maturity = "mat",
- age      = "age1",
+ age      = "age",
  sex      = "sex",
  data     = mat_aged
 )
@@ -210,9 +212,9 @@ t50_fit <- fit_bayesian_maturity(
 # Pass to growth model
 growth_fit <- fit_bayesian_growth(
  lt      = "fl",
- age     = "age1",
+ age     = "age",
  sex     = "sex",
- data    = gulper_data[embryo == FALSE & !is.na(age1)],
+ data    = growth_data[embryo == FALSE & !is.na(age)],
  k_based = FALSE,           # Use maturity-based parameterization
  L50_fit = L50_fit_2sex,    # Length-at-maturity fit
  t50_fit = t50_fit          # Age-at-maturity fit
@@ -233,10 +235,10 @@ growth_fit <- fit_bayesian_growth(
 - [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
   — Detailed treatment of hierarchical modeling for imbalanced data
 - [Statistical Methods: Maturity
-  Estimation](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#maturity)
+  Estimation](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity)
   — Full mathematical derivation
 - [Statistical Methods: Probit
-  Link](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#probit)
+  Link](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#probit)
   — Why probit over logit
 - [`plot_maturity_ogive()`](https://brian-j-moe.github.io/vitalBayes/reference/plot_maturity_ogive.md)
   — Visualization

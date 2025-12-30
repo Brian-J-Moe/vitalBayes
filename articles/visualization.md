@@ -60,31 +60,33 @@ Visualize birth size transition probability:
 
 ``` r
 library(data.table)
-data(gulper_data)
+
+# Load simulated data
+data(growth_data)
 
 # Fit birth model
 birth_fit <- fit_bayesian_birth(
- embryo_lts = gulper_data[embryo == TRUE, fl],
- free_swimming_lts = gulper_data[embryo == FALSE, fl]
+ embryo_lts = growth_data[embryo == TRUE, fl],
+ free_swimming_lts = growth_data[embryo == FALSE, fl]
 )
 
 # Basic plot
 plot_birth_ogive(
  fit = birth_fit,
- embryo_lengths = gulper_data[embryo == TRUE, fl],
- freeswim_lengths = gulper_data[embryo == FALSE, fl]
+ embryo_lengths = growth_data[embryo == TRUE, fl],
+ freeswim_lengths = growth_data[embryo == FALSE, fl]
 )
 
 # Customized
 plot_birth_ogive(
  fit = birth_fit,
- embryo_lengths = gulper_data[embryo == TRUE, fl],
- freeswim_lengths = gulper_data[embryo == FALSE, fl],
+ embryo_lengths = growth_data[embryo == TRUE, fl],
+ freeswim_lengths = growth_data[embryo == FALSE, fl],
  show_data = TRUE,
  show_b50_line = TRUE,
  colors = vital_colors(1, "sunset"),
  x_lab = "Fork Length (cm)",
- title = "Little Gulper Shark Birth Size"
+ title = "Birth Size Transition"
 )
 ```
 
@@ -95,9 +97,10 @@ plot_birth_ogive(
 Visualize maturity probability curves:
 
 ``` r
-# Fit two-sex maturity model
-mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
+# Prepare maturity data
+mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
+# Fit two-sex maturity model
 L50_fit <- fit_bayesian_maturity(
  maturity = "mat",
  lt = "fl",
@@ -155,7 +158,7 @@ plot_maturity_ogive(
  fit = L50_fit,
  type = "length",
  data = mat_data,
- sex_labels = c("1" = "Femelle", "2" = "Mâle"),
+ sex_labels = c("female" = "Femelle", "male" = "Mâle"),
  x_lab = "Longueur à la fourche (cm)",
  y_lab = "Probabilité de maturité"
 )
@@ -165,7 +168,7 @@ plot_maturity_ogive(
  fit = L50_fit,
  type = "length",
  data = mat_data,
- sex_labels = c("1" = "Hembra", "2" = "Macho"),
+ sex_labels = c("female" = "Hembra", "male" = "Macho"),
  x_lab = "Longitud furcal (cm)",
  y_lab = "Probabilidad de madurez"
 )
@@ -175,7 +178,7 @@ plot_maturity_ogive(
  fit = L50_fit,
  type = "length",
  data = mat_data,
- sex_labels = c("1" = "メス", "2" = "オス"),
+ sex_labels = c("female" = "メス", "male" = "オス"),
  x_lab = "尾叉長 (cm)",
  y_lab = "成熟確率"
 )
@@ -188,14 +191,15 @@ plot_maturity_ogive(
 Visualize fitted growth curves with uncertainty:
 
 ``` r
-growth_data <- gulper_data[embryo == FALSE & !is.na(age1)]
+# Prepare growth data
+gdata <- growth_data[embryo == FALSE & !is.na(age)]
 
 # Fit growth model
 growth_fit <- fit_bayesian_growth(
  lt = "fl",
- age = "age1",
+ age = "age",
  sex = "sex",
- data = growth_data,
+ data = gdata,
  model = "vb",
  k_based = FALSE,
  L50_fit = L50_fit
@@ -204,8 +208,8 @@ growth_fit <- fit_bayesian_growth(
 # Basic plot
 plot_growth_curve(
  fit = growth_fit,
- data = growth_data,
- age_col = "age1",
+ data = gdata,
+ age_col = "age",
  length_col = "fl",
  sex_col = "sex"
 )
@@ -216,10 +220,10 @@ plot_growth_curve(
 ``` r
 plot_growth_curve(
  fit = growth_fit,
- data = growth_data,
+ data = gdata,
  
  # Data columns
- age_col = "age1",
+ age_col = "age",
  length_col = "fl",
  sex_col = "sex",
  
@@ -260,7 +264,7 @@ library(ggplot2)
 
 plot_growth_curve(
  fit = growth_fit,
- data = growth_data,
+ data = gdata,
  additional_layers = list(
    # Add horizontal line at L50
    geom_hline(yintercept = 75, linetype = "dashed", color = "gray50"),
@@ -282,19 +286,26 @@ Side-by-side comparison of multiple growth models:
 
 ``` r
 # Fit multiple models
+mat_aged <- growth_data[embryo == FALSE & !is.na(mat) & !is.na(age)]
+
+t50_fit <- fit_bayesian_maturity(
+ maturity = "mat", age = "age", sex = "sex",
+ data = mat_aged
+)
+
 vb_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex", data = growth_data,
- model = "vb", k_based = FALSE, L50_fit = L50_fit
+ lt = "fl", age = "age", sex = "sex", data = gdata,
+ model = "vb", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
 )
 
 gomp_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex", data = growth_data,
- model = "gompertz", k_based = FALSE, L50_fit = L50_fit
+ lt = "fl", age = "age", sex = "sex", data = gdata,
+ model = "gompertz", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
 )
 
 logis_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex", data = growth_data,
- model = "logistic", k_based = FALSE, L50_fit = L50_fit
+ lt = "fl", age = "age", sex = "sex", data = gdata,
+ model = "logistic", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
 )
 
 # Compare visually
@@ -302,8 +313,8 @@ compare_growth_models(
  "von Bertalanffy" = vb_fit,
  "Gompertz" = gomp_fit,
  "Logistic" = logis_fit,
- data = growth_data,
- age_col = "age1",
+ data = gdata,
+ age_col = "age",
  length_col = "fl",
  sex_col = "sex",
  k_based_list = c(FALSE, FALSE, FALSE),
@@ -314,7 +325,7 @@ compare_growth_models(
 compare_growth_models(
  "von Bertalanffy" = vb_fit,
  "Gompertz" = gomp_fit,
- data = growth_data,
+ data = gdata,
  colorblind = TRUE
 )
 ```
@@ -329,18 +340,18 @@ Diagnostic residual plots for growth models:
 # All diagnostic plots
 plot_residuals(
  fit = growth_fit,
- data = growth_data,
- age_col = "age1",
+ data = gdata,
+ age_col = "age",
  length_col = "fl",
  sex_col = "sex",
  type = "all"              # Combined panel
 )
 
 # Individual plot types
-plot_residuals(fit = growth_fit, data = growth_data, type = "fitted")
-plot_residuals(fit = growth_fit, data = growth_data, type = "qq")
-plot_residuals(fit = growth_fit, data = growth_data, type = "histogram")
-plot_residuals(fit = growth_fit, data = growth_data, type = "age")
+plot_residuals(fit = growth_fit, data = gdata, type = "fitted")
+plot_residuals(fit = growth_fit, data = gdata, type = "qq")
+plot_residuals(fit = growth_fit, data = gdata, type = "histogram")
+plot_residuals(fit = growth_fit, data = gdata, type = "age")
 ```
 
 ------------------------------------------------------------------------
@@ -352,7 +363,7 @@ library(patchwork)
 
 # Create multi-panel figure
 p1 <- plot_maturity_ogive(L50_fit, type = "length", data = mat_data)
-p2 <- plot_growth_curve(growth_fit, data = growth_data)
+p2 <- plot_growth_curve(growth_fit, data = gdata)
 
 combined <- p1 / p2 + plot_annotation(tag_levels = "A")
 
@@ -361,10 +372,37 @@ ggsave("Figure1.pdf", combined, width = 10, height = 12)
 ggsave("Figure1.png", combined, width = 10, height = 12, dpi = 300)
 ```
 
+## Using Different Datasets for Demonstration
+
+The package includes multiple datasets for different visualization
+needs:
+
+``` r
+# Balanced data (growth_data) - best for general demonstrations
+data(growth_data)
+
+# Imbalanced data - shows pooling effects on uncertainty bands
+data(imbalanced_data)
+mat_imbal <- imbalanced_data[embryo == FALSE & !is.na(mat)]
+
+L50_imbal <- fit_bayesian_maturity(
+ maturity = "mat", lt = "fl", sex = "sex",
+ data = mat_imbal, use_pooling = TRUE
+)
+
+# Note the wider bands for males (sparse sex)
+plot_maturity_ogive(
+ fit = L50_imbal,
+ type = "length",
+ data = mat_imbal,
+ title = "Maturity Ogive with Imbalanced Sex Ratio (150F, 34M)"
+)
+```
+
 ## See Also
 
 - [Statistical Methods
-  Guide](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.md)
+  Guide](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.md)
   — Mathematical background for all models
 - [`vital_colors()`](https://brian-j-moe.github.io/vitalBayes/reference/vital_colors.md),
   [`theme_vital()`](https://brian-j-moe.github.io/vitalBayes/reference/theme_vital.md)

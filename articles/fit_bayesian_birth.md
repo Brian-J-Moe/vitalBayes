@@ -27,7 +27,7 @@ where:
 readiness is normally distributed across individuals—a biologically
 intuitive interpretation. For a detailed derivation, see the [Probit
 Link
-section](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#probit)
+section](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#probit)
 in the Statistical Methods guide.
 
 ## Basic Usage
@@ -36,12 +36,12 @@ in the Statistical Methods guide.
 library(vitalBayes)
 library(data.table)
 
-# Load example data
-data(gulper_data)
+# Load example data (simulated von Bertalanffy growth data)
+data(growth_data)
 
 # Separate embryo and free-swimming lengths
-embryo_lengths <- gulper_data[embryo == TRUE, fl]
-freeswim_lengths <- gulper_data[embryo == FALSE, fl]
+embryo_lengths <- growth_data[embryo == TRUE, fl]
+freeswim_lengths <- growth_data[embryo == FALSE, fl]
 
 # Fit the birth model
 birth_fit <- fit_bayesian_birth(
@@ -108,10 +108,27 @@ in growth models:
 # The birth fit can be passed directly to growth models
 growth_fit <- fit_bayesian_growth(
  lt        = "fl",
- age       = "age1", 
+ age       = "age", 
  sex       = "sex",
- data      = gulper_data[embryo == FALSE],
+ data      = growth_data[embryo == FALSE],
  birth_fit = birth_fit  # Automatically extracts L0 prior
+)
+```
+
+## Working with Limited Data
+
+For datasets with few embryos, consider using the `limited_data` example
+dataset to explore prior sensitivity:
+
+``` r
+# Load the small sample dataset (24F, 18M, 5 embryos)
+data(limited_data)
+
+# With sparse embryo data, priors become more influential
+birth_fit_limited <- fit_bayesian_birth(
+ embryo_lts        = limited_data[embryo == TRUE, fl],
+ free_swimming_lts = limited_data[embryo == FALSE, fl],
+ cv_b50            = 0.2  # Tighter prior when data are sparse
 )
 ```
 
@@ -126,7 +143,7 @@ growth_fit <- fit_bayesian_growth(
 ## See Also
 
 - [Statistical Methods: Birth Size
-  Estimation](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#birth)
+  Estimation](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#birth)
   — Full mathematical derivation
 - [`plot_birth_ogive()`](https://brian-j-moe.github.io/vitalBayes/reference/plot_birth_ogive.md)
   — Visualization function

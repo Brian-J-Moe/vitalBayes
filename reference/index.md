@@ -38,6 +38,11 @@
   : Posterior Predictive Summary
 - [`print(`*`<vitalBayes_ppc>`*`)`](https://brian-j-moe.github.io/vitalBayes/reference/print.vitalBayes_ppc.md)
   : Print PPC Summary
+- [`simulated_datasets`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
+  [`imbalanced_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
+  [`growth_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
+  [`limited_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
+  : Simulated von Bertalanffy growth datasets
 - [`theme_vital()`](https://brian-j-moe.github.io/vitalBayes/reference/theme_vital.md)
   : vitalBayes ggplot2 Theme
 - [`vital_colors()`](https://brian-j-moe.github.io/vitalBayes/reference/vital_colors.md)

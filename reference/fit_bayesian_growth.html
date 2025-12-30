@@ -301,13 +301,13 @@ linearization method is used to provide a reasonable starting value.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> for usage examples with gulper shark data.</p>
+    <div class="dont-index"><p><code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> for usage examples.</p>
 <p><code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code> for hierarchical modeling of imbalanced sex ratios.</p>
-<p><a href="../doc/vitalBayes_stats_explained.html#growth">Statistical Methods: Growth Models</a>
+<p><a href="../doc/Understanding_vitalBayes.html#growth">Statistical Methods: Growth Models</a>
 for equations and model comparison.</p>
-<p><a href="../doc/vitalBayes_stats_explained.html#maturity-param">Statistical Methods: Maturity-Based Parameterization</a>
+<p><a href="../doc/Understanding_vitalBayes.html#maturity-param">Statistical Methods: Maturity-Based Parameterization</a>
 for the derivation of k from maturity parameters.</p>
-<p><a href="../doc/vitalBayes_stats_explained.html#linf">Statistical Methods: L-infinity Constraint</a>
+<p><a href="../doc/Understanding_vitalBayes.html#linf">Statistical Methods: L-infinity Constraint</a>
 for why Linf must exceed maximum observed length.</p>
 <p><code><a href="fit_bayesian_birth.html">fit_bayesian_birth</a></code>, <code><a href="fit_bayesian_maturity.html">fit_bayesian_maturity</a></code>,
 <code><a href="plot_growth_curve.html">plot_growth_curve</a></code>, <code><a href="compare_growth_models.html">compare_growth_models</a></code></p></div>
@@ -316,39 +316,50 @@ for why Linf must exceed maximum observed length.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Load simulated data</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">growth_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Workflow: birth -&gt; maturity -&gt; growth</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Step 1: Fit birth model</span></span></span>
 <span class="r-in"><span><span class="va">birth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit_bayesian_birth.html">fit_bayesian_birth</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  embryo_lts <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">TRUE</span>, <span class="va">length</span><span class="op">]</span>,</span></span>
-<span class="r-in"><span>  free_swimming_lts <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">length</span><span class="op">]</span></span></span>
+<span class="r-in"><span>  embryo_lts <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">TRUE</span>, <span class="va">fl</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  free_swimming_lts <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">fl</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Step 2: Fit maturity models</span></span></span>
-<span class="r-in"><span><span class="va">mat_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  maturity <span class="op">=</span> <span class="va">mat</span>, lt <span class="op">=</span> <span class="va">length</span>, age <span class="op">=</span> <span class="va">age</span>, sex <span class="op">=</span> <span class="va">sex</span>,</span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">L50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, lt <span class="op">=</span> <span class="st">"fl"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">mat_data</span>, use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">t50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>, use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Step 3: Fit growth model (maturity-based, pooled)</span></span></span>
 <span class="r-in"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu">fit_bayesian_growth</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  lt <span class="op">=</span> <span class="va">length</span>, age <span class="op">=</span> <span class="va">age</span>, sex <span class="op">=</span> <span class="va">sex</span>,</span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span>,  <span class="co"># Can include incomplete cases for Lmax</span></span></span>
-<span class="r-in"><span>  model <span class="op">=</span> <span class="st">"v"</span>,</span></span>
+<span class="r-in"><span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  model <span class="op">=</span> <span class="st">"vb"</span>,</span></span>
 <span class="r-in"><span>  k_based <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
-<span class="r-in"><span>  birth_stanfit <span class="op">=</span> <span class="va">birth_fit</span>,</span></span>
-<span class="r-in"><span>  length.mature_stanfit <span class="op">=</span> <span class="va">mat_fits</span><span class="op">$</span><span class="va">length</span>,</span></span>
-<span class="r-in"><span>  age.mature_stanfit <span class="op">=</span> <span class="va">mat_fits</span><span class="op">$</span><span class="va">age</span>,</span></span>
-<span class="r-in"><span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>  robust <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>,</span></span>
+<span class="r-in"><span>  L50_fit <span class="op">=</span> <span class="va">L50_fit</span>,</span></span>
+<span class="r-in"><span>  t50_fit <span class="op">=</span> <span class="va">t50_fit</span>,</span></span>
+<span class="r-in"><span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Alternative: Specify Lmax if you know it exceeds observed data</span></span></span>
-<span class="r-in"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu">fit_bayesian_growth</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  lt <span class="op">=</span> <span class="va">length</span>, age <span class="op">=</span> <span class="va">age</span>, sex <span class="op">=</span> <span class="va">sex</span>,</span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,  <span class="co"># Complete cases only</span></span></span>
-<span class="r-in"><span>  Lmax <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">140</span><span class="op">)</span>,  <span class="co"># Known max: females, males</span></span></span>
-<span class="r-in"><span>  <span class="va">...</span></span></span>
+<span class="r-in"><span><span class="co"># View key parameters</span></span></span>
+<span class="r-in"><span><span class="va">growth_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Linf"</span>, <span class="st">"L0"</span>, <span class="st">"k"</span>, <span class="st">"Lmat"</span>, <span class="st">"tmat"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example with imbalanced data</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">imbalanced_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">gdata</span> <span class="op">&lt;-</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">growth_imbal</span> <span class="op">&lt;-</span> <span class="fu">fit_bayesian_growth</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">gdata</span>,</span></span>
+<span class="r-in"><span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># Important for sparse male data</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

@@ -30,16 +30,18 @@ Directly estimates the growth coefficient \\k\\:
 library(vitalBayes)
 library(data.table)
 
-data(gulper_data)
+# Load simulated data
+data(growth_data)
 
-growth_data <- gulper_data[embryo == FALSE & !is.na(age1)]
+# Filter to non-embryos with age data
+gdata <- growth_data[embryo == FALSE & !is.na(age)]
 
 # Traditional k-based von Bertalanffy
 growth_k <- fit_bayesian_growth(
  lt      = "fl",
- age     = "age1",
+ age     = "age",
  sex     = "sex",
- data    = growth_data,
+ data    = gdata,
  model   = "vb",
  k_based = TRUE,
  CV_k    = 0.5,        # 50% CV on k prior (high uncertainty)
@@ -59,28 +61,30 @@ L\_{mat}}\right)\\
 
 ``` r
 # First, fit maturity models
+mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
+
 L50_fit <- fit_bayesian_maturity(
  maturity = "mat", lt = "fl", sex = "sex",
- data = gulper_data[embryo == FALSE & !is.na(mat)]
+ data = mat_data
 )
 
 t50_fit <- fit_bayesian_maturity(
- maturity = "mat", age = "age1", sex = "sex",
- data = gulper_data[embryo == FALSE & !is.na(mat) & !is.na(age1)]
+ maturity = "mat", age = "age", sex = "sex",
+ data = mat_data[!is.na(age)]
 )
 
 # Optional: fit birth model for L0 prior
 birth_fit <- fit_bayesian_birth(
- embryo_lts = gulper_data[embryo == TRUE, fl],
- free_swimming_lts = gulper_data[embryo == FALSE, fl]
+ embryo_lts = growth_data[embryo == TRUE, fl],
+ free_swimming_lts = growth_data[embryo == FALSE, fl]
 )
 
 # Maturity-based growth model
 growth_mat <- fit_bayesian_growth(
  lt        = "fl",
- age       = "age1",
+ age       = "age",
  sex       = "sex",
- data      = growth_data,
+ data      = gdata,
  model     = "vb",
  k_based   = FALSE,          # Use maturity-based parameterization
  L50_fit   = L50_fit,        # Provides Lmat prior
@@ -105,7 +109,7 @@ growth_mat$summary(c("Linf", "L0", "Lmat", "tmat", "k", "sigma"))
     \\(t\_{mat}, L\_{mat})\\
 
 For the full derivation, see the [Maturity-Based Parameterization
-section](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#maturity-param)
+section](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity-param)
 in the Statistical Methods guide.
 
 ## The \\L\_\infty\\ Constraint
@@ -116,23 +120,23 @@ A critical issue: unconstrained \\L\_\infty\\ often converges to values
 **vitalBayes enforces** \\L\_\infty \> L\_{max}\\ (the maximum observed
 length). For the biological and statistical rationale, see [Why
 \\L\_\infty\\ Must Exceed Maximum Observed
-Length](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#linf)
+Length](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#linf)
 in the Statistical Methods guide.
 
 ``` r
 # Lmax is auto-detected from data
 growth_fit <- fit_bayesian_growth(
  lt   = "fl",
- age  = "age1",
- data = growth_data
+ age  = "age",
+ data = gdata
 )
 # Message: "Lmax from data: 98.5 cm"
 
 # Or specify manually (e.g., if you have length data without age)
 growth_fit <- fit_bayesian_growth(
  lt   = "fl",
- age  = "age1",
- data = growth_data,
+ age  = "age",
+ data = gdata,
  Lmax = c(100, 95)  # Female, Male
 )
 ```
@@ -146,9 +150,9 @@ uncertainty for the sparse group:
 ``` r
 growth_2sex <- fit_bayesian_growth(
  lt          = "fl",
- age         = "age1",
+ age         = "age",
  sex         = "sex",
- data        = growth_data,
+ data        = gdata,
  model       = "vb",
  k_based     = FALSE,
  L50_fit     = L50_fit,
@@ -175,17 +179,17 @@ effects, and when to use it, see
 ``` r
 # Fit all three models
 vb_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex", data = growth_data,
+ lt = "fl", age = "age", sex = "sex", data = gdata,
  model = "vb", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
 )
 
 gomp_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex", data = growth_data,
+ lt = "fl", age = "age", sex = "sex", data = gdata,
  model = "gompertz", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
 )
 
 logis_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex", data = growth_data,
+ lt = "fl", age = "age", sex = "sex", data = gdata,
  model = "logistic", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
 )
 
@@ -208,8 +212,8 @@ Priors are specified via coefficient of variation for intuitive scaling:
 ``` r
 growth_fit <- fit_bayesian_growth(
  lt   = "fl",
- age  = "age1",
- data = growth_data,
+ age  = "age",
+ data = gdata,
  
  # Prior CVs (proportion of mean)
  CV_Linf = 0.20,    # 20% uncertainty on Linf
@@ -229,8 +233,8 @@ growth_fit <- fit_bayesian_growth(
 # Basic growth curve
 plot_growth_curve(
  fit        = growth_2sex,
- data       = growth_data,
- age_col    = "age1",
+ data       = gdata,
+ age_col    = "age",
  length_col = "fl",
  sex_col    = "sex"
 )
@@ -238,8 +242,8 @@ plot_growth_curve(
 # Multilingual support
 plot_growth_curve(
  fit        = growth_2sex,
- data       = growth_data,
- sex_labels = c("1" = "Hembra", "2" = "Macho"),
+ data       = gdata,
+ sex_labels = c("female" = "Hembra", "male" = "Macho"),
  x_lab      = "Edad (años)",
  y_lab      = "Longitud (cm)"
 )
@@ -249,8 +253,8 @@ compare_growth_models(
  "von Bertalanffy" = vb_fit,
  "Gompertz" = gomp_fit,
  "Logistic" = logis_fit,
- data = growth_data,
- age_col = "age1",
+ data = gdata,
+ age_col = "age",
  length_col = "fl"
 )
 ```
@@ -264,8 +268,8 @@ growth_2sex$summary(c("rmse", "mae", "prop_in_95ci"))
 # Residual diagnostics
 plot_residuals(
  fit        = growth_2sex,
- data       = growth_data,
- age_col    = "age1",
+ data       = gdata,
+ age_col    = "age",
  length_col = "fl",
  type       = "all"
 )
@@ -274,14 +278,17 @@ plot_residuals(
 ## Complete Workflow Example
 
 ``` r
+# Load data
+data(growth_data)
+
 # ---- Stage 1: Birth ----
 birth_fit <- fit_bayesian_birth(
- embryo_lts = gulper_data[embryo == TRUE, fl],
- free_swimming_lts = gulper_data[embryo == FALSE, fl]
+ embryo_lts = growth_data[embryo == TRUE, fl],
+ free_swimming_lts = growth_data[embryo == FALSE, fl]
 )
 
 # ---- Stage 2: Maturity ----
-mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
+mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
 L50_fit <- fit_bayesian_maturity(
  maturity = "mat", lt = "fl", sex = "sex",
@@ -289,16 +296,16 @@ L50_fit <- fit_bayesian_maturity(
 )
 
 t50_fit <- fit_bayesian_maturity(
- maturity = "mat", age = "age1", sex = "sex",
- data = mat_data[!is.na(age1)], use_pooling = TRUE
+ maturity = "mat", age = "age", sex = "sex",
+ data = mat_data[!is.na(age)], use_pooling = TRUE
 )
 
 # ---- Stage 3: Growth ----
 growth_fit <- fit_bayesian_growth(
  lt        = "fl",
- age       = "age1",
+ age       = "age",
  sex       = "sex",
- data      = gulper_data[embryo == FALSE & !is.na(age1)],
+ data      = growth_data[embryo == FALSE & !is.na(age)],
  model     = "vb",
  k_based   = FALSE,
  birth_fit = birth_fit,
@@ -330,13 +337,13 @@ create_parameter_table(
 - [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
   — When and how to use hierarchical structure for imbalanced sex ratios
 - [Statistical Methods: Growth
-  Models](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#growth)
+  Models](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#growth)
   — Full mathematical derivation
 - [Statistical Methods: Maturity-Based
-  Parameterization](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#maturity-param)
+  Parameterization](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity-param)
   — The key innovation
 - [Statistical Methods: CV-Based
-  Priors](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#cv-priors)
+  Priors](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#cv-priors)
   — How priors are specified
 - [`plot_growth_curve()`](https://brian-j-moe.github.io/vitalBayes/reference/plot_growth_curve.md),
   [`compare_growth_models()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_growth_models.md)

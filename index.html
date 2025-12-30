@@ -180,15 +180,15 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Load example data (little gulper shark)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">gulper_data</span><span class="op">)</span></span>
+<span><span class="co"># Load example data (simulated von Bertalanffy growth data)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">growth_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
 <span><span class="co"># Stage 1: Birth Size</span></span>
 <span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
 <span><span class="va">birth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_birth.html">fit_bayesian_birth</a></span><span class="op">(</span></span>
-<span>  embryo_lts        <span class="op">=</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">TRUE</span>, <span class="va">fl</span><span class="op">]</span>,</span>
-<span>  free_swimming_lts <span class="op">=</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">fl</span><span class="op">]</span></span>
+<span>  embryo_lts        <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">TRUE</span>, <span class="va">fl</span><span class="op">]</span>,</span>
+<span>  free_swimming_lts <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">fl</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">birth_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b50"</span>, <span class="st">"transition_width"</span><span class="op">)</span><span class="op">)</span></span>
@@ -196,7 +196,7 @@
 <span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
 <span><span class="co"># Stage 2: Maturity</span></span>
 <span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
-<span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Length-at-maturity with partial pooling for imbalanced sexes</span></span>
 <span><span class="va">L50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
@@ -212,9 +212,9 @@
 <span><span class="co"># Age-at-maturity</span></span>
 <span><span class="va">t50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
 <span>  maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
-<span>  age         <span class="op">=</span> <span class="st">"age1"</span>,</span>
+<span>  age         <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data        <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age1</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  data        <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -223,9 +223,9 @@
 <span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt        <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age       <span class="op">=</span> <span class="st">"age1"</span>,</span>
+<span>  age       <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span>  sex       <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data      <span class="op">=</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age1</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  data      <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  model     <span class="op">=</span> <span class="st">"vb"</span>,</span>
 <span>  k_based   <span class="op">=</span> <span class="cn">FALSE</span>,        <span class="co"># Use maturity-based parameterization</span></span>
 <span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>,    <span class="co"># L₀ prior from birth model</span></span>
@@ -237,6 +237,46 @@
 <span><span class="va">growth_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Linf"</span>, <span class="st">"L0"</span>, <span class="st">"k"</span>, <span class="st">"Lmat"</span>, <span class="st">"tmat"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="example-datasets">Example Datasets<a class="anchor" aria-label="anchor" href="#example-datasets"></a>
+</h2>
+<p>vitalBayes includes three simulated datasets for demonstrations and testing:</p>
+<table class="table">
+<colgroup>
+<col width="19%">
+<col width="28%">
+<col width="30%">
+<col width="21%">
+</colgroup>
+<thead><tr class="header">
+<th>Dataset</th>
+<th>Description</th>
+<th>Sample Sizes</th>
+<th>Best For</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>growth_data</code></td>
+<td>Balanced, comprehensive</td>
+<td>189F, 176M, 26 embryos</td>
+<td>Main workflow, documentation</td>
+</tr>
+<tr class="even">
+<td><code>imbalanced_data</code></td>
+<td>Imbalanced sex ratio</td>
+<td>150F, 34M, 13 embryos</td>
+<td>Partial pooling demonstrations</td>
+</tr>
+<tr class="odd">
+<td><code>limited_data</code></td>
+<td>Small sample sizes</td>
+<td>24F, 18M, 5 embryos</td>
+<td>Prior sensitivity analysis</td>
+</tr>
+</tbody>
+</table>
+<p>All datasets share the same structure with columns: <code>sex</code>, <code>mat</code>, <code>fl</code>, <code>age</code>, <code>embryo</code>.</p>
+</div>
+<div class="section level2">
 <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
 </h2>
 <p>vitalBayes includes publication-ready plotting functions with a distinctive retro-wave color palette:</p>
@@ -244,8 +284,8 @@
 <code class="sourceCode R"><span><span class="co"># Growth curves with credible intervals</span></span>
 <span><span class="fu"><a href="reference/plot_growth_curve.html">plot_growth_curve</a></span><span class="op">(</span></span>
 <span>  fit        <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  data       <span class="op">=</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age1</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  age_col    <span class="op">=</span> <span class="st">"age1"</span>,</span>
+<span>  data       <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  age_col    <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span>  length_col <span class="op">=</span> <span class="st">"fl"</span>,</span>
 <span>  sex_col    <span class="op">=</span> <span class="st">"sex"</span></span>
 <span><span class="op">)</span></span>
@@ -265,7 +305,7 @@
 <span>  <span class="st">"von Bertalanffy"</span> <span class="op">=</span> <span class="va">vb_fit</span>,</span>
 <span>  <span class="st">"Gompertz"</span>        <span class="op">=</span> <span class="va">gomp_fit</span>,</span>
 <span>  <span class="st">"Logistic"</span>        <span class="op">=</span> <span class="va">logis_fit</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span></span>
+<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="colorblind-safe-palettes">Colorblind-Safe Palettes<a class="anchor" aria-label="anchor" href="#colorblind-safe-palettes"></a>
@@ -323,96 +363,21 @@
 <div class="section level3">
 <h3 id="id_1-maturity-based-growth-parameterization">1. Maturity-Based Growth Parameterization<a class="anchor" aria-label="anchor" href="#id_1-maturity-based-growth-parameterization"></a>
 </h3>
-<p><strong>The problem:</strong> Traditional growth models estimate the growth coefficient <em>k</em> directly, but <em>k</em> is notoriously difficult to estimate. It exhibits strong negative correlation with <em>L</em><sub>∞</sub> (often <em>r</em> &lt; -0.9), and in datasets that don’t extend to ages approaching asymptotic size, both parameters become poorly identified. Small changes in one can be compensated by changes in the other, inflating posterior uncertainty.</p>
-<p><strong>Our solution:</strong> Rather than estimating <em>k</em> directly, vitalBayes derives it from observable maturity milestones. The key insight is that any growth curve must pass through the point (<em>t</em><sub>mat</sub>, <em>L</em><sub>mat</sub>)—the age and length at which an individual reaches maturity. We solve each growth equation for <em>k</em>:</p>
-<div class="section level4">
-<h4 id="von-bertalanffy">von Bertalanffy<a class="anchor" aria-label="anchor" href="#von-bertalanffy"></a>
-</h4>
-<p>At maturity, <span class="math inline">\(L(t_{mat}) = L_{mat}\)</span>: <span class="math display">\[L_{mat} = L_\infty - (L_\infty - L_0) e^{-k \cdot t_{mat}}\]</span></p>
-<p>Solving for <em>k</em>: <span class="math display">\[k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
-</div>
-<div class="section level4">
-<h4 id="gompertz">Gompertz<a class="anchor" aria-label="anchor" href="#gompertz"></a>
-</h4>
-<p>At maturity: <span class="math display">\[L_{mat} = L_\infty \exp\left[-\ln\left(\frac{L_\infty}{L_0}\right) e^{-k \cdot t_{mat}}\right]\]</span></p>
-<p>Solving for <em>k</em>: <span class="math display">\[k = \frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_0)}{\ln(L_\infty / L_{mat})}\right)\]</span></p>
-</div>
-<div class="section level4">
-<h4 id="logistic">Logistic<a class="anchor" aria-label="anchor" href="#logistic"></a>
-</h4>
-<p>At maturity: <span class="math display">\[L_{mat} = \frac{L_\infty}{1 + \left(\frac{L_\infty}{L_0} - 1\right) e^{-k \cdot t_{mat}}}\]</span></p>
-<p>Solving for <em>k</em>: <span class="math display">\[k = \frac{1}{t_{mat}} \ln\left(\frac{L_{mat}(L_\infty - L_0)}{L_0(L_\infty - L_{mat})}\right)\]</span></p>
-<p><strong>Why this matters:</strong></p>
-<table class="table">
-<colgroup>
-<col width="21%">
-<col width="47%">
-<col width="31%">
-</colgroup>
-<thead><tr class="header">
-<th>Aspect</th>
-<th>Traditional (<em>k</em>-based)</th>
-<th>Maturity-based</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Parameter correlation</td>
-<td>Strong (<em>L</em><sub>∞</sub>, <em>k</em> ~ -0.9)</td>
-<td>Reduced (maturity params observable)</td>
-</tr>
-<tr class="even">
-<td>Data requirements</td>
-<td>Ages near asymptote</td>
-<td>Maturity data within observed range</td>
-</tr>
-<tr class="odd">
-<td>Prior information</td>
-<td>Difficult to specify</td>
-<td>Informed by maturity analysis</td>
-</tr>
-<tr class="even">
-<td>Uncertainty propagation</td>
-<td>Independent</td>
-<td>Flows from upstream models</td>
-</tr>
-<tr class="odd">
-<td>Biological coherence</td>
-<td>Not enforced</td>
-<td>Curve passes through maturity</td>
-</tr>
-</tbody>
-</table>
-<p>The maturity parameters (<em>L</em><sub>mat</sub>, <em>t</em><sub>mat</sub>) typically fall well within the observed data range, making them far more identifiable than asymptotic parameters. By anchoring the growth curve at this observable milestone, we transform a poorly-identified parameter (<em>k</em>) into a derived quantity constrained by well-informed inputs.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Maturity-based parameterization (recommended)</span></span>
-<span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt      <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age     <span class="op">=</span> <span class="st">"age1"</span>,</span>
-<span>  sex     <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data    <span class="op">=</span> <span class="va">growth_data</span>,</span>
-<span>  k_based <span class="op">=</span> <span class="cn">FALSE</span>,      <span class="co"># Derive k from maturity parameters</span></span>
-<span>  L50_fit <span class="op">=</span> <span class="va">L50_fit</span>,    <span class="co"># Posterior for Lmat</span></span>
-<span>  t50_fit <span class="op">=</span> <span class="va">t50_fit</span>     <span class="co"># Posterior for tmat</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># k is now a derived quantity with appropriate uncertainty</span></span>
-<span><span class="va">growth_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"k"</span><span class="op">)</span></span></code></pre></div>
-</div>
+<p>Traditional growth models estimate <em>k</em> directly, but <em>k</em> and <em>L</em><sub>∞</sub> are strongly negatively correlated (often <em>r</em> &lt; −0.9), making both poorly identified when data don’t extend to near-asymptotic sizes.</p>
+<p><strong>Our solution:</strong> Derive <em>k</em> from observable maturity milestones:</p>
+<p><span class="math display">\[k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
+<p>This parameterization: - Uses quantities that fall within the data range (<em>L</em><sub>mat</sub>, <em>t</em><sub>mat</sub>) - Ensures biological consistency: the growth curve passes through the maturity point - Propagates uncertainty from upstream maturity models</p>
 </div>
 <div class="section level3">
 <h3 id="id_2-probit-link-for-threshold-models">2. Probit Link for Threshold Models<a class="anchor" aria-label="anchor" href="#id_2-probit-link-for-threshold-models"></a>
 </h3>
-<p><strong>The problem:</strong> Maturity and birth-status models are typically fitted using logistic regression (logit link). While computationally convenient, the logit link implies that the log-odds of maturity change linearly with size—a mathematical abstraction without clear biological meaning.</p>
-<p><strong>Our solution:</strong> vitalBayes uses the probit link, which has a natural <strong>threshold-crossing interpretation</strong>. The probit model assumes there exists a latent continuous variable (developmental readiness, reproductive investment) that is normally distributed across individuals. An individual transitions when this latent variable crosses a threshold:</p>
-<p><span class="math display">\[P(\text{mature}_i) = \Phi[\beta \cdot (L_i - L_{50})]\]</span></p>
-<p>where Φ(·) is the standard normal CDF.</p>
-<p><strong>Biological justification:</strong> Developmental readiness is influenced by many factors—maternal condition, temperature, food availability, genetic variation, sibling competition (for embryos). The central limit theorem suggests that the aggregate effect of many small, independent factors tends toward normality. The probit link formalizes this intuition.</p>
-<p><strong>Practical implications:</strong> - The slope parameter β has units of inverse length (or inverse time), representing how quickly transition probability changes - The transition width (5% to 95% probability) equals 3.29/β, providing an intuitive measure of individual variation - Derived quantities (<em>L</em><sub>05</sub>, <em>L</em><sub>95</sub>) have direct biological interpretation</p>
+<p>Both birth and maturity models use a probit link function rather than the more common logit. The probit link assumes that underlying developmental readiness is normally distributed across individuals. An individual transitions (births or matures) when this latent readiness crosses a threshold.</p>
+<p><strong>Why probit?</strong> - <strong>Biological interpretation:</strong> Normal variation in developmental readiness is biologically plausible - <strong>Consistent reporting:</strong> The transition width (<em>x</em><sub>95</sub> − <em>x</em><sub>05</sub>) has units of the predictor (cm or years) - Derived quantities (<em>L</em><sub>05</sub>, <em>L</em><sub>95</sub>) have direct biological interpretation</p>
 </div>
 <div class="section level3">
 <h3 id="id_3-partial-pooling-for-imbalanced-sex-ratios">3. Partial Pooling for Imbalanced Sex Ratios<a class="anchor" aria-label="anchor" href="#id_3-partial-pooling-for-imbalanced-sex-ratios"></a>
 </h3>
-<p><strong>The problem:</strong> Elasmobranch sampling frequently yields imbalanced sex ratios. A dataset might contain 150 females but only 23 males. Fitting separate models produces: - Wide, unreliable credible intervals for the sparse sex - Estimates driven by a few influential observations<br>
+<p><strong>The problem:</strong> Elasmobranch sampling frequently yields imbalanced sex ratios. A dataset might contain 150 females but only 34 males. Fitting separate models produces: - Wide, unreliable credible intervals for the sparse sex - Estimates driven by a few influential observations<br>
 - Inefficient use of information (both sexes are the same species)</p>
 <p>Complete pooling (ignoring sex) is biologically unrealistic. No pooling (fully separate) wastes information.</p>
 <p><strong>Our solution:</strong> Partial pooling models sex-specific parameters as draws from a common distribution:</p>
@@ -425,13 +390,15 @@
 </ul>
 <p><strong>Non-centered parameterization:</strong> We use the non-centered form (estimating η rather than θ directly) because it dramatically improves MCMC sampling when τ is small. When between-sex variation is minimal, centered parameterizations create a “funnel” geometry that causes divergent transitions.</p>
 <p><strong>Half-normal prior on τ:</strong> We place τ ~ Half-Normal(0, σ<sub>τ</sub>) rather than the commonly-used half-Cauchy. The half-Cauchy’s heavy tails can pull τ toward implausibly large values, especially with only two groups (sexes). The half-normal provides gentle regularization while still allowing substantial between-sex variation when warranted.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Enable partial pooling</span></span>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Enable partial pooling (especially useful for imbalanced data)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">imbalanced_data</span><span class="op">)</span>  <span class="co"># 150 females, 34 males</span></span>
+<span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
 <span>  maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
 <span>  lt          <span class="op">=</span> <span class="st">"fl"</span>, </span>
 <span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data        <span class="op">=</span> <span class="va">mat_data</span>,</span>
+<span>  data        <span class="op">=</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
 <span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,    <span class="co"># Hierarchical structure</span></span>
 <span>  prior_tau   <span class="op">=</span> <span class="fl">0.5</span>      <span class="co"># Half-normal scale (on log scale)</span></span>
 <span><span class="op">)</span></span>
@@ -451,20 +418,20 @@
 <p><span class="math display">\[L_\infty = L_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu_\nu, \sigma_\nu)\]</span></p>
 <p>This ensures <em>L</em><sub>∞</sub> always exceeds the maximum observed length while still allowing uncertainty about <em>how much</em> it exceeds it.</p>
 <p><strong>Biological rationale:</strong> The largest individual we’ve observed represents a lower bound on the species’ potential size. Natural mortality, fishing pressure, and sampling limitations virtually guarantee we haven’t captured the true maximum. Our prior should encode this biological reality rather than allowing impossible values.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Lmax is auto-detected from data</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age  <span class="op">=</span> <span class="st">"age1"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span></span>
+<span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co"># Message: "Lmax from data: 98.5 cm (female), 87.2 cm (male)"</span></span>
 <span></span>
 <span><span class="co"># Or specify manually</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age  <span class="op">=</span> <span class="st">"age1"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span>,</span>
+<span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
 <span>  Lmax <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">90</span><span class="op">)</span>  <span class="co"># Female, Male</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -476,11 +443,11 @@
 <p>For a parameter θ with prior mean μ and CV = c: - The prior SD on the original scale is σ<sub>θ</sub> = μ · c - Approximately 95% of prior mass falls within μ ± 2μc</p>
 <p><strong>Example:</strong> Setting <code>CV_Linf = 0.2</code> for a species with expected <em>L</em><sub>∞</sub> ≈ 100 cm means: - Prior SD ≈ 20 cm - 95% prior interval ≈ 60–140 cm</p>
 <p>This is far more interpretable than specifying σ = 0.2 on log(<em>L</em><sub>∞</sub>).</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age  <span class="op">=</span> <span class="st">"age1"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span>,</span>
+<span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
 <span>  </span>
 <span>  <span class="co"># Intuitive CV-based priors</span></span>
 <span>  CV_Linf <span class="op">=</span> <span class="fl">0.20</span>,    <span class="co"># 20% uncertainty on asymptotic length</span></span>
@@ -501,16 +468,16 @@ Maturity (L₅₀) ──  prior on Lmat for growth model
 Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 <p>When you pass <code>birth_fit</code>, <code>L50_fit</code>, and <code>t50_fit</code> to <code><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth()</a></code>, the function extracts posterior summaries and constructs informative priors. Uncertainty from upstream models propagates naturally into growth parameter estimates.</p>
 <p><strong>Why this matters:</strong> - <strong>Biological coherence:</strong> Growth curves are constrained to pass through maturity milestones - <strong>Proper uncertainty:</strong> Imprecise maturity estimates → wider growth parameter CIs - <strong>Information efficiency:</strong> All available data inform the final estimates - <strong>Reproducibility:</strong> The entire workflow is encapsulated in a few function calls</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Complete integrated workflow</span></span>
 <span><span class="va">birth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_birth.html">fit_bayesian_birth</a></span><span class="op">(</span><span class="va">embryo_lts</span>, <span class="va">freeswim_lts</span><span class="op">)</span></span>
 <span><span class="va">L50_fit</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span>maturity <span class="op">=</span> <span class="st">"mat"</span>, lt <span class="op">=</span> <span class="st">"fl"</span>, <span class="va">...</span><span class="op">)</span></span>
-<span><span class="va">t50_fit</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span>maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age1"</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="va">t50_fit</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span>maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age"</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt        <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age       <span class="op">=</span> <span class="st">"age1"</span>,</span>
-<span>  data      <span class="op">=</span> <span class="va">growth_data</span>,</span>
+<span>  age       <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  data      <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
 <span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>,  <span class="co"># Informs L₀</span></span>
 <span>  L50_fit   <span class="op">=</span> <span class="va">L50_fit</span>,    <span class="co"># Informs Lmat</span></span>
 <span>  t50_fit   <span class="op">=</span> <span class="va">t50_fit</span>,    <span class="co"># Informs tmat</span></span>
@@ -521,7 +488,7 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 <h3 id="id_7-automatic-multilingual-sex-coding">7. Automatic Multilingual Sex Coding<a class="anchor" aria-label="anchor" href="#id_7-automatic-multilingual-sex-coding"></a>
 </h3>
 <p>vitalBayes automatically detects sex coding in 11+ languages:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># All of these work automatically:</span></span>
 <span><span class="co"># English:    "F"/"M", "Female"/"Male"</span></span>
 <span><span class="co"># Spanish:    "H"/"M", "Hembra"/"Macho"</span></span>
@@ -574,7 +541,7 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 </tr>
 </tbody>
 </table>
-<p>For comprehensive statistical background, see the <a href="articles/vitalBayes_stats_explained.html">Statistical Methods Guide</a>.</p>
+<p>For comprehensive statistical background, see the <a href="articles/Understanding_vitalBayes.html">Statistical Methods Guide</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>

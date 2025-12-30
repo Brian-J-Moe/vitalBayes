@@ -125,10 +125,11 @@ individuals are mature.</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">gulper_data</span><span class="op">)</span></span>
+<span><span class="co"># Load simulated data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">growth_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Filter to free-swimming females only</span></span>
-<span><span class="va">female_data</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="va">sex</span> <span class="op">==</span> <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="va">female_data</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="va">sex</span> <span class="op">==</span> <span class="st">"female"</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Fit length-at-maturity</span></span>
 <span><span class="va">L50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
@@ -148,7 +149,7 @@ individuals are mature.</p>
 <p>When sex data are available, fit both sexes simultaneously:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Prepare data (both sexes)</span></span>
-<span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Two-sex model with partial pooling (recommended)</span></span>
 <span><span class="va">L50_fit_2sex</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
@@ -169,7 +170,7 @@ individuals are mature.</p>
 <h3 id="why-partial-pooling">Why Partial Pooling?<a class="anchor" aria-label="anchor" href="#why-partial-pooling"></a>
 </h3>
 <p>Elasmobranch datasets often have imbalanced sex ratios. With 150
-females but only 23 males, the male estimate would have very wide
+females but only 34 males, the male estimate would have very wide
 credible intervals if fit independently.</p>
 <p><strong>Partial pooling</strong> addresses this by modeling
 sex-specific parameters as draws from a common distribution:</p>
@@ -184,7 +185,7 @@ different → estimates stay separated</li>
 <li>Sparse sex → borrows strength from the other sex</li>
 </ul>
 <p>For a comprehensive treatment, see
-<code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code> or the <a href="vitalBayes_stats_explained.html#maturity">Partial Pooling
+<code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code> or the <a href="Understanding_vitalBayes.html#maturity">Partial Pooling
 section</a> in the Statistical Methods guide.</p>
 </div>
 </div>
@@ -193,13 +194,13 @@ section</a> in the Statistical Methods guide.</p>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Filter to individuals with both maturity and age data</span></span>
-<span><span class="va">mat_aged</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age1</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">mat_aged</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Fit both models simultaneously</span></span>
 <span><span class="va">mat_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
 <span> maturity <span class="op">=</span> <span class="st">"mat"</span>,</span>
 <span> lt       <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span> age      <span class="op">=</span> <span class="st">"age1"</span>,</span>
+<span> age      <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span> sex      <span class="op">=</span> <span class="st">"sex"</span>,</span>
 <span> data     <span class="op">=</span> <span class="va">mat_aged</span>,</span>
 <span> use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -217,6 +218,7 @@ section</a> in the Statistical Methods guide.</p>
 <code class="sourceCode R"><span><span class="co"># All of these work automatically:</span></span>
 <span><span class="co"># sex = c("F", "M")           # English</span></span>
 <span><span class="co"># sex = c("Female", "Male")   # English full</span></span>
+<span><span class="co"># sex = c("female", "male")   # lowercase (used in simulated data)</span></span>
 <span><span class="co"># sex = c(1, 2)               # Numeric (1=female, 2=male)</span></span>
 <span><span class="co"># sex = c("Hembra", "Macho")  # Spanish</span></span>
 <span><span class="co"># sex = c("Femelle", "Mâle")  # French</span></span>
@@ -267,7 +269,7 @@ section</a> in the Statistical Methods guide.</p>
 <span> fit        <span class="op">=</span> <span class="va">L50_fit_2sex</span>,</span>
 <span> type       <span class="op">=</span> <span class="st">"length"</span>,</span>
 <span> data       <span class="op">=</span> <span class="va">mat_data</span>,</span>
-<span> sex_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span> <span class="op">=</span> <span class="st">"Femelle"</span>, <span class="st">"2"</span> <span class="op">=</span> <span class="st">"Mâle"</span><span class="op">)</span>,</span>
+<span> sex_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"female"</span> <span class="op">=</span> <span class="st">"Femelle"</span>, <span class="st">"male"</span> <span class="op">=</span> <span class="st">"Mâle"</span><span class="op">)</span>,</span>
 <span> x_lab      <span class="op">=</span> <span class="st">"Longueur (cm)"</span>,</span>
 <span> y_lab      <span class="op">=</span> <span class="st">"Probabilité de maturité"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -292,7 +294,7 @@ priors for the maturity-based growth parameterization:</p>
 <code class="sourceCode R"><span><span class="co"># Fit t50 for age-at-maturity</span></span>
 <span><span class="va">t50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
 <span> maturity <span class="op">=</span> <span class="st">"mat"</span>,</span>
-<span> age      <span class="op">=</span> <span class="st">"age1"</span>,</span>
+<span> age      <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span> sex      <span class="op">=</span> <span class="st">"sex"</span>,</span>
 <span> data     <span class="op">=</span> <span class="va">mat_aged</span></span>
 <span><span class="op">)</span></span>
@@ -300,9 +302,9 @@ priors for the maturity-based growth parameterization:</p>
 <span><span class="co"># Pass to growth model</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span> lt      <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span> age     <span class="op">=</span> <span class="st">"age1"</span>,</span>
+<span> age     <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span> sex     <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data    <span class="op">=</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age1</span><span class="op">)</span><span class="op">]</span>,</span>
+<span> data    <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
 <span> k_based <span class="op">=</span> <span class="cn">FALSE</span>,           <span class="co"># Use maturity-based parameterization</span></span>
 <span> L50_fit <span class="op">=</span> <span class="va">L50_fit_2sex</span>,    <span class="co"># Length-at-maturity fit</span></span>
 <span> t50_fit <span class="op">=</span> <span class="va">t50_fit</span>          <span class="co"># Age-at-maturity fit</span></span>
@@ -350,11 +352,11 @@ priors for the maturity-based growth parameterization:</p>
 <code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code> — Detailed treatment of
 hierarchical modeling for imbalanced data</li>
 <li>
-<a href="vitalBayes_stats_explained.html#maturity">Statistical
+<a href="Understanding_vitalBayes.html#maturity">Statistical
 Methods: Maturity Estimation</a> — Full mathematical derivation</li>
 <li>
-<a href="vitalBayes_stats_explained.html#probit">Statistical
-Methods: Probit Link</a> — Why probit over logit</li>
+<a href="Understanding_vitalBayes.html#probit">Statistical Methods:
+Probit Link</a> — Why probit over logit</li>
 <li>
 <code><a href="../reference/plot_maturity_ogive.html">plot_maturity_ogive()</a></code> — Visualization</li>
 <li>

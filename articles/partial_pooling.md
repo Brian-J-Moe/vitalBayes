@@ -3,24 +3,27 @@
 ## The Problem: Imbalanced Sex Ratios
 
 Elasmobranch datasets frequently have unequal sample sizes between
-sexes. In the gulper shark data, we have 150 females but only 23 males
-with maturity data. Fitting separate models for each sex leads to: -
-**Wide credible intervals** for the sparse sex (males) - **Unstable
-estimates** driven by a few influential observations - **Inefficient use
-of information** — we ignore the fact that both sexes are *the same
-species*
+sexes. The `imbalanced_data` example dataset illustrates this common
+scenario with 150 females but only 34 males. Fitting separate models for
+each sex leads to:
+
+- **Wide credible intervals** for the sparse sex (males)
+- **Unstable estimates** driven by a few influential observations
+- **Inefficient use of information** — we ignore the fact that both
+  sexes are *the same species*
 
 ``` r
 library(vitalBayes)
 library(data.table)
 
-data(gulper_data)
-mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
+# Load the imbalanced dataset (150F, 34M, 13 embryos)
+data(imbalanced_data)
 
-mat_data[, .N, by = sex]
+# Check the sex ratio
+imbalanced_data[embryo == FALSE, .N, by = sex]
 #    sex   N
-# 1:   1 150  (females)
-# 2:   2  23  (males)
+# 1: female  150
+# 2: male     34
 ```
 
 ## Three Estimation Strategies
@@ -91,6 +94,9 @@ where \\\sigma\_\tau\\ is set via the `prior_tau` argument. This prior:
 ### Enabling Partial Pooling
 
 ``` r
+# Prepare maturity data from the imbalanced dataset
+mat_data <- imbalanced_data[embryo == FALSE & !is.na(mat)]
+
 # With partial pooling (recommended for imbalanced data)
 L50_pooled <- fit_bayesian_maturity(
  maturity    = "mat",
@@ -164,14 +170,15 @@ library(ggplot2)
 draws_pooled <- L50_pooled$draws("L50", format = "df")
 draws_unpooled <- L50_unpooled$draws("L50", format = "df")
 
-# Compare male estimates
+# Compare male estimates (the sparse sex)
 ggplot() +
  geom_density(data = draws_unpooled, aes(x = `L50[2]`, fill = "Unpooled"), 
               alpha = 0.5) +
  geom_density(data = draws_pooled, aes(x = `L50[2]`, fill = "Pooled"), 
               alpha = 0.5) +
  labs(x = "Male L50 (cm)", y = "Density", 
-      title = "Effect of Partial Pooling on Male L50 Estimate") +
+      title = "Effect of Partial Pooling on Male L50 Estimate",
+      subtitle = "Note the narrower credible interval with pooling") +
  theme_vital()
 ```
 
@@ -179,14 +186,16 @@ ggplot() +
 
 ### Recommended (use_pooling = TRUE)
 
-- **Imbalanced sample sizes** between sexes
+- **Imbalanced sample sizes** between sexes (like the `imbalanced_data`
+  example)
 - **Moderate expected differences** between sexes
 - **Sparse data** overall
 - **Downstream use** of estimates (growth models, population models)
 
 ### Optional (use_pooling = FALSE)
 
-- **Balanced sample sizes** and adequate data for both sexes
+- **Balanced sample sizes** and adequate data for both sexes (like the
+  `growth_data` example)
 - **Strong prior belief** that sexes are very different
 - **Exploratory analysis** to assess sex differences without shrinkage
 
@@ -195,12 +204,15 @@ ggplot() +
 The same principles apply to growth parameters:
 
 ``` r
+# Prepare growth data from imbalanced dataset
+gdata <- imbalanced_data[embryo == FALSE & !is.na(age)]
+
 # Partial pooling on Linf, L0, k, Lmat, tmat
 growth_pooled <- fit_bayesian_growth(
  lt          = "fl",
- age         = "age1",
+ age         = "age",
  sex         = "sex",
- data        = growth_data,
+ data        = gdata,
  use_pooling = TRUE,
  prior_tau   = 0.2     # Tighter for growth (less between-sex variation expected)
 )
@@ -278,15 +290,17 @@ pooling.
 
 For two-sex elasmobranch models with typical sample sizes, yes. The only
 case to avoid pooling is when you have abundant, balanced data for both
-sexes AND strong prior belief in very different parameters.
+sexes (like the `growth_data` example with 189F, 176M) AND strong prior
+belief in very different parameters.
 
 ## Example: Full Workflow with Pooling
 
 ``` r
 # ---- Data Prep ----
-data(gulper_data)
-mat_data <- gulper_data[embryo == FALSE & !is.na(mat)]
-growth_data <- gulper_data[embryo == FALSE & !is.na(age1)]
+# Use the imbalanced dataset to demonstrate pooling benefits
+data(imbalanced_data)
+mat_data <- imbalanced_data[embryo == FALSE & !is.na(mat)]
+gdata <- imbalanced_data[embryo == FALSE & !is.na(age)]
 
 # ---- Maturity with Pooling ----
 L50_fit <- fit_bayesian_maturity(
@@ -297,16 +311,16 @@ L50_fit <- fit_bayesian_maturity(
 )
 
 t50_fit <- fit_bayesian_maturity(
- maturity = "mat", age = "age1", sex = "sex",
- data = mat_data[!is.na(age1)],
+ maturity = "mat", age = "age", sex = "sex",
+ data = mat_data[!is.na(age)],
  use_pooling = TRUE,
  prior_tau = 0.5
 )
 
 # ---- Growth with Pooling ----
 growth_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex",
- data = growth_data,
+ lt = "fl", age = "age", sex = "sex",
+ data = gdata,
  k_based = FALSE,
  L50_fit = L50_fit,
  t50_fit = t50_fit,
@@ -320,6 +334,24 @@ growth_fit$summary(c("Linf", "k"))
 
 # Credible sex differences
 growth_fit$summary(c("Linf_diff", "k_diff"))
+```
+
+## Comparing Datasets: Balanced vs Imbalanced
+
+The package includes datasets that illustrate when pooling matters most:
+
+``` r
+# Imbalanced data (150F, 34M) - pooling helps
+data(imbalanced_data)
+imbalanced_data[embryo == FALSE, .N, by = sex]
+
+# Balanced data (189F, 176M) - pooling still works but less critical
+data(growth_data)
+growth_data[embryo == FALSE, .N, by = sex]
+
+# Limited data (24F, 18M) - pooling essential for both sexes
+data(limited_data)
+limited_data[embryo == FALSE, .N, by = sex]
 ```
 
 ## Summary
@@ -338,11 +370,11 @@ recommended default** when fitting two-sex models.
 ## See Also
 
 - [Statistical Methods: Partial
-  Pooling](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#maturity)
+  Pooling](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity)
   — Full mathematical derivation with non-centered parameterization
   details
 - [Statistical Methods: CV-Based
-  Priors](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#cv-priors)
+  Priors](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#cv-priors)
   — How prior_tau works
 - [`vignette("fit_bayesian_maturity")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md)
   — Maturity model fitting

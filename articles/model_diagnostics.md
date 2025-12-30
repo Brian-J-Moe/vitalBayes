@@ -17,14 +17,18 @@ Before interpreting results, verify that MCMC chains have converged.
 library(vitalBayes)
 library(data.table)
 
-data(gulper_data)
+# Load simulated data
+data(growth_data)
+
+# Prepare growth data
+gdata <- growth_data[embryo == FALSE & !is.na(age)]
 
 # Fit a model
 growth_fit <- fit_bayesian_growth(
  lt = "fl",
- age = "age1",
+ age = "age",
  sex = "sex",
- data = gulper_data[embryo == FALSE & !is.na(age1)],
+ data = gdata,
  model = "vb"
 )
 
@@ -50,20 +54,20 @@ growth_fit$summary(c("Linf", "L0", "k", "sigma"))
 ``` r
 # Increase adapt_delta for divergences
 growth_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", data = growth_data,
+ lt = "fl", age = "age", data = gdata,
  adapt_delta = 0.99  # Default is 0.8-0.95
 )
 
 # Increase iterations for low ESS
 growth_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", data = growth_data,
+ lt = "fl", age = "age", data = gdata,
  iter_warmup = 2000,
  iter_sampling = 2000
 )
 
 # Use more informative priors if parameters are poorly identified
 growth_fit <- fit_bayesian_growth(
- lt = "fl", age = "age1", data = growth_data,
+ lt = "fl", age = "age", data = gdata,
  CV_Linf = 0.15,  # Tighter prior
  CV_k = 0.30      # Tighter prior
 )
@@ -78,13 +82,40 @@ Do model predictions match observed data patterns?
 ### Using ppc_summary()
 
 ``` r
+# First fit all required models
+birth_fit <- fit_bayesian_birth(
+ embryo_lts = growth_data[embryo == TRUE, fl],
+ free_swimming_lts = growth_data[embryo == FALSE, fl]
+)
+
+mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
+
+L50_fit <- fit_bayesian_maturity(
+ maturity = "mat", lt = "fl", sex = "sex", data = mat_data
+)
+
+t50_fit <- fit_bayesian_maturity(
+ maturity = "mat", age = "age", sex = "sex", 
+ data = mat_data[!is.na(age)]
+)
+
+growth_vb <- fit_bayesian_growth(
+ lt = "fl", age = "age", sex = "sex", data = gdata,
+ model = "vb", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+)
+
+growth_gomp <- fit_bayesian_growth(
+ lt = "fl", age = "age", sex = "sex", data = gdata,
+ model = "gompertz", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+)
+
 # Comprehensive PPC for entire workflow
 ppc <- ppc_summary(
  birth_fit = birth_fit,
  L50_fit = L50_fit,
  t50_fit = t50_fit,
  growth_fits = list(vb = growth_vb, gomp = growth_gomp),
- data = gulper_data,
+ data = growth_data,
  embryo_col = "embryo"
 )
 
@@ -126,8 +157,8 @@ growth_fit$summary(c(
 # Visual residual checks
 plot_residuals(
  fit = growth_fit,
- data = growth_data,
- age_col = "age1",
+ data = gdata,
+ age_col = "age",
  length_col = "fl",
  type = "all"
 )
@@ -157,6 +188,12 @@ importance sampling (PSIS-LOO) for efficient computation.
 ### Computing LOO
 
 ``` r
+# Fit additional models for comparison
+growth_logis <- fit_bayesian_growth(
+ lt = "fl", age = "age", sex = "sex", data = gdata,
+ model = "logistic", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+)
+
 # Compute LOO for each model
 loo_vb <- compute_loo(growth_vb)
 loo_gomp <- compute_loo(growth_gomp)
@@ -208,16 +245,20 @@ For two-sex models, compare partial pooling vs no pooling to assess
 whether hierarchical structure improves estimation:
 
 ``` r
+# Use the imbalanced dataset where pooling matters most
+data(imbalanced_data)
+gdata_imbal <- imbalanced_data[embryo == FALSE & !is.na(age)]
+
 # Fit both versions
 growth_pooled <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex",
- data = growth_data,
+ lt = "fl", age = "age", sex = "sex",
+ data = gdata_imbal,
  use_pooling = TRUE
 )
 
 growth_unpooled <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex",
- data = growth_data,
+ lt = "fl", age = "age", sex = "sex",
+ data = gdata_imbal,
  use_pooling = FALSE
 )
 
@@ -271,15 +312,19 @@ data.table::fwrite(param_table, "Table1_parameters.csv")
 ## Complete Diagnostic Workflow
 
 ``` r
+# ---- Load data ----
+data(growth_data)
+gdata <- growth_data[embryo == FALSE & !is.na(age)]
+
 # ---- 1. Fit Models ----
 growth_vb <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex",
- data = growth_data, model = "vb"
+ lt = "fl", age = "age", sex = "sex",
+ data = gdata, model = "vb"
 )
 
 growth_gomp <- fit_bayesian_growth(
- lt = "fl", age = "age1", sex = "sex",
- data = growth_data, model = "gompertz"
+ lt = "fl", age = "age", sex = "sex",
+ data = gdata, model = "gompertz"
 )
 
 # ---- 2. Check Convergence ----
@@ -288,7 +333,7 @@ growth_vb$summary()[, c("variable", "rhat", "ess_bulk")]
 
 # ---- 3. Posterior Predictive Checks ----
 growth_vb$summary(c("rmse", "mae", "prop_in_95ci"))
-plot_residuals(growth_vb, growth_data, type = "all")
+plot_residuals(growth_vb, gdata, type = "all")
 
 # ---- 4. Model Comparison ----
 loo_vb <- compute_loo(growth_vb)
@@ -327,10 +372,10 @@ When models are equivalent by LOO, prefer:
 - [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
   — Detailed treatment of hierarchical modeling and shrinkage
 - [Statistical Methods: Model
-  Assessment](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#assessment)
+  Assessment](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#assessment)
   — LOO-CV theory and interpretation
 - [Statistical Methods: Integrated
-  Workflow](https://brian-j-moe.github.io/vitalBayes/articles/vitalBayes_stats_explained.html#workflow)
+  Workflow](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#workflow)
   — How stages connect
 - [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)
   — Growth model fitting details

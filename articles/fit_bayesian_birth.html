@@ -120,7 +120,7 @@ sharpness of the transition</li>
 <p><strong>Why probit?</strong> The probit link assumes that underlying
 developmental readiness is normally distributed across individuals—a
 biologically intuitive interpretation. For a detailed derivation, see
-the <a href="vitalBayes_stats_explained.html#probit">Probit Link
+the <a href="Understanding_vitalBayes.html#probit">Probit Link
 section</a> in the Statistical Methods guide.</p>
 </div>
 <div class="section level2">
@@ -130,12 +130,12 @@ section</a> in the Statistical Methods guide.</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Load example data</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">gulper_data</span><span class="op">)</span></span>
+<span><span class="co"># Load example data (simulated von Bertalanffy growth data)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">growth_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Separate embryo and free-swimming lengths</span></span>
-<span><span class="va">embryo_lengths</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">TRUE</span>, <span class="va">fl</span><span class="op">]</span></span>
-<span><span class="va">freeswim_lengths</span> <span class="op">&lt;-</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">fl</span><span class="op">]</span></span>
+<span><span class="va">embryo_lengths</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">TRUE</span>, <span class="va">fl</span><span class="op">]</span></span>
+<span><span class="va">freeswim_lengths</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">fl</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Fit the birth model</span></span>
 <span><span class="va">birth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_birth.html">fit_bayesian_birth</a></span><span class="op">(</span></span>
@@ -205,10 +205,27 @@ growth models:</p>
 <code class="sourceCode R"><span><span class="co"># The birth fit can be passed directly to growth models</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span> lt        <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span> age       <span class="op">=</span> <span class="st">"age1"</span>, </span>
+<span> age       <span class="op">=</span> <span class="st">"age"</span>, </span>
 <span> sex       <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data      <span class="op">=</span> <span class="va">gulper_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
+<span> data      <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
 <span> birth_fit <span class="op">=</span> <span class="va">birth_fit</span>  <span class="co"># Automatically extracts L0 prior</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="working-with-limited-data">Working with Limited Data<a class="anchor" aria-label="anchor" href="#working-with-limited-data"></a>
+</h2>
+<p>For datasets with few embryos, consider using the
+<code>limited_data</code> example dataset to explore prior
+sensitivity:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Load the small sample dataset (24F, 18M, 5 embryos)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">limited_data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># With sparse embryo data, priors become more influential</span></span>
+<span><span class="va">birth_fit_limited</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_birth.html">fit_bayesian_birth</a></span><span class="op">(</span></span>
+<span> embryo_lts        <span class="op">=</span> <span class="va">limited_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">TRUE</span>, <span class="va">fl</span><span class="op">]</span>,</span>
+<span> free_swimming_lts <span class="op">=</span> <span class="va">limited_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">fl</span><span class="op">]</span>,</span>
+<span> cv_b50            <span class="op">=</span> <span class="fl">0.2</span>  <span class="co"># Tighter prior when data are sparse</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -244,7 +261,7 @@ growth models:</p>
 </h2>
 <ul>
 <li>
-<a href="vitalBayes_stats_explained.html#birth">Statistical Methods:
+<a href="Understanding_vitalBayes.html#birth">Statistical Methods:
 Birth Size Estimation</a> — Full mathematical derivation</li>
 <li>
 <code><a href="../reference/plot_birth_ogive.html">plot_birth_ogive()</a></code> — Visualization function</li>
