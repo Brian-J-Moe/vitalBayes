@@ -163,14 +163,14 @@
 <h2 id="the-three-stage-workflow">The Three-Stage Workflow<a class="anchor" aria-label="anchor" href="#the-three-stage-workflow"></a>
 </h2>
 <p>vitalBayes implements an integrated workflow where information flows forward through life history stages:</p>
-<pre><code>        Birth      ───▶      Maturity      ───▶      Growth
-        (b₅₀)               (L₅₀, t₅₀)              (L∞, k, L₀)
+<pre><code>  Birth      ───▶      Maturity      ───▶      Growth
+  (b₅₀)               (L₅₀, t₅₀)              (L∞, k, L₀)
 
-          │                     │                       │
-          │                     │                       │
-          ▼                     ▼                       ▼
-      Informs L₀             Informs               Derived from
-        prior              Lmat, tmat             maturity params</code></pre>
+    │                     │                       │
+    │                     │                       │
+    ▼                     ▼                       ▼
+ Informs L₀             Informs               Derived from
+  prior              Lmat, tmat             maturity params</code></pre>
 <p>Each stage produces posterior distributions that become informative priors for the next, creating a biologically coherent analysis.</p>
 </div>
 <div class="section level2">
