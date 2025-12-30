@@ -620,27 +620,18 @@ fit_bayesian_growth <- function(
   init_fun <- function() {
     if (k_based) {
       if (is_twosex) {
-        if (use_pooling) {
-          list(
-            mu_Linf  = array(mean(log(mean_Linf_nat)), dim = 1),
-            mu_L0    = array(mean(log(mean_L0_nat)), dim = 1),
-            mu_k     = array(mean(log(k_init)), dim = 1),
-            tau_Linf = array(0.1, dim = 1),
-            tau_L0   = array(0.1, dim = 1),
-            tau_k    = array(0.1, dim = 1),
-            raw_Linf = array(c(0, 0), dim = c(1, 2)),
-            raw_L0   = array(c(0, 0), dim = c(1, 2)),
-            raw_k    = array(c(0, 0), dim = c(1, 2)),
-            sigma    = c(0.1, 0.1)
-          )
-        } else {
-          list(
-            log_Linf_direct = array(log(mean_Linf_nat), dim = c(1, 2)),
-            log_L0_direct   = array(log(mean_L0_nat), dim = c(1, 2)),
-            log_k_direct    = array(log(k_init), dim = c(1, 2)),
-            sigma           = c(0.1, 0.1)
-          )
-        }
+        list(
+          mu_Linf  = mean(log(mean_Linf_nat)),
+          mu_L0    = mean(log(mean_L0_nat)),
+          mu_k     = mean(log(k_init)),
+          tau_Linf = 0.1,
+          tau_L0   = 0.1,
+          tau_k    = 0.1,
+          raw_Linf = if (use_pooling) c(0, 0) else log(mean_Linf_nat),
+          raw_L0   = if (use_pooling) c(0, 0) else log(mean_L0_nat),
+          raw_k    = if (use_pooling) c(0, 0) else log(c(k_init, k_init)),
+          sigma    = c(0.1, 0.1)
+        )
       } else {
         list(
           log_Linf = log(mean_Linf_nat[1]),
@@ -652,31 +643,21 @@ fit_bayesian_growth <- function(
     } else {
       # Maturity-based
       if (is_twosex) {
-        if (use_pooling) {
-          list(
-            mu_Linf  = array(mean(log(mean_Linf_nat)), dim = 1),
-            mu_L0    = array(mean(log(mean_L0_nat)), dim = 1),
-            mu_Lmat  = array(mean(log(mean_Lmat_nat)), dim = 1),
-            mu_tmat  = array(mean(log(mean_tmat_nat)), dim = 1),
-            tau_Linf = array(0.1, dim = 1),
-            tau_L0   = array(0.1, dim = 1),
-            tau_Lmat = array(0.1, dim = 1),
-            tau_tmat = array(0.1, dim = 1),
-            raw_Linf = array(c(0, 0), dim = c(1, 2)),
-            raw_L0   = array(c(0, 0), dim = c(1, 2)),
-            raw_Lmat = array(c(0, 0), dim = c(1, 2)),
-            raw_tmat = array(c(0, 0), dim = c(1, 2)),
-            sigma    = c(0.1, 0.1)
-          )
-        } else {
-          list(
-            log_Linf_direct = array(log(mean_Linf_nat), dim = c(1, 2)),
-            log_L0_direct   = array(log(mean_L0_nat), dim = c(1, 2)),
-            log_Lmat_direct = array(log(mean_Lmat_nat), dim = c(1, 2)),
-            log_tmat_direct = array(log(mean_tmat_nat), dim = c(1, 2)),
-            sigma           = c(0.1, 0.1)
-          )
-        }
+        list(
+          mu_Linf  = mean(log(mean_Linf_nat)),
+          mu_L0    = mean(log(mean_L0_nat)),
+          mu_Lmat  = mean(log(mean_Lmat_nat)),
+          mu_tmat  = mean(log(mean_tmat_nat)),
+          tau_Linf = 0.1,
+          tau_L0   = 0.1,
+          tau_Lmat = 0.1,
+          tau_tmat = 0.1,
+          raw_Linf = if (use_pooling) c(0, 0) else log(mean_Linf_nat),
+          raw_L0   = if (use_pooling) c(0, 0) else log(mean_L0_nat),
+          raw_Lmat = if (use_pooling) c(0, 0) else log(mean_Lmat_nat),
+          raw_tmat = if (use_pooling) c(0, 0) else log(mean_tmat_nat),
+          sigma    = c(0.1, 0.1)
+        )
       } else {
         list(
           log_Linf = log(mean_Linf_nat[1]),

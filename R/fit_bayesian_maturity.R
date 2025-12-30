@@ -300,21 +300,14 @@ fit_bayesian_maturity <- function(
         prior_tau_L50   = prior_tau
       )
       
-      # Initialization
+      # Initialization - all params always present now
       init_fun <- function() {
-        if (use_pooling) {
-          list(
-            mu_L50 = array(mean(log(midpoint_L50)), dim = 1),
-            tau_L50 = array(0.1, dim = 1),
-            raw_L50 = array(c(0, 0), dim = c(1, 2)),
-            log_slope = c(0, 0)
-          )
-        } else {
-          list(
-            log_L50_direct = array(log(midpoint_L50), dim = c(1, 2)),
-            log_slope = c(0, 0)
-          )
-        }
+        list(
+          mu_L50    = mean(log(midpoint_L50)),
+          tau_L50   = 0.1,
+          raw_L50   = if (use_pooling) c(0, 0) else log(midpoint_L50),
+          log_slope = c(0, 0)
+        )
       }
       
       model <- instantiate::stan_package_model(
@@ -428,20 +421,14 @@ fit_bayesian_maturity <- function(
         prior_tau_t50   = prior_tau
       )
       
+      # Initialization - all params always present now
       init_fun <- function() {
-        if (use_pooling) {
-          list(
-            mu_t50 = array(mean(log(midpoint_t50)), dim = 1),
-            tau_t50 = array(0.1, dim = 1),
-            raw_t50 = array(c(0, 0), dim = c(1, 2)),
-            log_slope = c(0, 0)
-          )
-        } else {
-          list(
-            log_t50_direct = array(log(midpoint_t50), dim = c(1, 2)),
-            log_slope = c(0, 0)
-          )
-        }
+        list(
+          mu_t50    = mean(log(midpoint_t50)),
+          tau_t50   = 0.1,
+          raw_t50   = if (use_pooling) c(0, 0) else log(midpoint_t50),
+          log_slope = c(0, 0)
+        )
       }
       
       model <- instantiate::stan_package_model(
