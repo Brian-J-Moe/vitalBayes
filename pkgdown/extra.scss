@@ -3,7 +3,7 @@
 // =============================================================================
 // An immersive retro-futuristic theme inspired by 80s synthwave aesthetics
 // Featuring: Neon glows, retro grid horizon, scan lines, chrome effects
-// 
+//
 // Colors from hex sticker:
 //   Pink: #FF1D8E | Cyan: #00D9FF | Purple: #5B3A8F | Navy: #1A1F3A
 // =============================================================================
@@ -114,9 +114,9 @@ $glow-purple: 0 0 10px rgba($sunset-purple, 0.6), 0 0 20px rgba($sunset-purple, 
 // Base Body with Gradient Background
 // -----------------------------------------------------------------------------
 body {
-  background: linear-gradient(180deg, 
-    $bg-top 0%, 
-    $bg-mid 40%, 
+  background: linear-gradient(180deg,
+    $bg-top 0%,
+    $bg-mid 40%,
     $horizon-purple 70%,
     $deep-purple 100%
   ) !important;
@@ -124,7 +124,7 @@ body {
   color: $text-primary !important;
   min-height: 100vh;
   position: relative;
-  
+
   // Subtle noise texture overlay
   &::before {
     content: "";
@@ -153,7 +153,7 @@ body {
   height: 40vh;
   pointer-events: none;
   z-index: -1;
-  background: 
+  background:
     // Horizontal lines
     repeating-linear-gradient(
       0deg,
@@ -201,7 +201,7 @@ body {
 // -----------------------------------------------------------------------------
 main {
   position: relative;
-  
+
   &::before {
     content: "";
     position: fixed;
@@ -226,30 +226,30 @@ main {
 // Navbar - Floating Neon Bar
 // -----------------------------------------------------------------------------
 .navbar {
-  background: linear-gradient(180deg, 
-    rgba($deep-ocean, 0.95) 0%, 
+  background: linear-gradient(180deg,
+    rgba($deep-ocean, 0.95) 0%,
     rgba($midnight, 0.9) 100%
   ) !important;
   border-bottom: 2px solid $vital-pink;
-  box-shadow: 
+  box-shadow:
     0 2px 20px rgba($vital-pink, 0.4),
     0 0 40px rgba($vital-pink, 0.2),
     inset 0 -1px 0 rgba($bayes-blue, 0.3);
   backdrop-filter: blur(10px);
-  
+
   .navbar-brand {
     color: $bayes-blue !important;
     font-weight: 800;
     letter-spacing: 2px;
     text-transform: uppercase;
     animation: neon-pulse 2s ease-in-out infinite;
-    
+
     &:hover {
       color: $electric-blue !important;
       animation: flicker 0.5s ease-in-out;
     }
   }
-  
+
   .nav-link {
     color: $text-primary !important;
     font-weight: 500;
@@ -258,7 +258,7 @@ main {
     font-size: 0.85rem;
     transition: all 0.3s ease;
     position: relative;
-    
+
     &::after {
       content: "";
       position: absolute;
@@ -271,53 +271,53 @@ main {
       transition: all 0.3s ease;
       transform: translateX(-50%);
     }
-    
+
     &:hover, &:focus {
       color: $vital-pink !important;
       text-shadow: $glow-pink;
-      
+
       &::after {
         width: 80%;
         background: $vital-pink;
         box-shadow: $glow-pink;
       }
     }
-    
+
     &.active {
       color: $bayes-blue !important;
       text-shadow: $glow-cyan;
-      
+
       &::after {
         width: 80%;
       }
     }
   }
-  
+
   // Dropdown menus
   .dropdown-menu {
     background: rgba($midnight, 0.95);
     border: 1px solid $sunset-purple;
-    box-shadow: 
+    box-shadow:
       0 10px 40px rgba(0, 0, 0, 0.5),
       0 0 20px rgba($sunset-purple, 0.3),
       inset 0 1px 0 rgba($bayes-blue, 0.1);
     backdrop-filter: blur(10px);
-    
+
     .dropdown-item {
       color: $text-primary;
       transition: all 0.2s ease;
-      
+
       &:hover, &:focus {
         background: linear-gradient(90deg, rgba($vital-pink, 0.2) 0%, transparent 100%);
         color: $vital-pink;
         padding-left: 1.5rem;
       }
     }
-    
+
     .dropdown-divider {
       border-color: rgba($sunset-purple, 0.5);
     }
-    
+
     .dropdown-header {
       color: $bayes-blue;
       text-transform: uppercase;
@@ -341,15 +341,15 @@ main {
 }
 
 .page-header {
-  background: linear-gradient(135deg, 
-    rgba($deep-ocean, 0.8) 0%, 
+  background: linear-gradient(135deg,
+    rgba($deep-ocean, 0.8) 0%,
     rgba($sunset-purple, 0.3) 100%
   );
   border-bottom: 1px solid rgba($vital-pink, 0.3);
   padding: 2rem 0;
   margin-bottom: 2rem;
   position: relative;
-  
+
   &::after {
     content: "";
     position: absolute;
@@ -357,16 +357,16 @@ main {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      $vital-pink 20%, 
-      $bayes-blue 50%, 
-      $vital-pink 80%, 
+    background: linear-gradient(90deg,
+      transparent 0%,
+      $vital-pink 20%,
+      $bayes-blue 50%,
+      $vital-pink 80%,
       transparent 100%
     );
     box-shadow: 0 0 10px rgba($vital-pink, 0.5);
   }
-  
+
   h1 {
     color: $bayes-blue;
     text-shadow: $glow-cyan;
@@ -379,7 +379,7 @@ main {
 // -----------------------------------------------------------------------------
 h1 {
   color: $bayes-blue;
-  text-shadow: 
+  text-shadow:
     0 0 5px rgba($bayes-blue, 0.8),
     0 0 10px rgba($bayes-blue, 0.5);
   font-weight: 700;
@@ -388,14 +388,14 @@ h1 {
 
 h2 {
   color: $vital-pink;
-  text-shadow: 
+  text-shadow:
     0 0 5px rgba($vital-pink, 0.6),
     0 0 10px rgba($vital-pink, 0.3);
   border-bottom: 1px solid rgba($vital-pink, 0.3);
   padding-bottom: 0.75rem;
   margin-top: 2rem;
   position: relative;
-  
+
   &::after {
     content: "";
     position: absolute;
@@ -426,7 +426,7 @@ a {
   color: $bayes-blue;
   text-decoration: none;
   transition: all 0.3s ease;
-  
+
   &:hover {
     color: $vital-pink;
     text-shadow: $glow-pink;
@@ -451,30 +451,30 @@ em, i {
 // Cards with Glass Morphism
 // -----------------------------------------------------------------------------
 .card {
-  background: linear-gradient(135deg, 
-    rgba($deep-ocean, 0.6) 0%, 
+  background: linear-gradient(135deg,
+    rgba($deep-ocean, 0.6) 0%,
     rgba($sunset-purple, 0.3) 100%
   );
   border: 1px solid rgba($sunset-purple, 0.5);
   border-radius: 12px;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   overflow: hidden;
   transition: all 0.3s ease;
-  
+
   &:hover {
     border-color: $vital-pink;
-    box-shadow: 
+    box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.4),
       0 0 20px rgba($vital-pink, 0.2);
     transform: translateY(-2px);
   }
-  
+
   .card-header {
-    background: linear-gradient(90deg, 
-      rgba($sunset-purple, 0.5) 0%, 
+    background: linear-gradient(90deg,
+      rgba($sunset-purple, 0.5) 0%,
       rgba($deep-ocean, 0.5) 100%
     );
     border-bottom: 1px solid rgba($vital-pink, 0.3);
@@ -482,7 +482,7 @@ em, i {
     font-weight: 600;
     letter-spacing: 1px;
   }
-  
+
   .card-body {
     color: $text-primary;
   }
@@ -492,20 +492,20 @@ em, i {
 // Code Blocks - Terminal Style
 // -----------------------------------------------------------------------------
 pre {
-  background: linear-gradient(180deg, 
-    rgba($midnight, 0.95) 0%, 
+  background: linear-gradient(180deg,
+    rgba($midnight, 0.95) 0%,
     rgba($deep-ocean, 0.95) 100%
   ) !important;
   border: 1px solid $sunset-purple;
   border-left: 4px solid $bayes-blue;
   border-radius: 8px;
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.4),
     inset 0 0 30px rgba(0, 0, 0, 0.3),
     0 0 15px rgba($bayes-blue, 0.1);
   position: relative;
   overflow: hidden;
-  
+
   // Terminal dots decoration
   &::before {
     content: "● ● ●";
@@ -515,11 +515,11 @@ pre {
     font-size: 8px;
     letter-spacing: 4px;
     color: rgba($vital-pink, 0.6);
-    text-shadow: 
+    text-shadow:
       8px 0 0 rgba($coral-orange, 0.6),
       16px 0 0 rgba($teal-accent, 0.6);
   }
-  
+
   code {
     color: $text-primary !important;
     font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
@@ -542,7 +542,7 @@ code {
 // Syntax highlighting
 .sourceCode {
   background: transparent !important;
-  
+
   .co { color: #6A6A8A; font-style: italic; }  // Comments
   .st { color: $teal-accent; }                   // Strings
   .dv, .fl, .bn { color: $coral-orange; }        // Numbers
@@ -579,10 +579,10 @@ table {
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid rgba($sunset-purple, 0.5);
-  
+
   th {
-    background: linear-gradient(180deg, 
-      rgba($sunset-purple, 0.8) 0%, 
+    background: linear-gradient(180deg,
+      rgba($sunset-purple, 0.8) 0%,
       rgba($deep-purple, 0.8) 100%
     );
     color: $bayes-blue;
@@ -593,7 +593,7 @@ table {
     border-bottom: 2px solid $vital-pink;
     text-shadow: 0 0 5px rgba($bayes-blue, 0.5);
   }
-  
+
   td {
     background: rgba($midnight, 0.5);
     border-bottom: 1px solid rgba($sunset-purple, 0.2);
@@ -601,12 +601,12 @@ table {
     color: $text-primary;
     transition: all 0.2s ease;
   }
-  
+
   tr:hover td {
     background: rgba($vital-pink, 0.1);
     box-shadow: inset 0 0 20px rgba($vital-pink, 0.05);
   }
-  
+
   tr:nth-child(even) td {
     background: rgba($sunset-purple, 0.1);
   }
@@ -623,29 +623,29 @@ table {
 // Sidebar Navigation
 // -----------------------------------------------------------------------------
 .sidebar, .toc {
-  background: linear-gradient(180deg, 
-    rgba($midnight, 0.8) 0%, 
+  background: linear-gradient(180deg,
+    rgba($midnight, 0.8) 0%,
     rgba($deep-ocean, 0.6) 100%
   );
   border: 1px solid rgba($sunset-purple, 0.3);
   border-radius: 8px;
   padding: 1rem;
   backdrop-filter: blur(5px);
-  
+
   .nav-link, a {
     color: $text-secondary;
     padding: 0.5rem 1rem;
     border-radius: 4px;
     transition: all 0.3s ease;
     border-left: 2px solid transparent;
-    
+
     &:hover {
       color: $bayes-blue;
       background: rgba($bayes-blue, 0.1);
       border-left-color: $bayes-blue;
       padding-left: 1.25rem;
     }
-    
+
     &.active {
       color: $vital-pink;
       background: rgba($vital-pink, 0.1);
@@ -653,7 +653,7 @@ table {
       text-shadow: 0 0 5px rgba($vital-pink, 0.5);
     }
   }
-  
+
   // Section headers
   .toc-heading, h5, h6 {
     color: $bayes-blue;
@@ -672,13 +672,13 @@ table {
     color: $bayes-blue;
     text-shadow: $glow-cyan;
   }
-  
+
   .name {
     color: $vital-pink;
     font-weight: 600;
     text-shadow: 0 0 5px rgba($vital-pink, 0.3);
   }
-  
+
   .title {
     color: $text-secondary;
   }
@@ -689,11 +689,11 @@ table {
     color: $vital-pink;
     font-weight: 600;
   }
-  
+
   dd, .ref-arguments dd {
     color: $text-primary;
   }
-  
+
   .ref-heading {
     color: $bayes-blue;
     border-bottom: 1px solid rgba($bayes-blue, 0.3);
@@ -704,7 +704,7 @@ table {
 // Footer - Horizon Line
 // -----------------------------------------------------------------------------
 .footer, footer {
-  background: linear-gradient(180deg, 
+  background: linear-gradient(180deg,
     transparent 0%,
     rgba($midnight, 0.9) 30%,
     $midnight 100%
@@ -714,7 +714,7 @@ table {
   color: $text-secondary;
   padding: 2rem 0;
   position: relative;
-  
+
   &::before {
     content: "";
     position: absolute;
@@ -722,18 +722,18 @@ table {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      $vital-pink 20%, 
-      $bayes-blue 50%, 
-      $vital-pink 80%, 
+    background: linear-gradient(90deg,
+      transparent 0%,
+      $vital-pink 20%,
+      $bayes-blue 50%,
+      $vital-pink 80%,
       transparent 100%
     );
   }
-  
+
   a {
     color: $bayes-blue;
-    
+
     &:hover {
       color: $vital-pink;
       text-shadow: $glow-pink;
@@ -747,17 +747,17 @@ table {
 .btn-primary {
   background: linear-gradient(135deg, $vital-pink 0%, $sunset-purple 100%);
   border: none;
-  box-shadow: 
+  box-shadow:
     0 4px 15px rgba($vital-pink, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
   transition: all 0.3s ease;
-  
+
   &:hover {
     background: linear-gradient(135deg, lighten($vital-pink, 10%) 0%, lighten($sunset-purple, 10%) 100%);
-    box-shadow: 
+    box-shadow:
       0 6px 25px rgba($vital-pink, 0.6),
       0 0 30px rgba($vital-pink, 0.3);
     transform: translateY(-2px);
@@ -770,7 +770,7 @@ table {
   color: $bayes-blue;
   text-transform: uppercase;
   letter-spacing: 1px;
-  
+
   &:hover {
     background: rgba($bayes-blue, 0.2);
     border-color: $electric-blue;
@@ -784,7 +784,7 @@ table {
   background: rgba($sunset-purple, 0.5);
   border: 1px solid rgba($bayes-blue, 0.3);
   color: $bayes-blue;
-  
+
   &:hover {
     background: rgba($vital-pink, 0.3);
     border-color: $vital-pink;
@@ -802,16 +802,16 @@ table {
   border-radius: 20px;
   padding: 0.5rem 1rem;
   transition: all 0.3s ease;
-  
+
   &:focus {
     background: rgba($deep-ocean, 0.9);
     border-color: $bayes-blue;
-    box-shadow: 
+    box-shadow:
       0 0 0 2px rgba($bayes-blue, 0.2),
       0 0 20px rgba($bayes-blue, 0.3);
     color: $text-primary;
   }
-  
+
   &::placeholder {
     color: $text-muted;
   }
@@ -824,10 +824,10 @@ table {
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
-  
+
   .search-result, .aa-suggestion {
     border-bottom: 1px solid rgba($sunset-purple, 0.2);
-    
+
     &:hover, &.aa-cursor {
       background: rgba($vital-pink, 0.15);
     }
@@ -841,24 +841,24 @@ table {
   font-weight: 500;
   letter-spacing: 0.5px;
   padding: 0.4em 0.8em;
-  
+
   &.bg-primary {
     background: linear-gradient(135deg, $vital-pink, $sunset-purple) !important;
     box-shadow: 0 2px 10px rgba($vital-pink, 0.4);
   }
-  
+
   &.bg-secondary {
     background: linear-gradient(135deg, $sunset-purple, $deep-ocean) !important;
   }
-  
+
   &.bg-success {
     background: linear-gradient(135deg, $teal-accent, darken($teal-accent, 20%)) !important;
   }
-  
+
   &.bg-info {
     background: linear-gradient(135deg, $bayes-blue, darken($bayes-blue, 20%)) !important;
   }
-  
+
   &.bg-warning {
     background: linear-gradient(135deg, $coral-orange, darken($coral-orange, 15%)) !important;
   }
@@ -872,27 +872,27 @@ table {
   border-left-width: 4px;
   background: rgba($midnight, 0.8);
   backdrop-filter: blur(5px);
-  
+
   &.alert-info {
     border-color: $bayes-blue;
     box-shadow: 0 0 15px rgba($bayes-blue, 0.2);
-    
+
     &::before {
       content: "ℹ ";
       color: $bayes-blue;
     }
   }
-  
+
   &.alert-warning {
     border-color: $coral-orange;
     box-shadow: 0 0 15px rgba($coral-orange, 0.2);
   }
-  
+
   &.alert-danger {
     border-color: $vital-pink;
     box-shadow: 0 0 15px rgba($vital-pink, 0.2);
   }
-  
+
   &.alert-success {
     border-color: $teal-accent;
     box-shadow: 0 0 15px rgba($teal-accent, 0.2);
@@ -905,7 +905,7 @@ table {
 .logo, img[src*="logo"] {
   filter: drop-shadow(0 0 15px rgba($bayes-blue, 0.6));
   transition: all 0.3s ease;
-  
+
   &:hover {
     filter: drop-shadow(0 0 25px rgba($vital-pink, 0.8));
   }
@@ -931,7 +931,7 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, $sunset-purple, $vital-pink);
   border-radius: 5px;
-  
+
   &:hover {
     background: linear-gradient(180deg, $vital-pink, $sunset-purple);
     box-shadow: 0 0 10px rgba($vital-pink, 0.5);
@@ -963,7 +963,7 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
 // -----------------------------------------------------------------------------
 .lightswitch {
   color: $bayes-blue;
-  
+
   &:hover {
     color: $vital-pink;
   }
@@ -984,12 +984,12 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
     font-size: 3rem;
     animation: neon-pulse 2s ease-in-out infinite;
   }
-  
+
   // Feature sections
   section {
     padding: 2rem 0;
     border-bottom: 1px solid rgba($sunset-purple, 0.2);
-    
+
     &:last-child {
       border-bottom: none;
     }
@@ -997,14 +997,146 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
 }
 
 // -----------------------------------------------------------------------------
-// Article Specific
+// Article Specific - Comprehensive Styling
 // -----------------------------------------------------------------------------
 .template-article {
   .article-heading {
     color: $bayes-blue;
     text-shadow: $glow-cyan;
   }
-  
+
+  // Article header area
+  .page-header {
+    h1 {
+      color: $bayes-blue;
+      text-shadow: $glow-cyan;
+    }
+
+    // Subtitle styling (various possible classes)
+    .subtitle, .lead, .description, .abstract {
+      color: $text-secondary !important;
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-top: 0.5rem;
+    }
+
+    // Author and date metadata
+    .author, .date, .metadata, small {
+      color: $text-muted !important;
+    }
+  }
+
+  // Main article content
+  .contents, article, .article-content {
+    // All heading levels with proper visibility
+    h1 {
+      color: $bayes-blue;
+      text-shadow: 0 0 5px rgba($bayes-blue, 0.6);
+    }
+
+    h2 {
+      color: $vital-pink;
+      text-shadow: 0 0 5px rgba($vital-pink, 0.5);
+      border-bottom: 1px solid rgba($vital-pink, 0.3);
+      padding-bottom: 0.5rem;
+      margin-top: 2rem;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 80px;
+        height: 2px;
+        background: $vital-pink;
+        box-shadow: 0 0 10px rgba($vital-pink, 0.5);
+      }
+    }
+
+    h3 {
+      color: $teal-accent;
+      text-shadow: 0 0 3px rgba($teal-accent, 0.4);
+      margin-top: 1.5rem;
+    }
+
+    h4 {
+      color: $coral-orange;
+      margin-top: 1.25rem;
+    }
+
+    h5 {
+      color: $hot-pink;
+      margin-top: 1rem;
+    }
+
+    h6 {
+      color: $text-secondary;
+      margin-top: 1rem;
+    }
+
+    // Paragraph text
+    p {
+      color: $text-primary;
+      line-height: 1.8;
+    }
+
+    // Lists
+    ul, ol {
+      color: $text-primary;
+
+      li {
+        color: $text-primary;
+        margin-bottom: 0.5rem;
+
+        &::marker {
+          color: $vital-pink;
+        }
+      }
+    }
+
+    // Definition lists (often used in R docs)
+    dl {
+      dt {
+        color: $vital-pink;
+        font-weight: 600;
+      }
+
+      dd {
+        color: $text-primary;
+        margin-left: 1.5rem;
+      }
+    }
+
+    // Emphasis
+    strong, b {
+      color: $hot-pink;
+    }
+
+    em, i {
+      color: $teal-accent;
+    }
+  }
+
+  // Section headers within articles (pkgdown specific)
+  .section {
+    h2, h3, h4, h5, h6 {
+      position: relative;
+    }
+
+    // Section level styling
+    &.level2 > h2 {
+      color: $vital-pink;
+    }
+
+    &.level3 > h3 {
+      color: $teal-accent;
+    }
+
+    &.level4 > h4 {
+      color: $coral-orange;
+    }
+  }
+
   // Block quotes
   blockquote {
     border-left: 4px solid $vital-pink;
@@ -1012,11 +1144,93 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
     padding: 1rem 1.5rem;
     margin: 1.5rem 0;
     border-radius: 0 8px 8px 0;
-    
+
     p {
       color: $text-secondary;
       font-style: italic;
     }
+  }
+
+  // Horizontal rules
+  hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      $sunset-purple 20%,
+      $vital-pink 50%,
+      $sunset-purple 80%,
+      transparent 100%
+    );
+    margin: 2rem 0;
+  }
+
+  // Figure captions
+  figure {
+    figcaption, .figure-caption {
+      color: $text-muted !important;
+      font-style: italic;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+  }
+
+  // Images within articles
+  img {
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Article TOC (table of contents sidebar)
+.template-article .toc, #toc {
+  h2, .toc-title {
+    color: $bayes-blue !important;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+  }
+
+  a {
+    color: $text-secondary !important;
+
+    &:hover {
+      color: $vital-pink !important;
+    }
+
+    &.active {
+      color: $bayes-blue !important;
+      font-weight: 600;
+    }
+  }
+
+  // Nested TOC levels
+  ul ul {
+    a {
+      color: $text-muted !important;
+      font-size: 0.9em;
+
+      &:hover {
+        color: $teal-accent !important;
+      }
+    }
+  }
+}
+
+// Vignette/article listing page
+.template-articles {
+  .article-title, .vignette-title {
+    color: $vital-pink;
+
+    &:hover {
+      color: $bayes-blue;
+      text-shadow: $glow-cyan;
+    }
+  }
+
+  .article-description, .vignette-description {
+    color: $text-secondary;
   }
 }
 
@@ -1027,14 +1241,14 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
   position: relative;
   padding: 2rem;
   margin: 2rem 0;
-  background: linear-gradient(135deg, 
-    rgba($deep-ocean, 0.4) 0%, 
+  background: linear-gradient(135deg,
+    rgba($deep-ocean, 0.4) 0%,
     rgba($sunset-purple, 0.2) 100%
   );
   border-radius: 12px;
   border: 1px solid rgba($vital-pink, 0.2);
   animation: border-glow 4s ease-in-out infinite;
-  
+
   &::before {
     content: "";
     position: absolute;
@@ -1045,11 +1259,11 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
     border-radius: 12px;
     padding: 1px;
     background: linear-gradient(135deg, $vital-pink, $bayes-blue, $sunset-purple);
-    -webkit-mask: 
-      linear-gradient(#fff 0 0) content-box, 
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
-    mask: 
-      linear-gradient(#fff 0 0) content-box, 
+    mask:
+      linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -1059,13 +1273,115 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
 }
 
 // -----------------------------------------------------------------------------
-// Mathematical Formulas (if using MathJax)
+// Mathematical Formulas (MathJax 3 + KaTeX support)
 // -----------------------------------------------------------------------------
+// MathJax 3 uses SVG by default - need to style the SVG elements
 .MathJax {
   color: $teal-accent !important;
+
+  svg {
+    color: $teal-accent !important;
+  }
 }
 
+// MathJax 3 container
 mjx-container {
+  color: $teal-accent !important;
+
+  // SVG math rendering
+  svg {
+    color: $teal-accent !important;
+
+    // SVG text and paths
+    g, path, rect, use {
+      fill: $teal-accent !important;
+      stroke: $teal-accent !important;
+    }
+  }
+
+  // CHTML rendering fallback
+  mjx-math {
+    color: $teal-accent !important;
+  }
+
+  mjx-mi, mjx-mo, mjx-mn, mjx-mtext, mjx-mspace, mjx-ms {
+    color: $teal-accent !important;
+  }
+
+  mjx-c {
+    color: $teal-accent !important;
+  }
+}
+
+// MathJax display math (block equations)
+mjx-container[display="true"] {
+  background: rgba($deep-ocean, 0.4) !important;
+  padding: 1rem 1.5rem !important;
+  border-radius: 8px;
+  border-left: 3px solid $bayes-blue;
+  margin: 1.5rem 0 !important;
+  overflow-x: auto;
+
+  svg {
+    g, path, rect, use {
+      fill: $bayes-blue !important;
+      stroke: none !important;
+    }
+  }
+}
+
+// MathJax inline math
+mjx-container:not([display="true"]) {
+  svg {
+    g, path, rect, use {
+      fill: $teal-accent !important;
+      stroke: none !important;
+    }
+  }
+}
+
+// KaTeX support (alternative math renderer)
+.katex {
+  color: $teal-accent !important;
+
+  .katex-html {
+    color: $teal-accent !important;
+  }
+
+  .base, .strut, .mord, .mop, .mbin, .mrel, .mopen, .mclose, .mpunct, .minner {
+    color: $teal-accent !important;
+  }
+}
+
+// Display mode KaTeX
+.katex-display {
+  background: rgba($deep-ocean, 0.4) !important;
+  padding: 1rem 1.5rem !important;
+  border-radius: 8px;
+  border-left: 3px solid $bayes-blue;
+  margin: 1.5rem 0 !important;
+
+  .katex {
+    color: $bayes-blue !important;
+
+    * {
+      color: $bayes-blue !important;
+    }
+  }
+}
+
+// Equation numbers
+.mjx-eqn-number, .katex .eqno {
+  color: $text-muted !important;
+}
+
+// Fix any white backgrounds from math rendering
+mjx-container, .MathJax, .MathJax_Display, .katex, .katex-display {
+  background-color: transparent !important;
+}
+
+// MathJax contextual menu (if enabled)
+.MJX-TEX {
   color: $teal-accent !important;
 }
 
@@ -1081,11 +1397,11 @@ mjx-container {
       padding: 1rem;
       border: 1px solid $sunset-purple;
     }
-    
+
     .nav-link {
       padding: 0.75rem 1rem;
       border-bottom: 1px solid rgba($sunset-purple, 0.2);
-      
+
       &::after {
         display: none;
       }
@@ -1098,13 +1414,196 @@ mjx-container {
   .template-home main::after {
     opacity: 0.5;
   }
-  
+
   h1 {
     font-size: 2rem;
   }
-  
+
   h2 {
     font-size: 1.5rem;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Catch-All Text Visibility Fixes
+// -----------------------------------------------------------------------------
+// Ensure no text defaults to dark/black on our dark background
+
+// Generic text elements that might be missed
+.lead, .subtitle, .description, .text-muted {
+  color: $text-secondary !important;
+}
+
+.text-body, .text-dark {
+  color: $text-primary !important;
+}
+
+// Any remaining paragraph or span text
+main p, main span, main div {
+  &:not([class*="btn"]):not([class*="badge"]) {
+    color: inherit;
+  }
+}
+
+// Small text and captions
+small, .small, caption, .caption {
+  color: $text-muted !important;
+}
+
+// Ensure all SVG text in math is visible
+svg text, svg tspan {
+  fill: currentColor;
+}
+
+// Fix any Bootstrap text utilities that might override
+[class*="text-"] {
+  &.text-muted {
+    color: $text-muted !important;
+  }
+
+  &.text-secondary {
+    color: $text-secondary !important;
+  }
+
+  &.text-primary {
+    color: $vital-pink !important;
+  }
+
+  &.text-info {
+    color: $bayes-blue !important;
+  }
+
+  &.text-success {
+    color: $teal-accent !important;
+  }
+
+  &.text-warning {
+    color: $coral-orange !important;
+  }
+
+  &.text-danger {
+    color: $vital-pink !important;
+  }
+}
+
+// Figure and image captions anywhere
+figcaption, .figure-caption, .wp-caption-text {
+  color: $text-muted !important;
+}
+
+// Breadcrumbs if present
+.breadcrumb {
+  background: transparent;
+
+  .breadcrumb-item {
+    color: $text-secondary;
+
+    &.active {
+      color: $text-primary;
+    }
+
+    a {
+      color: $bayes-blue;
+    }
+
+    &::before {
+      color: $sunset-purple;
+    }
+  }
+}
+
+// Any accordion or collapse elements
+.accordion {
+  .accordion-button {
+    background: rgba($deep-ocean, 0.8);
+    color: $text-primary;
+
+    &:not(.collapsed) {
+      background: rgba($sunset-purple, 0.3);
+      color: $bayes-blue;
+    }
+
+    &::after {
+      filter: invert(1);
+    }
+  }
+
+  .accordion-body {
+    background: rgba($midnight, 0.5);
+    color: $text-primary;
+  }
+}
+
+// Tab content
+.tab-content {
+  color: $text-primary;
+
+  .tab-pane {
+    color: $text-primary;
+  }
+}
+
+.nav-tabs, .nav-pills {
+  .nav-link {
+    color: $text-secondary;
+
+    &:hover {
+      color: $bayes-blue;
+    }
+
+    &.active {
+      background: rgba($sunset-purple, 0.5);
+      color: $vital-pink;
+      border-color: $sunset-purple;
+    }
+  }
+}
+
+// Modal dialogs (if any)
+.modal-content {
+  background: rgba($midnight, 0.98);
+  border: 1px solid $sunset-purple;
+  color: $text-primary;
+
+  .modal-header {
+    border-bottom-color: $sunset-purple;
+
+    .modal-title {
+      color: $bayes-blue;
+    }
+
+    .btn-close {
+      filter: invert(1);
+    }
+  }
+
+  .modal-footer {
+    border-top-color: $sunset-purple;
+  }
+}
+
+// Tooltips
+.tooltip {
+  .tooltip-inner {
+    background: rgba($midnight, 0.95);
+    color: $text-primary;
+    border: 1px solid $sunset-purple;
+  }
+}
+
+// Popovers
+.popover {
+  background: rgba($midnight, 0.95);
+  border-color: $sunset-purple;
+
+  .popover-header {
+    background: rgba($sunset-purple, 0.5);
+    color: $bayes-blue;
+    border-bottom-color: $sunset-purple;
+  }
+
+  .popover-body {
+    color: $text-primary;
   }
 }
 
@@ -1116,17 +1615,17 @@ mjx-container {
     background: white !important;
     color: black !important;
   }
-  
+
   * {
     text-shadow: none !important;
     box-shadow: none !important;
   }
-  
+
   pre {
     background: #f5f5f5 !important;
     border-color: #ccc !important;
   }
-  
+
   a {
     color: #0066cc !important;
   }
