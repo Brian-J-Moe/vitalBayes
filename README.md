@@ -78,7 +78,7 @@ vitalBayes implements an integrated workflow where information flows forward thr
     │                     │                       │
     │                     │                       │
     ▼                     ▼                       ▼
- Informs L₀             Informs               Derived from
+ Informs L₀            Informs               Derived from
   prior              Lmat, tmat             maturity params
 ```
 
@@ -161,7 +161,7 @@ All datasets share the same structure with columns: `sex`, `mat`, `fl`, `age`, `
 
 ## Visualization
 
-vitalBayes includes publication-ready plotting functions with a distinctive retro-wave color palette:
+vitalBayes includes publication-ready plotting functions with a signature vaporwave color palette:
 ```r
 # Growth curves with credible intervals
 plot_growth_curve(
