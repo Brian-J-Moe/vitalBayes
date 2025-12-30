@@ -2802,3 +2802,104 @@ article div.thinking-question {
     color: #00D9FF !important;
   }
 }
+
+/* =============================================================================
+   MATHJAX SUBSCRIPT COLOR FIX
+   Add this to your extra.scss file
+   ============================================================================= */
+
+/* Force ALL MathJax elements to inherit color from parent */
+mjx-container {
+  color: inherit !important;
+
+  /* Target every possible MathJax element */
+  * {
+    color: inherit !important;
+  }
+
+  /* Specifically target subscript/superscript containers */
+  mjx-msub,
+  mjx-msup,
+  mjx-msubsup,
+  mjx-script,
+  mjx-row,
+  mjx-cell,
+  mjx-mrow,
+  mjx-mi,
+  mjx-mo,
+  mjx-mn,
+  mjx-mtext,
+  mjx-c {
+    color: inherit !important;
+  }
+}
+
+/* Inline math (non-display) - teal color */
+mjx-container:not([display="true"]) {
+  color: $teal-accent !important;
+
+  *,
+  mjx-mi,
+  mjx-mo,
+  mjx-mn,
+  mjx-msub,
+  mjx-msup,
+  mjx-msubsup,
+  mjx-script,
+  mjx-row,
+  mjx-cell,
+  mjx-mrow,
+  mjx-mtext,
+  mjx-c,
+  mjx-c::before,
+  mjx-c::after {
+    color: $teal-accent !important;
+  }
+}
+
+/* Display math (centered equations) - bayes blue */
+mjx-container[display="true"] {
+  color: $bayes-blue !important;
+
+  *,
+  mjx-mi,
+  mjx-mo,
+  mjx-mn,
+  mjx-msub,
+  mjx-msup,
+  mjx-msubsup,
+  mjx-script,
+  mjx-row,
+  mjx-cell,
+  mjx-mrow,
+  mjx-mtext,
+  mjx-c,
+  mjx-c::before,
+  mjx-c::after {
+    color: $bayes-blue !important;
+  }
+}
+
+/* Nuclear option: Override SVG text fills as well */
+mjx-container svg {
+  fill: currentColor !important;
+}
+
+mjx-container svg text,
+mjx-container svg tspan,
+mjx-container svg path {
+  fill: currentColor !important;
+}
+
+/* Target the specific character containers that render glyphs */
+mjx-c {
+  color: inherit !important;
+}
+
+/* Ensure script elements (sub/superscripts) don't get different colors */
+mjx-script mjx-c,
+mjx-msub mjx-c,
+mjx-msup mjx-c,
+mjx-msubsup mjx-c {
+  color: inherit !important;
+}

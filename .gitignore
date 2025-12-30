@@ -6,5 +6,6 @@ inst/doc
 .DS_Store
 .quarto
 docs
+!docs/growth_explorer.html
 /doc/
 /Meta/

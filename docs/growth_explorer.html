@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vitalBayes Growth Curve Explorer</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background-color: #1A1F3A;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+    }
+    
+    /* Loading overlay */
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #1A1F3A;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    #loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loader-title {
+      color: #00D9FF;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+      from { text-shadow: 0 0 10px rgba(0, 217, 255, 0.3); }
+      to { text-shadow: 0 0 30px rgba(0, 217, 255, 0.8), 0 0 40px rgba(255, 29, 142, 0.4); }
+    }
+    
+    .loader {
+      width: 120px;
+      height: 120px;
+      position: relative;
+    }
+    
+    .loader::before,
+    .loader::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      animation: pulse 2s linear infinite;
+    }
+    
+    .loader::before {
+      width: 100%;
+      height: 100%;
+      border: 3px solid transparent;
+      border-top-color: #FF1D8E;
+      border-right-color: #FF1D8E;
+      animation: spin 1.5s linear infinite;
+    }
+    
+    .loader::after {
+      width: 70%;
+      height: 70%;
+      top: 15%;
+      left: 15%;
+      border: 3px solid transparent;
+      border-bottom-color: #00D9FF;
+      border-left-color: #00D9FF;
+      animation: spin 1s linear infinite reverse;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loader-text {
+      color: #8892B0;
+      font-size: 14px;
+      margin-top: 30px;
+      text-align: center;
+    }
+    
+    .loader-subtext {
+      color: #5B6A8A;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    
+    /* Progress dots */
+    .progress-dots {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #3D4466;
+      animation: dotPulse 1.5s ease-in-out infinite;
+    }
+    
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes dotPulse {
+      0%, 100% { 
+        background-color: #3D4466;
+        transform: scale(1);
+      }
+      50% { 
+        background-color: #00D9FF;
+        transform: scale(1.3);
+      }
+    }
+    
+    .container {
+      width: 100%;
+      min-height: 100vh;
+    }
+    
+    /* Override shinylive styles */
+    .shinylive-container {
+      background-color: #1A1F3A !important;
+    }
+  </style>
+  
+  <!-- Shinylive -->
+  <script src="https://shinylive.io/r/shinylive.js"></script>
+  <link rel="stylesheet" href="https://shinylive.io/r/shinylive.css">
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div id="loading-overlay">
+    <div class="loader-title">vitalBayes</div>
+    <div class="loader"></div>
+    <div class="loader-text">Loading Growth Curve Explorer</div>
+    <div class="loader-subtext">Initializing WebR runtime...</div>
+    <div class="progress-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <script type="shinylive-r">
+## file: app.R
+library(shiny)
+library(ggplot2)
+
+# Growth Model Functions
+derive_k_vb <- function(Linf, L0, Lmat, tmat) {
+  (1 / tmat) * log((Linf - L0) / (Linf - Lmat))
+}
+
+derive_k_gompertz <- function(Linf, L0, Lmat, tmat) {
+  (1 / tmat) * log(log(Linf / L0) / log(Linf / Lmat))
+}
+
+derive_k_logistic <- function(Linf, L0, Lmat, tmat) {
+  (1 / tmat) * log((Linf / L0 - 1) / (Linf / Lmat - 1))
+}
+
+vb_growth <- function(age, Linf, L0, k) {
+  Linf - (Linf - L0) * exp(-k * age)
+}
+
+gompertz_growth <- function(age, Linf, L0, k) {
+  Linf * exp(-log(Linf / L0) * exp(-k * age))
+}
+
+logistic_growth <- function(age, Linf, L0, k) {
+  Linf / (1 + (Linf / L0 - 1) * exp(-k * age))
+}
+
+# Synthwave Colors
+colors <- list(
+  background = "#1A1F3A",
+  panel      = "#252B48",
+  pink       = "#FF1D8E",
+  cyan       = "#00D9FF",
+  purple     = "#9D4EDD",
+  grid       = "#3D4466",
+  text       = "#E0E0E0",
+  text_dim   = "#8892B0"
+)
+
+# Custom Theme
+theme_synthwave <- function(base_size = 14) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      plot.background = element_rect(fill = colors$background, color = NA),
+      panel.background = element_rect(fill = colors$panel, color = NA),
+      panel.grid.major = element_line(color = colors$grid, linewidth = 0.3),
+      panel.grid.minor = element_blank(),
+      text = element_text(color = colors$text),
+      plot.title = element_text(color = colors$cyan, size = 16, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(color = colors$text_dim, size = 11, hjust = 0.5),
+      axis.title = element_text(color = colors$text, size = 11),
+      axis.text = element_text(color = colors$text_dim, size = 9),
+      legend.background = element_rect(fill = colors$background, color = NA),
+      legend.key = element_rect(fill = colors$background, color = NA),
+      legend.text = element_text(color = colors$text, size = 10),
+      legend.title = element_text(color = colors$cyan, size = 11, face = "bold"),
+      legend.position = "bottom",
+      plot.margin = margin(15, 15, 15, 15)
+    )
+}
+
+ui <- fluidPage(
+  tags$head(
+    tags$style(HTML("
+      body { background-color: #1A1F3A; color: #E0E0E0; }
+      .well { 
+        background-color: #252B48; 
+        border: 1px solid #3D4466; 
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+      }
+      .irs--shiny .irs-bar { 
+        background: linear-gradient(90deg, #FF1D8E, #00D9FF); 
+        border: none; 
+      }
+      .irs--shiny .irs-handle { 
+        background-color: #00D9FF; 
+        border: 2px solid #00D9FF;
+        box-shadow: 0 0 10px #00D9FF;
+      }
+      .irs--shiny .irs-single { 
+        background-color: #FF1D8E; 
+        color: #1A1F3A;
+        font-weight: bold;
+        border-radius: 4px;
+      }
+      .irs--shiny .irs-line { background-color: #3D4466; }
+      .irs--shiny .irs-grid-text { color: #8892B0; }
+      .irs--shiny .irs-min, .irs--shiny .irs-max { color: #8892B0; background: transparent; }
+      h4 { 
+        color: #00D9FF; 
+        text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+        margin-bottom: 15px;
+        font-size: 16px;
+      }
+      .k-display {
+        background-color: #1A1F3A;
+        border: 1px solid #3D4466;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 15px;
+      }
+      .k-display h5 { color: #00D9FF; margin-bottom: 8px; font-size: 13px; }
+      .k-value { font-family: 'Consolas', monospace; font-size: 11px; margin: 4px 0; }
+      .k-vb { color: #FF1D8E; }
+      .k-gomp { color: #00D9FF; }
+      .k-logis { color: #9D4EDD; }
+      .control-label { color: #E0E0E0 !important; font-weight: 500; }
+    ")),
+    tags$script(HTML("
+      $(document).on('shiny:connected', function() {
+        document.getElementById('loading-overlay').classList.add('hidden');
+      });
+    "))
+  ),
+  
+  fluidRow(
+    column(3,
+      wellPanel(
+        h4("Growth Parameters"),
+        sliderInput("L0", HTML("L<sub>0</sub> (Birth Length)"),
+          min = 25, max = 45, value = 35, step = 1, post = " cm"),
+        sliderInput("Lmat", HTML("L<sub>mat</sub> (Maturity Length)"),
+          min = 50, max = 90, value = 70, step = 1, post = " cm"),
+        sliderInput("tmat", HTML("t<sub>mat</sub> (Maturity Age)"),
+          min = 5, max = 20, value = 12, step = 0.5, post = " yrs"),
+        sliderInput("Linf", HTML("L<sub>∞</sub> (Asymptotic Length)"),
+          min = 100, max = 140, value = 115, step = 1, post = " cm"),
+        div(class = "k-display",
+          h5("Derived Growth Rates (k)"),
+          uiOutput("k_values")
+        )
+      )
+    ),
+    column(9,
+      plotOutput("growth_plot", height = "520px")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  
+  k_values <- reactive({
+    req(input$L0 < input$Lmat, input$Lmat < input$Linf)
+    list(
+      vb = derive_k_vb(input$Linf, input$L0, input$Lmat, input$tmat),
+      gompertz = derive_k_gompertz(input$Linf, input$L0, input$Lmat, input$tmat),
+      logistic = derive_k_logistic(input$Linf, input$L0, input$Lmat, input$tmat)
+    )
+  })
+  
+  output$k_values <- renderUI({
+    k <- k_values()
+    HTML(sprintf(
+      "<div class='k-value k-vb'>von Bertalanffy: k = %.4f</div>
+       <div class='k-value k-gomp'>Gompertz: k = %.4f</div>
+       <div class='k-value k-logis'>Logistic: k = %.4f</div>",
+      k$vb, k$gompertz, k$logistic
+    ))
+  })
+  
+  output$growth_plot <- renderPlot({
+    k <- k_values()
+    ages <- seq(0, 50, length.out = 200)
+    
+    df <- data.frame(
+      age = rep(ages, 3),
+      length = c(
+        vb_growth(ages, input$Linf, input$L0, k$vb),
+        gompertz_growth(ages, input$Linf, input$L0, k$gompertz),
+        logistic_growth(ages, input$Linf, input$L0, k$logistic)
+      ),
+      model = factor(rep(c("von Bertalanffy", "Gompertz", "Logistic"), each = length(ages)),
+                     levels = c("von Bertalanffy", "Gompertz", "Logistic"))
+    )
+    
+    mat_point <- data.frame(age = input$tmat, length = input$Lmat)
+    
+    ggplot(df, aes(x = age, y = length, color = model)) +
+      geom_line(linewidth = 2.5, alpha = 0.3) +
+      geom_line(linewidth = 1.2) +
+      geom_hline(yintercept = input$Linf, linetype = "dashed", 
+                 color = colors$text_dim, linewidth = 0.4, alpha = 0.7) +
+      annotate("text", x = 48, y = input$Linf + 2.5, 
+               label = expression(L[infinity]), color = colors$text_dim, size = 3.5, hjust = 1) +
+      geom_hline(yintercept = input$L0, linetype = "dotted",
+                 color = colors$text_dim, linewidth = 0.4, alpha = 0.7) +
+      annotate("text", x = 48, y = input$L0 - 2.5,
+               label = expression(L[0]), color = colors$text_dim, size = 3.5, hjust = 1) +
+      geom_point(data = mat_point, aes(x = age, y = length),
+                 color = "white", size = 4.5, inherit.aes = FALSE) +
+      geom_point(data = mat_point, aes(x = age, y = length),
+                 color = colors$pink, size = 2.5, inherit.aes = FALSE) +
+      annotate("text", x = input$tmat + 1.5, y = input$Lmat + 3,
+               label = expression(paste("(", t[mat], ", ", L[mat], ")")),
+               color = colors$pink, size = 3.5, hjust = 0) +
+      scale_color_manual(
+        values = c("von Bertalanffy" = colors$pink,
+                   "Gompertz" = colors$cyan,
+                   "Logistic" = colors$purple),
+        name = "Growth Model"
+      ) +
+      scale_x_continuous(limits = c(0, 50), expand = c(0.02, 0)) +
+      scale_y_continuous(limits = c(0, 150), expand = c(0.02, 0)) +
+      labs(
+        title = "Maturity-Based Growth Parameterization",
+        subtitle = "All models pass through the same maturity point - k is derived, not estimated",
+        x = "Age (years)",
+        y = "Length (cm)"
+      ) +
+      theme_synthwave() +
+      guides(color = guide_legend(override.aes = list(linewidth = 2.5)))
+    
+  }, bg = colors$background)
+}
+
+shinyApp(ui = ui, server = server)
+    </script>
+  </div>
+  
+  <script>
+    // Fallback: hide loading after max timeout (60 seconds)
+    setTimeout(function() {
+      var overlay = document.getElementById('loading-overlay');
+      if (overlay && !overlay.classList.contains('hidden')) {
+        overlay.classList.add('hidden');
+      }
+    }, 60000);
+  </script>
+</body>
+</html>
