@@ -1137,17 +1137,142 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
     }
   }
 
-  // Block quotes
+  // Block quotes and callout boxes
   blockquote {
     border-left: 4px solid $vital-pink;
-    background: rgba($sunset-purple, 0.2);
+    background: rgba($sunset-purple, 0.3);
     padding: 1rem 1.5rem;
     margin: 1.5rem 0;
     border-radius: 0 8px 8px 0;
 
+    // Ensure ALL text inside blockquotes is visible
+    color: $text-primary !important;
+
+    * {
+      color: $text-primary !important;
+    }
+
     p {
-      color: $text-secondary;
-      font-style: italic;
+      color: $text-primary !important;
+      font-style: normal;
+    }
+
+    // Headings inside blockquotes
+    h1, h2, h3, h4, h5, h6 {
+      color: $vital-pink !important;
+    }
+
+    // Inline code in blockquotes
+    code {
+      color: $coral-orange !important;
+      background: rgba($midnight, 0.5);
+    }
+
+    // Strong/bold text
+    strong, b {
+      color: $hot-pink !important;
+    }
+
+    // Emphasis
+    em, i {
+      color: $teal-accent !important;
+    }
+
+    // Links
+    a {
+      color: $bayes-blue !important;
+
+      &:hover {
+        color: $electric-blue !important;
+      }
+    }
+  }
+
+  // Callout boxes (various R Markdown / pkgdown classes)
+  .callout, .callout-note, .callout-tip, .callout-warning, .callout-important, .callout-caution,
+  .alert, .note, .tip, .warning, .important, .caution,
+  .rmd-alert, .rmd-note, .rmd-tip, .rmd-warning, .rmd-important, .rmd-caution,
+  .bs-callout, .bs-callout-info, .bs-callout-warning, .bs-callout-danger,
+  div.note, div.tip, div.warning, div.important, div.caution,
+  aside, .aside, .sidebar-note {
+    background: rgba($deep-ocean, 0.6) !important;
+    border: 1px solid rgba($sunset-purple, 0.5);
+    border-left: 4px solid $bayes-blue;
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    color: $text-primary !important;
+
+    // Force all child elements to have visible text
+    * {
+      color: $text-primary !important;
+    }
+
+    // Headings in callouts
+    h1, h2, h3, h4, h5, h6,
+    .callout-header, .callout-title, .alert-heading {
+      color: $bayes-blue !important;
+      margin-top: 0;
+    }
+
+    p {
+      color: $text-primary !important;
+    }
+
+    code {
+      color: $coral-orange !important;
+      background: rgba($midnight, 0.5) !important;
+    }
+
+    strong, b {
+      color: $hot-pink !important;
+    }
+
+    em, i {
+      color: $teal-accent !important;
+    }
+
+    a {
+      color: $bayes-blue !important;
+
+      &:hover {
+        color: $vital-pink !important;
+      }
+    }
+
+    // Lists in callouts
+    ul, ol {
+      color: $text-primary !important;
+
+      li {
+        color: $text-primary !important;
+      }
+    }
+  }
+
+  // Specific callout type variations
+  .callout-warning, .warning, .rmd-warning, .bs-callout-warning, div.warning {
+    border-left-color: $coral-orange;
+
+    h1, h2, h3, h4, h5, h6, .callout-header, .callout-title {
+      color: $coral-orange !important;
+    }
+  }
+
+  .callout-important, .important, .rmd-important, .bs-callout-danger, div.important,
+  .callout-caution, .caution, .rmd-caution, div.caution {
+    border-left-color: $vital-pink;
+
+    h1, h2, h3, h4, h5, h6, .callout-header, .callout-title {
+      color: $vital-pink !important;
+    }
+  }
+
+  .callout-tip, .tip, .rmd-tip, div.tip {
+    border-left-color: $teal-accent;
+
+    h1, h2, h3, h4, h5, h6, .callout-header, .callout-title {
+      color: $teal-accent !important;
     }
   }
 
@@ -1436,6 +1561,82 @@ mjx-container, .MathJax, .MathJax_Display, .katex, .katex-display {
 
 .text-body, .text-dark {
   color: $text-primary !important;
+}
+
+// NUCLEAR OPTION: Any element with a background that might have dark text
+// This catches custom callouts, highlighted sections, etc.
+div[style*="background"],
+span[style*="background"],
+p[style*="background"],
+section[style*="background"],
+aside[style*="background"],
+.bg-light, .bg-white, .bg-info, .bg-primary, .bg-secondary, .bg-success, .bg-warning, .bg-danger {
+  color: $text-primary !important;
+
+  * {
+    color: $text-primary !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: $vital-pink !important;
+  }
+
+  a {
+    color: $bayes-blue !important;
+  }
+
+  code {
+    color: $coral-orange !important;
+  }
+}
+
+// Bootstrap card variants that might have light backgrounds
+.card-body, .card-text, .card-title, .card-subtitle {
+  color: $text-primary !important;
+}
+
+// Any box/panel/well elements
+.box, .panel, .panel-body, .well, .jumbotron, .hero {
+  background: rgba($deep-ocean, 0.6) !important;
+  color: $text-primary !important;
+
+  * {
+    color: $text-primary !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: $bayes-blue !important;
+  }
+}
+
+// R Markdown special divs (fenced divs with :::)
+.rmdnote, .rmdcaution, .rmdimportant, .rmdtip, .rmdwarning,
+div.rmdnote, div.rmdcaution, div.rmdimportant, div.rmdtip, div.rmdwarning,
+[class^="rmd"], [class*=" rmd"] {
+  background: rgba($deep-ocean, 0.6) !important;
+  border: 1px solid rgba($sunset-purple, 0.5);
+  border-left: 4px solid $bayes-blue;
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  color: $text-primary !important;
+
+  * {
+    color: $text-primary !important;
+  }
+
+  h1, h2, h3, h4, h5, h6, strong, b {
+    color: $vital-pink !important;
+  }
+
+  code {
+    color: $coral-orange !important;
+    background: rgba($midnight, 0.5) !important;
+  }
+
+  a {
+    color: $bayes-blue !important;
+  }
 }
 
 // Any remaining paragraph or span text
