@@ -140,6 +140,22 @@ body {
   }
 }
 
+// Fix for content being hidden behind fixed navbar
+.container, .container-fluid, main, .main {
+  padding-top: 20px; // Extra breathing room below navbar
+}
+
+// Sidebar TOC - ensure it's visible below navbar
+.col-md-3, .sidebar, aside.col-md-3 {
+  padding-top: 0 !important;
+
+  // The "ON THIS PAGE" header and TOC
+  .toc, nav, #toc {
+    position: sticky;
+    top: 80px; // Position below fixed navbar
+  }
+}
+
 // -----------------------------------------------------------------------------
 // Retro Grid Horizon Effect (appears at bottom of pages)
 // -----------------------------------------------------------------------------
@@ -1444,6 +1460,7 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 1rem;
+    padding-top: 0.5rem;
   }
 
   a {
