@@ -1,4 +1,4 @@
-#' Simulated von Bertalanffy growth datasets
+#' Simulated datasets
 #'
 #' Three example datasets generated with [simulate_vb_growth_data()] to illustrate
 #' common sample-size scenarios (imbalanced, larger balanced, and limited sample sizes)

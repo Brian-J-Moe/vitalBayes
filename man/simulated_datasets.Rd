@@ -6,7 +6,7 @@
 \alias{imbalanced_data}
 \alias{growth_data}
 \alias{limited_data}
-\title{Simulated von Bertalanffy growth datasets}
+\title{Simulated datasets}
 \format{
 A \link[data.table:data.table]{data.table::data.table} with 5 columns:
 \describe{
