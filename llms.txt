@@ -39,10 +39,9 @@ vitalBayes addresses these challenges through:
 
 Explore how the three growth models (von Bertalanffy, Gompertz,
 Logistic) respond to changes in life history parameters. All curves pass
-through the same maturity point (*t*_(mat),*L*_(mat))
-
-— the growth coefficient *k* is derived from these observable milestones
-rather than estimated directly.
+through the same maturity point (*t*_(mat), *L*_(mat)) — the growth
+coefficient *k* is derived from these observable milestones rather than
+estimated directly.
 
 *First load may take 10-20 seconds while WebR initializes*
 
