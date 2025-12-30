@@ -60,12 +60,6 @@ footer:
   structure:
     left: developed_by
     right: built_with
-  components:
-    developed_by:
-      text: "Developed by Brian J Moe"
-    built_with:
-      text: "Built with pkgdown"
-      href: https://pkgdown.r-lib.org/
 
 authors:
   Brian J Moe:
