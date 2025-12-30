@@ -135,13 +135,9 @@ template:
 
 navbar:
   structure:
-    left: [home, articles, reference]
+    left: [articles, reference]
     right: [search, github]
   components:
-    home:
-      icon: fa-home
-      href: index.html
-      aria-label: Home
     articles:
       text: Articles
       menu:
