@@ -39,7 +39,7 @@ simulate_vb_growth_data <- function(n_female = 150L,
                                     mat_w95_male   = 18,
                                     embryo_mean = 33,
                                     embryo_sd   = 2.5,
-                                    seed = 42,
+                                    seed = 123,
                                     round_digits = 1L) {
 
   if (!is.null(seed)) set.seed(seed)
