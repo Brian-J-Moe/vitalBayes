@@ -34,6 +34,24 @@ vitalBayes addresses these challenges through:
 | Prior specification | **CV-based priors** offer scale-invariant, intuitive parameter uncertainty |
 | Reproducibility | **Precompiled Stan models** ensure consistent, fast inference |
 
+
+## Interactive Demo
+
+Explore how the three growth models (von Bertalanffy, Gompertz, Logistic) respond to changes in life history parameters. All curves pass through the same maturity point (tmat,Lmat)(t_{mat}, L_{mat})
+(tmat​,Lmat​) — the growth coefficient kk
+k is
+derived from these observable milestones rather than estimated directly.
+<div align="center">
+<iframe 
+  src="growth_explorer.html" 
+  width="100%" 
+  height="650" 
+  style="border: 2px solid #3D4466; border-radius: 12px; max-width: 1000px;"
+  loading="lazy">
+</iframe>
+</div>
+<p align="center"><em>First load may take 10-20 seconds while WebR initializes</em></p>
+
 ## Installation
 vitalBayes requires a working C++ toolchain for Stan. See the [RStan Getting Started Guide](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for setup instructions.
 
