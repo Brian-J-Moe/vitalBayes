@@ -3,15 +3,14 @@
 ## Bayesian Life History Parameter Estimation for Elasmobranchs
 
 `vitalBayes` provides a coherent statistical framework for estimating
-birth size, maturity, and growth parameters in sharks and rays using
+birth size, maturity, and growth parameters in elasmobranchs using
 Bayesian methods. The package implements hierarchical models via
 [Stan](https://mc-stan.org/) with precompiled models for fast, reliable
 inference.
 
-The package addresses critical methodological challenges in shark and
-ray research, including sparse datasets, imbalanced sex ratios,
-uncertain aging methodologies, and the need for biologically coherent
-parameter estimation across life stages.
+The package addresses critical methodological challenges, including
+sparse datasets, imbalanced sex ratios, and the need for biologically
+coherent parameter estimation across life stages.
 
 ## Why vitalBayes?
 
@@ -270,8 +269,10 @@ of the predictor (cm or years) - Derived quantities (\\L\_{05}\\,
 
 **The problem:** Elasmobranch sampling frequently yields imbalanced sex
 ratios. A dataset might contain 150 females but only 34 males. Fitting
-separate models produces: - Wide, unreliable credible intervals for the
-sparse sex - Estimates driven by a few influential observations  
+separate models produces:
+
+- Wide, unreliable credible intervals for the sparse sex
+- Estimates driven by a few influential observations  
 - Inefficient use of information (both sexes are the same species)
 
 Complete pooling (ignoring sex) is biologically unrealistic. No pooling
@@ -332,10 +333,12 @@ for a comprehensive treatment.
 **The problem:** Unconstrained growth models frequently converge on
 \\L\_\infty\\ values *below* the largest observed individuals. This is
 biologically impossible—asymptotic length must exceed any realized
-length—yet it occurs regularly when: - Data don’t extend to ages near
-asymptotic size - Older individuals are undersampled (fishing
-selectivity, natural mortality) - Strong \\L\_\infty\\–\\k\\ correlation
-allows trade-offs
+length—yet it occurs regularly when:
+
+- Data don’t extend to ages near asymptotic size
+- Older individuals are undersampled (fishing selectivity, natural
+  mortality)
+- Strong \\L\_\infty\\–\\k\\ correlation allows trade-offs
 
 **Our solution:** vitalBayes enforces \\L\_\infty\\ \> \\L\_{max}\\
 through a shifted lognormal prior:
@@ -374,13 +377,13 @@ growth_fit <- fit_bayesian_growth(
 
 **The problem:** Bayesian models require prior distributions, but
 specifying priors on log-transformed parameters is unintuitive. What
-does σ = 0.5 on log(*L*₅₀) mean in practical terms? Researchers often
-resort to “weakly informative” priors without considering whether they
-encode reasonable biological information.
+does σ = 0.5 on log(\\L\_{50}\\) mean in practical terms? Researchers
+often resort to “weakly informative” priors without considering whether
+they encode reasonable biological information.
 
 **Our solution:** vitalBayes uses **coefficient of variation (CV)** for
 prior specification. The CV expresses uncertainty as a proportion of the
-mean—a scale-invariant, intuitive quantity.
+mean — a scale-invariant, intuitive quantity.
 
 For a parameter θ with prior mean μ and CV = c: - The prior SD on the
 original scale is σ_(θ) = μ · c - Approximately 95% of prior mass falls

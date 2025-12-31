@@ -88,8 +88,8 @@
 </h2>
 <!-- badges: start -->
 
-<p><code>vitalBayes</code> provides a coherent statistical framework for estimating birth size, maturity, and growth parameters in sharks and rays using Bayesian methods. The package implements hierarchical models via <a href="https://mc-stan.org/" class="external-link">Stan</a> with precompiled models for fast, reliable inference.</p>
-<p>The package addresses critical methodological challenges in shark and ray research, including sparse datasets, imbalanced sex ratios, uncertain aging methodologies, and the need for biologically coherent parameter estimation across life stages.</p>
+<p><code>vitalBayes</code> provides a coherent statistical framework for estimating birth size, maturity, and growth parameters in elasmobranchs using Bayesian methods. The package implements hierarchical models via <a href="https://mc-stan.org/" class="external-link">Stan</a> with precompiled models for fast, reliable inference.</p>
+<p>The package addresses critical methodological challenges, including sparse datasets, imbalanced sex ratios, and the need for biologically coherent parameter estimation across life stages.</p>
 </div>
 <div class="section level2">
 <h2 id="why-vitalbayes">Why vitalBayes?<a class="anchor" aria-label="anchor" href="#why-vitalbayes"></a>
@@ -394,8 +394,13 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <div class="section level3">
 <h3 id="id_3-partial-pooling-for-imbalanced-sex-ratios">3. Partial Pooling for Imbalanced Sex Ratios<a class="anchor" aria-label="anchor" href="#id_3-partial-pooling-for-imbalanced-sex-ratios"></a>
 </h3>
-<p><strong>The problem:</strong> Elasmobranch sampling frequently yields imbalanced sex ratios. A dataset might contain 150 females but only 34 males. Fitting separate models produces: - Wide, unreliable credible intervals for the sparse sex - Estimates driven by a few influential observations<br>
-- Inefficient use of information (both sexes are the same species)</p>
+<p><strong>The problem:</strong> Elasmobranch sampling frequently yields imbalanced sex ratios. A dataset might contain 150 females but only 34 males. Fitting separate models produces:</p>
+<ul>
+<li>Wide, unreliable credible intervals for the sparse sex</li>
+<li>Estimates driven by a few influential observations<br>
+</li>
+<li>Inefficient use of information (both sexes are the same species)</li>
+</ul>
 <p>Complete pooling (ignoring sex) is biologically unrealistic. No pooling (fully separate) wastes information.</p>
 <p><strong>Our solution:</strong> Partial pooling models sex-specific parameters as draws from a common distribution:</p>
 <p><span class="math display">\[\log(\theta_s) = \mu + \tau \cdot \eta_s, \quad \eta_s \sim \mathcal{N}(0, 1)\]</span></p>
@@ -430,7 +435,12 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <div class="section level3">
 <h3 id="id_4-constrained-asymptotic-length-l_infty--l_max">4. Constrained Asymptotic Length (<span class="math inline">\(L_\infty\)</span> &gt; <span class="math inline">\(L_{max}\)</span>)<a class="anchor" aria-label="anchor" href="#id_4-constrained-asymptotic-length-l_infty--l_max"></a>
 </h3>
-<p><strong>The problem:</strong> Unconstrained growth models frequently converge on <span class="math inline">\(L_\infty\)</span> values <em>below</em> the largest observed individuals. This is biologically impossible—asymptotic length must exceed any realized length—yet it occurs regularly when: - Data don’t extend to ages near asymptotic size - Older individuals are undersampled (fishing selectivity, natural mortality) - Strong <span class="math inline">\(L_\infty\)</span>–<span class="math inline">\(k\)</span> correlation allows trade-offs</p>
+<p><strong>The problem:</strong> Unconstrained growth models frequently converge on <span class="math inline">\(L_\infty\)</span> values <em>below</em> the largest observed individuals. This is biologically impossible—asymptotic length must exceed any realized length—yet it occurs regularly when:</p>
+<ul>
+<li>Data don’t extend to ages near asymptotic size</li>
+<li>Older individuals are undersampled (fishing selectivity, natural mortality)</li>
+<li>Strong <span class="math inline">\(L_\infty\)</span>–<span class="math inline">\(k\)</span> correlation allows trade-offs</li>
+</ul>
 <p><strong>Our solution:</strong> vitalBayes enforces <span class="math inline">\(L_\infty\)</span> &gt; <span class="math inline">\(L_{max}\)</span> through a shifted lognormal prior:</p>
 <p><span class="math display">\[L_\infty = L_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu_\nu, \sigma_\nu)\]</span></p>
 <p>This ensures <span class="math inline">\(L_\infty\)</span> always exceeds the maximum observed length while still allowing uncertainty about <em>how much</em> it exceeds it.</p>
@@ -455,8 +465,8 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <div class="section level3">
 <h3 id="id_5-cv-based-prior-elicitation">5. CV-Based Prior Elicitation<a class="anchor" aria-label="anchor" href="#id_5-cv-based-prior-elicitation"></a>
 </h3>
-<p><strong>The problem:</strong> Bayesian models require prior distributions, but specifying priors on log-transformed parameters is unintuitive. What does σ = 0.5 on log(<em>L</em><sub>50</sub>) mean in practical terms? Researchers often resort to “weakly informative” priors without considering whether they encode reasonable biological information.</p>
-<p><strong>Our solution:</strong> vitalBayes uses <strong>coefficient of variation (CV)</strong> for prior specification. The CV expresses uncertainty as a proportion of the mean—a scale-invariant, intuitive quantity.</p>
+<p><strong>The problem:</strong> Bayesian models require prior distributions, but specifying priors on log-transformed parameters is unintuitive. What does σ = 0.5 on log(<span class="math inline">\(L_{50}\)</span>) mean in practical terms? Researchers often resort to “weakly informative” priors without considering whether they encode reasonable biological information.</p>
+<p><strong>Our solution:</strong> vitalBayes uses <strong>coefficient of variation (CV)</strong> for prior specification. The CV expresses uncertainty as a proportion of the mean — a scale-invariant, intuitive quantity.</p>
 <p>For a parameter θ with prior mean μ and CV = c: - The prior SD on the original scale is σ<sub>θ</sub> = μ · c - Approximately 95% of prior mass falls within μ ± 2μc</p>
 <p><strong>Example:</strong> Setting <code>CV_Linf = 0.2</code> for a species with expected <span class="math inline">\(L_\infty\)</span> ≈ 100 cm means: - Prior SD ≈ 20 cm - 95% prior interval ≈ 60–140 cm</p>
 <p>This is far more interpretable than specifying σ = 0.2 on log(<span class="math inline">\(L_\infty\)</span>).</p>
