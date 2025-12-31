@@ -65,7 +65,7 @@ forward through life history stages:
         │                     │                       │
         │                     │                       │
         ▼                     ▼                       ▼
-     Informs L₀             Informs               Derived from
+     Informs L₀            Informs               Derived from
       prior              Lmat, tmat             maturity params
 
 Each stage produces posterior distributions that become informative
@@ -151,7 +151,7 @@ All datasets share the same structure with columns: `sex`, `mat`, `fl`,
 ## Visualization
 
 vitalBayes includes publication-ready plotting functions with a
-distinctive retro-wave color palette:
+signature vaporwave color palette:
 
 ``` r
 # Growth curves with credible intervals
