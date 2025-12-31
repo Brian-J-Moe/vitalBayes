@@ -138,10 +138,10 @@ transformed parameters {
 model {
   // Priors
   if (use_pooling == 1) {
-    // Hyperpriors
-    mu_Linf ~ normal(mean(prior_Linf_mu), 1);
-    mu_L0 ~ normal(mean(prior_L0_mu), 1);
-    mu_k ~ normal(mean(prior_k_mu), 1);
+    // Hyperpriors - use actual prior SDs
+    mu_Linf ~ normal(mean(prior_Linf_mu), mean(prior_Linf_sigma));
+    mu_L0 ~ normal(mean(prior_L0_mu), mean(prior_L0_sigma));
+    mu_k ~ normal(mean(prior_k_mu), mean(prior_k_sigma));
     
     // Half-normal priors on between-sex SD
     tau_Linf ~ normal(0, prior_tau_Linf);
