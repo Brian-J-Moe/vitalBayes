@@ -777,9 +777,15 @@ standardize_sex <- function(sex_values, female = NULL, male = NULL, silent = FAL
            call. = FALSE)
     }
 
-    unique_sex <- unique(tolower(sex_vec[!is.na(sex_vec)]))
-    has_female <- any(grepl("f", unique_sex))
-    has_male <- any(grepl("m", unique_sex))
+    unique_sex <- unique(tolower(as.character(sex_vec[!is.na(sex_vec)])))
+
+    if (all(unique_sex %in% c("1", "2"))) {
+      has_female <- any(unique_sex == "1")
+      has_male   <- any(unique_sex == "2")
+    } else {
+      has_female <- any(grepl("f", unique_sex))
+      has_male   <- any(grepl("m", unique_sex))
+    }
 
     if (!has_female || !has_male) {
       warning("Expected both sexes. Found: ", paste(unique_sex, collapse = ", "),
