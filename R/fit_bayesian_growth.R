@@ -743,6 +743,12 @@ fit_bayesian_growth <- function(
       }
     }
 
+    if (!isTRUE(robust)) {
+      base_init$nu_raw <- NULL  # removes the element from the init list
+    } else {
+      base_init$nu_raw <- 10
+    }
+
     base_init
   }
 
