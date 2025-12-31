@@ -57,7 +57,7 @@ transformed parameters {
   real L0_constrained = fmin(L0, Lmat * 0.95);
   real Lmat_constrained = fmin(fmax(Lmat, L0_constrained * 1.05), Linf * 0.99);
   
-  // Derive k from maturity parameters
+  // Derive k from maturity parameters with safeguards
   real<lower=0> k;
   
   // Degrees of freedom for robust model
@@ -66,20 +66,28 @@ transformed parameters {
   // Predicted mean lengths
   vector<lower=0>[N] mu;
   
+  // Ensure safe denominators and ratios for log()
+  real Linf_minus_L0 = fmax(Linf - L0_constrained, 1e-6);
+  real Linf_minus_Lmat = fmax(Linf - Lmat_constrained, 1e-6);
+  
   // Compute k based on growth model
   if (which_model == 1) {
     // von Bertalanffy: k = (1/tmat) * ln((Linf - L0)/(Linf - Lmat))
-    k = (1.0 / tmat) * log((Linf - L0_constrained) / (Linf - Lmat_constrained));
+    real ratio = fmax(Linf_minus_L0 / Linf_minus_Lmat, 1.001);
+    k = (1.0 / tmat) * log(ratio);
   } else if (which_model == 2) {
-    // Gompertz: k = (1/tmat) * ln(-ln(L0/Linf) / ln(Lmat/Linf))
-    real r0 = log(Linf / L0_constrained);
-    real rmt = log(Lmat_constrained / Linf);
-    k = (1.0 / tmat) * log(-r0 / rmt);
+    // Gompertz: k = (1/tmat) * ln[ln(Linf/L0) / ln(Linf/Lmat)]
+    real r0 = log(fmax(Linf / L0_constrained, 1.001));
+    real rmt = log(fmax(Lmat_constrained / Linf, 1e-6));
+    // rmt is negative, so -r0/rmt is positive
+    real ratio = fmax(-r0 / rmt, 1.001);
+    k = (1.0 / tmat) * log(ratio);
   } else {
     // Logistic: k = (1/tmat) * ln((Lmat*(Linf-L0)) / (L0*(Linf-Lmat)))
-    real num = Lmat_constrained * (Linf - L0_constrained);
-    real den = L0_constrained * (Linf - Lmat_constrained);
-    k = (1.0 / tmat) * log(num / den);
+    real num = Lmat_constrained * Linf_minus_L0;
+    real den = fmax(L0_constrained * Linf_minus_Lmat, 1e-6);
+    real ratio = fmax(num / den, 1.001);
+    k = (1.0 / tmat) * log(ratio);
   }
   
   // Compute predicted lengths

@@ -96,13 +96,10 @@ region of the posterior.
 
 \examples{
 \dontrun{
-# Load simulated data
-data(growth_data)
-
 # Fit birth model with data-derived priors
 birth_fit <- fit_bayesian_birth(
-  embryo_lts        = growth_data[embryo == TRUE, fl],
-  free_swimming_lts = growth_data[embryo == FALSE, fl]
+  embryo_lts        = sharks[embryo == TRUE, length],
+  free_swimming_lts = sharks[embryo == FALSE, length]
 )
 
 # View summary
@@ -110,30 +107,21 @@ birth_fit$summary(c("b50", "slope", "transition_width"))
 
 # Use b50 posterior as L0 prior for growth model
 growth_fit <- fit_bayesian_growth(
-  lt        = "fl",
-  age       = "age",
-  sex       = "sex",
-  data      = growth_data[embryo == FALSE],
-  birth_fit = birth_fit
-)
-
-# Example with limited data (sparse embryo sample)
-data(limited_data)
-birth_fit_limited <- fit_bayesian_birth(
-  embryo_lts        = limited_data[embryo == TRUE, fl],
-  free_swimming_lts = limited_data[embryo == FALSE, fl],
-  cv_b50            = 0.2  # Tighter prior when data are sparse
+  ...,
+  birth_stanfit = birth_fit
 )
 }
 
 }
 \seealso{
-\code{vignette("fit_bayesian_birth")} for usage examples.
+\code{vignette("fit_bayesian_birth")} for usage examples with gulper shark data.
 
-\href{../doc/Understanding_vitalBayes.html#birth}{Statistical Methods: Birth Size Estimation}
+\code{vignette("complete_workflow")} for the full three-stage analysis pipeline.
+
+\href{../doc/vitalBayes_stats_explained.html#birth}{Statistical Methods: Birth Size Estimation}
 for the mathematical derivation.
 
-\href{../doc/Understanding_vitalBayes.html#probit}{Statistical Methods: Probit Link}
+\href{../doc/vitalBayes_stats_explained.html#probit}{Statistical Methods: Probit Link}
 for justification of the probit over logit link.
 
 \code{\link{fit_bayesian_maturity}}, \code{\link{fit_bayesian_growth}} for

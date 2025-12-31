@@ -128,22 +128,31 @@ transformed parameters {
   }
   
   // Derive k from maturity parameters
+  // Add safeguards to ensure log() arguments are always positive
   vector<lower=0>[2] k;
   
   for (s in 1:2) {
+    // Ensure safe denominators and ratios for log()
+    real Linf_minus_L0 = fmax(Linf[s] - L0_constrained[s], 1e-6);
+    real Linf_minus_Lmat = fmax(Linf[s] - Lmat_constrained[s], 1e-6);
+    
     if (which_model == 1) {
-      // von Bertalanffy
-      k[s] = (1.0 / tmat[s]) * log((Linf[s] - L0_constrained[s]) / (Linf[s] - Lmat_constrained[s]));
+      // von Bertalanffy: k = (1/tmat) * ln[(Linf - L0) / (Linf - Lmat)]
+      real ratio = fmax(Linf_minus_L0 / Linf_minus_Lmat, 1.001);
+      k[s] = (1.0 / tmat[s]) * log(ratio);
     } else if (which_model == 2) {
-      // Gompertz
-      real r0 = log(Linf[s] / L0_constrained[s]);
-      real rmt = log(Lmat_constrained[s] / Linf[s]);
-      k[s] = (1.0 / tmat[s]) * log(-r0 / rmt);
+      // Gompertz: k = (1/tmat) * ln[ln(Linf/L0) / ln(Linf/Lmat)]
+      real r0 = log(fmax(Linf[s] / L0_constrained[s], 1.001));
+      real rmt = log(fmax(Lmat_constrained[s] / Linf[s], 1e-6));
+      // rmt is negative, so -r0/rmt is positive
+      real ratio = fmax(-r0 / rmt, 1.001);
+      k[s] = (1.0 / tmat[s]) * log(ratio);
     } else {
-      // Logistic
-      real num = Lmat_constrained[s] * (Linf[s] - L0_constrained[s]);
-      real den = L0_constrained[s] * (Linf[s] - Lmat_constrained[s]);
-      k[s] = (1.0 / tmat[s]) * log(num / den);
+      // Logistic: k = (1/tmat) * ln[Lmat*(Linf-L0) / (L0*(Linf-Lmat))]
+      real num = Lmat_constrained[s] * Linf_minus_L0;
+      real den = fmax(L0_constrained[s] * Linf_minus_Lmat, 1e-6);
+      real ratio = fmax(num / den, 1.001);
+      k[s] = (1.0 / tmat[s]) * log(ratio);
     }
   }
   
