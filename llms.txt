@@ -459,7 +459,7 @@ growth_fit <- fit_bayesian_growth(
 
 ### 7. Automatic Multilingual Sex Coding
 
-vitalBayes automatically detects sex coding in 11+ languages:
+vitalBayes automatically detects sex coding in multiple languages:
 
 ``` r
 # All of these work automatically:
