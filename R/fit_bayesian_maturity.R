@@ -301,12 +301,13 @@ fit_bayesian_maturity <- function(
       )
       
       # Initialization - all params always present now
+      # Note: log_slope initialized to give slope ~ 0.1-0.2 (reasonable for cm scale)
       init_fun <- function() {
         list(
           mu_L50    = mean(log(midpoint_L50)),
           tau_L50   = 0.1,
           raw_L50   = if (use_pooling) c(0, 0) else log(midpoint_L50),
-          log_slope = c(0, 0)
+          log_slope = c(-2, -2)  # slope ~ 0.135, reasonable for probit on cm scale
         )
       }
       
@@ -346,7 +347,7 @@ fit_bayesian_maturity <- function(
       init_fun <- function() {
         list(
           log_L50   = log(midpoint_L50),
-          log_slope = 0
+          log_slope = -2  # slope ~ 0.135, reasonable for probit on cm scale
         )
       }
       
@@ -422,12 +423,13 @@ fit_bayesian_maturity <- function(
       )
       
       # Initialization - all params always present now
+      # Note: log_slope initialized to give slope ~ 0.1-0.3 (reasonable for age in years)
       init_fun <- function() {
         list(
           mu_t50    = mean(log(midpoint_t50)),
           tau_t50   = 0.1,
           raw_t50   = if (use_pooling) c(0, 0) else log(midpoint_t50),
-          log_slope = c(0, 0)
+          log_slope = c(-1, -1)  # slope ~ 0.37, reasonable for probit on age scale
         )
       }
       
@@ -466,7 +468,7 @@ fit_bayesian_maturity <- function(
       init_fun <- function() {
         list(
           log_t50   = log(midpoint_t50),
-          log_slope = 0
+          log_slope = -1  # slope ~ 0.37, reasonable for probit on age scale
         )
       }
       

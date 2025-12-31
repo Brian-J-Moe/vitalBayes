@@ -7,22 +7,26 @@
 <!-- badges: end -->
 
 
-`vitalBayes` provides a coherent statistical framework for estimating birth size, maturity, and growth parameters in sharks and rays using Bayesian methods. 
-The package implements hierarchical models via [Stan](https://mc-stan.org/) with precompiled models for fast, reliable inference. 
+`vitalBayes` provides a coherent statistical framework for estimating birth size, 
+maturity, and growth parameters in elasmobranchs using Bayesian methods. The 
+package implements hierarchical models via [Stan](https://mc-stan.org/) with 
+precompiled models for fast, reliable inference. 
 
-The package addresses critical methodological 
-challenges in shark and ray research, including sparse datasets, imbalanced 
-sex ratios, uncertain aging methodologies, and the need for biologically 
-coherent parameter estimation across life stages. 
+The package addresses critical methodological challenges, including sparse 
+datasets, imbalanced sex ratios, and the need for biologically coherent 
+parameter estimation across life stages. 
 
 ## Why vitalBayes?
 
 Elasmobranch life history estimation presents unique challenges:
 
 - **Sparse embryo samples** make birth size estimation uncertain
-- **Imbalanced sex ratios** lead to unreliable parameter estimates for the undersampled sex
-- **Strong parameter correlations** (especially $L_\infty$ and $k$) complicate growth model inference
-- **Data limitations** may result in unrealistic parameter estimates using traditional modeling approaches
+- **Imbalanced sex ratios** lead to unreliable parameter estimates for the 
+undersampled sex
+- **Strong parameter correlations** (especially $L_\infty$ and $k$) complicate 
+growth model inference
+- **Data limitations** may result in unrealistic parameter estimates using 
+traditional modeling approaches
 
 vitalBayes addresses these challenges through:
 
@@ -69,7 +73,8 @@ pak::pak("Brian-J-Moe/vitalBayes")
 
 ## The Three-Stage Workflow
 
-vitalBayes implements an integrated workflow where information flows forward through life history stages:
+vitalBayes implements an integrated workflow where information flows forward 
+through life history stages:
 
 ```
   Birth      ───▶      Maturity      ───▶      Growth    
@@ -82,7 +87,8 @@ vitalBayes implements an integrated workflow where information flows forward thr
   prior              Lmat, tmat             maturity params
 ```
 
-Each stage produces posterior distributions that become informative priors for the next, creating a biologically coherent analysis.
+Each stage produces posterior distributions that become informative priors 
+for the next, creating a biologically coherent analysis.
 
 ## Quick Start
 
@@ -161,7 +167,8 @@ All datasets share the same structure with columns: `sex`, `mat`, `fl`, `age`, `
 
 ## Visualization
 
-vitalBayes includes publication-ready plotting functions with a signature vaporwave color palette:
+vitalBayes includes publication-ready plotting functions with a signature 
+vaporwave color palette:
 ```r
 # Growth curves with credible intervals
 plot_growth_curve(
@@ -244,7 +251,9 @@ create_loo_table(
 
 ### 1. Maturity-Based Growth Parameterization
 
-Traditional growth models estimate $k$ directly, but $k$ and $L_\infty$ are strongly negatively correlated (often *r* < −0.9), making both poorly identified when data don't extend to near-asymptotic sizes.
+Traditional growth models estimate $k$ directly, but $k$ and $L_\infty$ are 
+strongly negatively correlated (often *r* < −0.9), making both poorly identified 
+when data don't extend to near-asymptotic sizes.
 
 **Our solution:** Derive $k$ from observable maturity milestones:
 
@@ -257,35 +266,54 @@ This parameterization:
 
 ### 2. Probit Link for Threshold Models
 
-Both birth and maturity models use a probit link function rather than the more common logit. The probit link assumes that underlying developmental readiness is normally distributed across individuals. An individual transitions (births or matures) when this latent readiness crosses a threshold.
+Both birth and maturity models use a probit link function rather than the more 
+common logit. The probit link assumes that underlying developmental readiness 
+is normally distributed across individuals. An individual transitions (births or 
+matures) when this latent readiness crosses a threshold.
 
 **Why probit?**
-- **Biological interpretation:** Normal variation in developmental readiness is biologically plausible
-- **Consistent reporting:** The transition width ($x_{95}$ − $x_{05}$) has units of the predictor (cm or years)
+- **Biological interpretation:** Normal variation in developmental readiness is 
+biologically plausible
+- **Consistent reporting:** The transition width ($x_{95}$ − $x_{05}$) has units 
+of the predictor (cm or years)
 - Derived quantities ($L_{05}$, $L_{95}$) have direct biological interpretation
 
 ### 3. Partial Pooling for Imbalanced Sex Ratios
 
-**The problem:** Elasmobranch sampling frequently yields imbalanced sex ratios. A dataset might contain 150 females but only 34 males. Fitting separate models produces:
+**The problem:** Elasmobranch sampling frequently yields imbalanced sex ratios. 
+A dataset might contain 150 females but only 34 males. Fitting separate models 
+produces:
+
 - Wide, unreliable credible intervals for the sparse sex
 - Estimates driven by a few influential observations  
 - Inefficient use of information (both sexes are the same species)
 
-Complete pooling (ignoring sex) is biologically unrealistic. No pooling (fully separate) wastes information.
+Complete pooling (ignoring sex) is biologically unrealistic. No pooling (fully 
+separate) wastes information.
 
-**Our solution:** Partial pooling models sex-specific parameters as draws from a common distribution:
+**Our solution:** Partial pooling models sex-specific parameters as draws from 
+a common distribution:
 
 $$\log(\theta_s) = \mu + \tau \cdot \eta_s, \quad \eta_s \sim \mathcal{N}(0, 1)$$
 
-where μ is the population mean, τ is between-sex standard deviation, and η<sub>s</sub> are standardized sex deviations. The model **learns τ from the data**:
+where μ is the population mean, τ is between-sex standard deviation, and 
+η<sub>s</sub> are standardized sex deviations. The model **learns τ from the 
+data**:
 
 - If sexes appear similar → small τ → estimates shrink together
 - If sexes appear different → large τ → estimates stay separated
 - Sparse sex → borrows strength from data-rich sex
 
-**Non-centered parameterization:** We use the non-centered form (estimating η rather than θ directly) because it dramatically improves MCMC sampling when τ is small. When between-sex variation is minimal, centered parameterizations create a "funnel" geometry that causes divergent transitions.
+**Non-centered parameterization:** We use the non-centered form (estimating η 
+rather than θ directly) because it dramatically improves MCMC sampling when τ 
+is small. When between-sex variation is minimal, centered parameterizations 
+create a "funnel" geometry that causes divergent transitions.
 
-**Half-normal prior on τ:** We place τ ~ Half-Normal(0, σ<sub>τ</sub>) rather than the commonly-used half-Cauchy. The half-Cauchy's heavy tails can pull τ toward implausibly large values, especially with only two groups (sexes). The half-normal provides gentle regularization while still allowing substantial between-sex variation when warranted.
+**Half-normal prior on τ:** We place τ ~ Half-Normal(0, σ<sub>τ</sub>) rather 
+than the commonly-used half-Cauchy. The half-Cauchy's heavy tails can pull τ 
+toward implausibly large values, especially with only two groups (sexes). The 
+half-normal provides gentle regularization while still allowing substantial 
+between-sex variation when warranted.
 
 ```r
 # Enable partial pooling (especially useful for imbalanced data)
@@ -311,18 +339,28 @@ See `vignette("partial_pooling")` for a comprehensive treatment.
 
 ### 4. Constrained Asymptotic Length ($L_\infty$ > $L_{max}$)
 
-**The problem:** Unconstrained growth models frequently converge on $L_\infty$ values *below* the largest observed individuals. This is biologically impossible—asymptotic length must exceed any realized length—yet it occurs regularly when:
+**The problem:** Unconstrained growth models frequently converge on $L_\infty$ 
+values *below* the largest observed individuals. This is biologically 
+impossible—asymptotic length must exceed any realized length—yet it occurs 
+regularly when:
+
 - Data don't extend to ages near asymptotic size
 - Older individuals are undersampled (fishing selectivity, natural mortality)
 - Strong $L_\infty$–$k$ correlation allows trade-offs
 
-**Our solution:** vitalBayes enforces $L_\infty$ > $L_{max}$ through a shifted lognormal prior:
+**Our solution:** vitalBayes enforces $L_\infty$ > $L_{max}$ through a shifted 
+lognormal prior:
 
 $$L_\infty = L_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu_\nu, \sigma_\nu)$$
 
-This ensures $L_\infty$ always exceeds the maximum observed length while still allowing uncertainty about *how much* it exceeds it.
+This ensures $L_\infty$ always exceeds the maximum observed length while still 
+allowing uncertainty about *how much* it exceeds it.
 
-**Biological rationale:** The largest individual we've observed represents a lower bound on the species' potential size. Natural mortality, fishing pressure, and sampling limitations virtually guarantee we haven't captured the true maximum. Our prior should encode this biological reality rather than allowing impossible values.
+**Biological rationale:** The largest individual we've observed represents a 
+lower bound on the species' potential size. Natural mortality, fishing pressure, 
+and sampling limitations virtually guarantee we haven't captured the true 
+maximum. Our prior should encode this biological reality rather than allowing 
+impossible values.
 
 ```r
 # Lmax is auto-detected from data
@@ -344,9 +382,15 @@ growth_fit <- fit_bayesian_growth(
 
 ### 5. CV-Based Prior Elicitation
 
-**The problem:** Bayesian models require prior distributions, but specifying priors on log-transformed parameters is unintuitive. What does σ = 0.5 on log(*L*<sub>50</sub>) mean in practical terms? Researchers often resort to "weakly informative" priors without considering whether they encode reasonable biological information.
+**The problem:** Bayesian models require prior distributions, but specifying 
+priors on log-transformed parameters is unintuitive. What does σ = 0.5 on 
+log($L_{50}$) mean in practical terms? Researchers often resort to "weakly 
+informative" priors without considering whether they encode reasonable 
+biological information.
 
-**Our solution:** vitalBayes uses **coefficient of variation (CV)** for prior specification. The CV expresses uncertainty as a proportion of the mean—a scale-invariant, intuitive quantity.
+**Our solution:** vitalBayes uses **coefficient of variation (CV)** for prior 
+specification. The CV expresses uncertainty as a proportion of the mean — a 
+scale-invariant, intuitive quantity.
 
 For a parameter θ with prior mean μ and CV = c:
 - The prior SD on the original scale is σ<sub>θ</sub> = μ · c
@@ -374,9 +418,14 @@ growth_fit <- fit_bayesian_growth(
 
 ### 6. Integrated Three-Stage Workflow
 
-**The problem:** Life history parameters are typically estimated independently, ignoring biological connections. Birth size is estimated from embryo data, maturity from reproductive assessments, and growth from age-length pairs—each analysis producing point estimates and confidence intervals that don't propagate into downstream analyses.
+**The problem:** Life history parameters are typically estimated independently, 
+ignoring biological connections. Birth size is estimated from embryo data, 
+maturity from reproductive assessments, and growth from age-length pairs—each 
+analysis producing point estimates and confidence intervals that don't propagate 
+into downstream analyses.
 
-**Our solution:** vitalBayes implements an integrated workflow where **posterior distributions flow forward** through life history stages:
+**Our solution:** vitalBayes implements an integrated workflow where 
+**posterior distributions flow forward** through life history stages:
 
 ```
 Birth (b₅₀)  ──▶  prior on L₀ for growth model
@@ -386,7 +435,10 @@ Maturity (L₅₀) ──  prior on Lmat for growth model
 Maturity (t₅₀)  ──▶  prior on tmat for growth model
 ```
 
-When you pass `birth_fit`, `L50_fit`, and `t50_fit` to `fit_bayesian_growth()`, the function extracts posterior summaries and constructs informative priors. Uncertainty from upstream models propagates naturally into growth parameter estimates.
+When you pass `birth_fit`, `L50_fit`, and `t50_fit` to `fit_bayesian_growth()`, 
+the function extracts posterior summaries and constructs informative priors. 
+Uncertainty from upstream models propagates naturally into growth parameter 
+estimates.
 
 **Why this matters:**
 - **Biological coherence:** Growth curves are constrained to pass through maturity milestones
@@ -440,7 +492,8 @@ vitalBayes automatically detects sex coding in 11+ languages:
 | `vignette("visualization")` | Plotting functions and color palettes |
 | `vignette("model_diagnostics")` | Convergence, PPC, and LOO-CV |
 
-For comprehensive statistical background, see the [Statistical Methods Guide](articles/Understanding_vitalBayes.html).
+For comprehensive statistical background, see the 
+[Statistical Methods Guide](articles/Understanding_vitalBayes.html).
 
 ## Citation
 
@@ -471,7 +524,8 @@ If you use vitalBayes in your research, please cite:
 
 ## Contributing
 
-Contributions are welcome! Please open an issue to discuss proposed changes or submit a pull request.
+Contributions are welcome! Please open an issue to discuss proposed changes or 
+submit a pull request.
 
 ## License
 
