@@ -676,12 +676,12 @@ fit_bayesian_growth <- function(
           mu_tmat = if (use_pooling) tmat_init$mu0 else mean(log(mean_tmat_nat)),
           tau_Linf = 0.1,
           tau_L0   = 0.1,
-          tau_Lmat = if (use_pooling) Lmat_init$tau0 else 0.1,
-          tau_tmat = if (use_pooling) tmat_init$tau0 else 0.1,
+          tau_Lmat = 0.1,
+          tau_tmat = 0.1,
           raw_Linf = if (use_pooling) c(0, 0) else log(mean_Linf_nat),
           raw_L0   = if (use_pooling) c(0, 0) else log(mean_L0_nat),
-          raw_Lmat = if (use_pooling) as.numeric(Lmat_init$raw0) else log(mean_Lmat_nat),
-          raw_tmat = if (use_pooling) as.numeric(tmat_init$raw0) else log(mean_tmat_nat),
+          raw_Lmat = if (use_pooling) c(0, 0) else log(mean_Lmat_nat),
+          raw_tmat = if (use_pooling) c(0, 0) else log(mean_tmat_nat),
           sigma    = c(0.1, 0.1)
         )
       } else {
