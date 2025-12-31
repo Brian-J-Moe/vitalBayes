@@ -512,7 +512,7 @@ If you use vitalBayes in your research, please cite:
   title = {vitalBayes: Bayesian Life History Parameter Estimation for Elasmobranchs},
   year = {2025},
   url = {https://github.com/Brian-J-Moe/vitalBayes},
-  version = {0.0.9}
+  version = {0.3.2}
 }
 ```
 

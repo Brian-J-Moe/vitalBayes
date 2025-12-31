@@ -1,6 +1,6 @@
 Package: vitalBayes
 Title: Bayesian Life History Parameter Estimation for Elasmobranchs
-Version: 0.0.9
+Version: 0.3.2
 Authors@R: 
     person(given = c("Brian", "J"), family = "Moe", email = "brian.moe@MYFWC.com", role = c("aut", "cre"))
 Description: `vitalBayes` is an R package implementing innovative Bayesian 
