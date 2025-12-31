@@ -641,7 +641,7 @@ fit_bayesian_growth <- function(
           tau_k    = 0.1,
           raw_Linf = if (use_pooling) c(0, 0) else log(mean_Linf_nat),
           raw_L0   = if (use_pooling) c(0, 0) else log(mean_L0_nat),
-          raw_k    = if (use_pooling) c(0, 0) else log(c(k_init, k_init)),
+          raw_k = if (use_pooling) c(0, 0) else log(as.numeric(k_init)),
           sigma    = c(0.1, 0.1)
         )
       } else {
@@ -655,19 +655,33 @@ fit_bayesian_growth <- function(
     } else {
       # Maturity-based
       if (is_twosex) {
+
+        .init_noncentered_from_priors <- function(prior_mu, tau_init_floor = 0.25) {
+          mu0  <- mean(prior_mu)
+          sdmu <- stats::sd(prior_mu)
+          tau0 <- max(tau_init_floor, sdmu)
+          raw0 <- (prior_mu - mu0) / tau0
+          list(mu0 = mu0, tau0 = tau0, raw0 = raw0)
+        }
+
+        if(use_pooling) {
+          Lmat_init <- .init_noncentered_from_priors(stan_data$prior_Lmat_mu)
+          tmat_init <- .init_noncentered_from_priors(stan_data$prior_tmat_mu)
+        }
+
         list(
           mu_Linf  = mean(log(mean_Linf_nat)),
           mu_L0    = mean(log(mean_L0_nat)),
-          mu_Lmat  = mean(log(mean_Lmat_nat)),
-          mu_tmat  = mean(log(mean_tmat_nat)),
+          mu_Lmat = if (use_pooling) Lmat_init$mu0 else mean(log(mean_Lmat_nat)),
+          mu_tmat = if (use_pooling) tmat_init$mu0 else mean(log(mean_tmat_nat)),
           tau_Linf = 0.1,
           tau_L0   = 0.1,
-          tau_Lmat = 0.1,
-          tau_tmat = 0.1,
+          tau_Lmat = if (use_pooling) Lmat_init$tau0 else 0.1,
+          tau_tmat = if (use_pooling) tmat_init$tau0 else 0.1,
           raw_Linf = if (use_pooling) c(0, 0) else log(mean_Linf_nat),
           raw_L0   = if (use_pooling) c(0, 0) else log(mean_L0_nat),
-          raw_Lmat = if (use_pooling) c(0, 0) else log(mean_Lmat_nat),
-          raw_tmat = if (use_pooling) c(0, 0) else log(mean_tmat_nat),
+          raw_Lmat = if (use_pooling) as.numeric(Lmat_init$raw0) else log(mean_Lmat_nat),
+          raw_tmat = if (use_pooling) as.numeric(tmat_init$raw0) else log(mean_tmat_nat),
           sigma    = c(0.1, 0.1)
         )
       } else {
@@ -738,3 +752,7 @@ fit_bayesian_growth <- function(
 
   return(fit)
 }
+
+
+
+

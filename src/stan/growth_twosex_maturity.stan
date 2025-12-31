@@ -11,34 +11,34 @@ data {
   vector<lower=0>[N] age;            // Observed ages
   array[N] int<lower=1, upper=2> sex;// Sex indicator (1=female, 2=male)
   array[N] int<lower=1> row_id;      // Original row indices
-  
+
   int<lower=1, upper=3> which_model; // 1=VBGM, 2=Gompertz, 3=Logistic
   int<lower=0, upper=1> robust;      // 0=lognormal, 1=Student-t errors
   int<lower=0, upper=1> use_pooling; // 0=independent, 1=partial pooling
-  
+
   // Priors for Linf (log scale) - vectors of length 2 for [female, male]
   vector[2] prior_Linf_mu;
   vector<lower=0>[2] prior_Linf_sigma;
   vector<lower=0>[2] Linf_lower;
-  
+
   // Priors for L0 (log scale)
   vector[2] prior_L0_mu;
   vector<lower=0>[2] prior_L0_sigma;
-  
+
   // Priors for Lmat (log scale)
   vector[2] prior_Lmat_mu;
   vector<lower=0>[2] prior_Lmat_sigma;
-  
+
   // Priors for tmat (log scale)
   vector[2] prior_tmat_mu;
   vector<lower=0>[2] prior_tmat_sigma;
-  
+
   // Hyperprior scales for partial pooling (half-normal scale)
   real<lower=0> prior_tau_Linf;
   real<lower=0> prior_tau_L0;
   real<lower=0> prior_tau_Lmat;
   real<lower=0> prior_tau_tmat;
-  
+
   // Priors for sigma
   real loc_sig;
   real<lower=0> scale_sig;
@@ -46,7 +46,7 @@ data {
 
 transformed data {
   vector[N] log_length = log(length);
-  
+
   // Count observations per sex
   int n_female = 0;
   int n_male = 0;
@@ -62,22 +62,22 @@ parameters {
   real mu_L0;
   real mu_Lmat;
   real mu_tmat;
-  
+
   // Between-sex standard deviations (for pooling)
   real<lower=0> tau_Linf;
   real<lower=0> tau_L0;
   real<lower=0> tau_Lmat;
   real<lower=0> tau_tmat;
-  
+
   // Raw deviates (always present)
   vector[2] raw_Linf;
   vector[2] raw_L0;
   vector[2] raw_Lmat;
   vector[2] raw_tmat;
-  
+
   // Sex-specific observation error
   vector<lower=0>[2] sigma;
-  
+
   // Degrees of freedom (if robust)
   array[robust] real<lower=2> nu_raw;
 }
@@ -88,7 +88,7 @@ transformed parameters {
   vector[2] log_L0;
   vector[2] log_Lmat;
   vector[2] log_tmat;
-  
+
   if (use_pooling == 1) {
     // Non-centered: log_param = mu + tau * raw
     for (s in 1:2) {
@@ -104,38 +104,38 @@ transformed parameters {
     log_Lmat = raw_Lmat;
     log_tmat = raw_tmat;
   }
-  
+
   // Transform to natural scale
   vector<lower=0>[2] Linf;
   vector<lower=0>[2] L0;
   vector<lower=0>[2] Lmat;
   vector<lower=0>[2] tmat;
-  
+
   for (s in 1:2) {
     Linf[s] = fmax(exp(log_Linf[s]), Linf_lower[s]);
     L0[s] = exp(log_L0[s]);
     Lmat[s] = exp(log_Lmat[s]);
     tmat[s] = exp(log_tmat[s]);
   }
-  
+
   // Constrain L0 < Lmat < Linf for biological plausibility
   vector<lower=0>[2] L0_constrained;
   vector<lower=0>[2] Lmat_constrained;
-  
+
   for (s in 1:2) {
     L0_constrained[s] = fmin(L0[s], Lmat[s] * 0.95);
     Lmat_constrained[s] = fmin(fmax(Lmat[s], L0_constrained[s] * 1.05), Linf[s] * 0.99);
   }
-  
+
   // Derive k from maturity parameters
   // Add safeguards to ensure log() arguments are always positive
   vector<lower=0>[2] k;
-  
+
   for (s in 1:2) {
     // Ensure safe denominators and ratios for log()
     real Linf_minus_L0 = fmax(Linf[s] - L0_constrained[s], 1e-6);
     real Linf_minus_Lmat = fmax(Linf[s] - Lmat_constrained[s], 1e-6);
-    
+
     if (which_model == 1) {
       // von Bertalanffy: k = (1/tmat) * ln[(Linf - L0) / (Linf - Lmat)]
       real ratio = fmax(Linf_minus_L0 / Linf_minus_Lmat, 1.001);
@@ -155,17 +155,19 @@ transformed parameters {
       k[s] = (1.0 / tmat[s]) * log(ratio);
     }
   }
-  
+
   // Degrees of freedom
-  real nu = robust ? nu_raw[1] : 100.0;
-  
+  real nu;
+  if (robust == 1) nu = nu_raw[1];
+  else nu = 100.0;
+
   // Predicted lengths
   vector<lower=0>[N] mu;
-  
+
   for (i in 1:N) {
     int s = sex[i];
     real a = age[i];
-    
+
     if (which_model == 1) {
       // von Bertalanffy
       mu[i] = Linf[s] - (Linf[s] - L0_constrained[s]) * exp(-k[s] * a);
@@ -187,21 +189,30 @@ model {
     // Hyperpriors for population means - use actual prior SDs from maturity fits
     mu_Linf ~ normal(mean(prior_Linf_mu), mean(prior_Linf_sigma));
     mu_L0 ~ normal(mean(prior_L0_mu), mean(prior_L0_sigma));
-    mu_Lmat ~ normal(mean(prior_Lmat_mu), mean(prior_Lmat_sigma));
-    mu_tmat ~ normal(mean(prior_tmat_mu), mean(prior_tmat_sigma));
-    
+    mu_Lmat ~ normal(mean(prior_Lmat_mu), 2 * mean(prior_Lmat_sigma));
+    mu_tmat ~ normal(mean(prior_tmat_mu), 2 * mean(prior_tmat_sigma));
+
     // Half-normal priors on between-sex SD
     tau_Linf ~ normal(0, prior_tau_Linf);
     tau_L0 ~ normal(0, prior_tau_L0);
     tau_Lmat ~ normal(0, prior_tau_Lmat);
     tau_tmat ~ normal(0, prior_tau_tmat);
-    
+
     // Standard normal for non-centered raw deviates
     raw_Linf ~ std_normal();
     raw_L0 ~ std_normal();
     raw_Lmat ~ std_normal();
     raw_tmat ~ std_normal();
-    
+
+    // Keep sex-specific priors even under pooling
+    // (prevents collapse to the geometric mean when use_pooling==1).
+    for (s in 1:2) {
+      target += normal_lpdf(log_Linf[s] | prior_Linf_mu[s], prior_Linf_sigma[s]);
+      target += normal_lpdf(log_L0[s]   | prior_L0_mu[s],   prior_L0_sigma[s]);
+      target += normal_lpdf(log_Lmat[s] | prior_Lmat_mu[s], prior_Lmat_sigma[s]);
+      target += normal_lpdf(log_tmat[s] | prior_tmat_mu[s], prior_tmat_sigma[s]);
+    }
+
   } else {
     // Independent priors per sex (raw values are log parameters)
     for (s in 1:2) {
@@ -210,7 +221,7 @@ model {
       raw_Lmat[s] ~ normal(prior_Lmat_mu[s], prior_Lmat_sigma[s]);
       raw_tmat[s] ~ normal(prior_tmat_mu[s], prior_tmat_sigma[s]);
     }
-    
+
     // Weakly constrain unused params
     mu_Linf ~ normal(0, 1);
     mu_L0 ~ normal(0, 1);
@@ -221,14 +232,14 @@ model {
     tau_Lmat ~ normal(0, 1);
     tau_tmat ~ normal(0, 1);
   }
-  
+
   // Observation error priors
   sigma ~ cauchy(loc_sig, scale_sig);
-  
+
   if (robust) {
     nu_raw[1] ~ gamma(2, 0.1);
   }
-  
+
   // Likelihood
   for (i in 1:N) {
     int s = sex[i];
@@ -243,20 +254,20 @@ model {
 generated quantities {
   // Log-likelihood
   vector[N] log_lik;
-  
+
   // Posterior predictive
   vector[N] y_pred;
   vector[N] y_rep;
   vector[N] residual;
   vector[N] std_residual;
-  
+
   // Sex differences (always computed, Female - Male)
   real Linf_diff = Linf[1] - Linf[2];
   real L0_diff = L0[1] - L0[2];
   real Lmat_diff = Lmat[1] - Lmat[2];
   real tmat_diff = tmat[1] - tmat[2];
   real k_diff = k[1] - k[2];
-  
+
   // Sex-specific summary stats
   real mean_residual_f = 0;
   real mean_residual_m = 0;
@@ -264,42 +275,42 @@ generated quantities {
   real rmse_m = 0;
   int n_in_CI_f = 0;
   int n_in_CI_m = 0;
-  
+
   // Temporary accumulators
   real sum_resid_f = 0;
   real sum_resid_m = 0;
   real sum_sq_f = 0;
   real sum_sq_m = 0;
-  
+
   for (i in 1:N) {
     int s = sex[i];
-    
+
     // Log-likelihood
     if (robust) {
       log_lik[i] = student_t_lpdf(log_length[i] | nu, log(mu[i]), sigma[s]);
     } else {
       log_lik[i] = normal_lpdf(log_length[i] | log(mu[i]), sigma[s]);
     }
-    
+
     // Predictions
     y_pred[i] = mu[i];
-    
+
     if (robust) {
       real log_rep = student_t_rng(nu, log(mu[i]), sigma[s]);
       y_rep[i] = exp(log_rep);
     } else {
       y_rep[i] = lognormal_rng(log(mu[i]), sigma[s]);
     }
-    
+
     // Residuals
     residual[i] = length[i] - mu[i];
     std_residual[i] = (log_length[i] - log(mu[i])) / sigma[s];
-    
+
     // Accumulate by sex
     if (s == 1) {
       sum_resid_f += residual[i];
       sum_sq_f += square(residual[i]);
-      
+
       real lower_ci = exp(log(mu[i]) - 1.96 * sigma[s]);
       real upper_ci = exp(log(mu[i]) + 1.96 * sigma[s]);
       if (length[i] >= lower_ci && length[i] <= upper_ci) {
@@ -308,7 +319,7 @@ generated quantities {
     } else {
       sum_resid_m += residual[i];
       sum_sq_m += square(residual[i]);
-      
+
       real lower_ci = exp(log(mu[i]) - 1.96 * sigma[s]);
       real upper_ci = exp(log(mu[i]) + 1.96 * sigma[s]);
       if (length[i] >= lower_ci && length[i] <= upper_ci) {
@@ -316,7 +327,7 @@ generated quantities {
       }
     }
   }
-  
+
   // Finalize sex-specific stats
   if (n_female > 0) {
     mean_residual_f = sum_resid_f / n_female;
