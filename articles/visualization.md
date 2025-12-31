@@ -414,3 +414,8 @@ plot_maturity_ogive(
   — Maturity model fitting
 - [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)
   — Growth model fitting
+
+------------------------------------------------------------------------
+
+*This document is part of the vitalBayes R package. For bug reports,
+feature requests, or questions, please visit the GitHub repository.*

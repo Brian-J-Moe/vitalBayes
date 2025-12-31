@@ -149,3 +149,8 @@ birth_fit_limited <- fit_bayesian_birth(
   — Visualization function
 - [`fit_bayesian_maturity()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md)
   — Similar approach for maturity estimation
+
+------------------------------------------------------------------------
+
+*This document is part of the vitalBayes R package. For bug reports,
+feature requests, or questions, please visit the GitHub repository.*

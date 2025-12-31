@@ -296,7 +296,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <div class="section level2">
 <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
 </h2>
-<p>vitalBayes includes publication-ready plotting functions with a signature vaporwave color palette:</p>
+<p>vitalBayes includes publication-ready plotting functions with its signature vaporwave color palette:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Growth curves with credible intervals</span></span>
 <span><span class="fu"><a href="reference/plot_growth_curve.html">plot_growth_curve</a></span><span class="op">(</span></span>
@@ -383,13 +383,25 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <p>Traditional growth models estimate <span class="math inline">\(k\)</span> directly, but <span class="math inline">\(k\)</span> and <span class="math inline">\(L_\infty\)</span> are strongly negatively correlated (often <em>r</em> &lt; −0.9), making both poorly identified when data don’t extend to near-asymptotic sizes.</p>
 <p><strong>Our solution:</strong> Derive <span class="math inline">\(k\)</span> from observable maturity milestones:</p>
 <p><span class="math display">\[k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
-<p>This parameterization: - Uses quantities that fall within the data range (<span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span>) - Ensures biological consistency: the growth curve passes through the maturity point - Propagates uncertainty from upstream maturity models</p>
+<p>This parameterization:</p>
+<ul>
+<li>Uses quantities that fall within the data range (<span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span>)</li>
+<li>Ensures biological consistency: the growth curve passes through the maturity point</li>
+<li>Propagates uncertainty from upstream maturity models</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="id_2-probit-link-for-threshold-models">2. Probit Link for Threshold Models<a class="anchor" aria-label="anchor" href="#id_2-probit-link-for-threshold-models"></a>
 </h3>
-<p>Both birth and maturity models use a probit link function rather than the more common logit. The probit link assumes that underlying developmental readiness is normally distributed across individuals. An individual transitions (births or matures) when this latent readiness crosses a threshold.</p>
-<p><strong>Why probit?</strong> - <strong>Biological interpretation:</strong> Normal variation in developmental readiness is biologically plausible - <strong>Consistent reporting:</strong> The transition width (<span class="math inline">\(x_{95}\)</span> − <span class="math inline">\(x_{05}\)</span>) has units of the predictor (cm or years) - Derived quantities (<span class="math inline">\(L_{05}\)</span>, <span class="math inline">\(L_{95}\)</span>) have direct biological interpretation</p>
+<p>Both birth and maturity models use a probit link function rather than the more commonly used logit. The probit link assumes that underlying developmental readiness is normally distributed across individuals. An individual transitions (births or matures) when this latent readiness crosses a threshold.</p>
+<p><strong>Why probit?</strong></p>
+<ul>
+<li>
+<strong>Biological interpretation:</strong> Normal variation in developmental readiness is biologically plausible</li>
+<li>
+<strong>Consistent reporting:</strong> The transition width (<span class="math inline">\(x_{95}\)</span> − <span class="math inline">\(x_{05}\)</span>) has units of the predictor (cm or years)</li>
+<li>Derived quantities (<span class="math inline">\(L_{05}\)</span>, <span class="math inline">\(L_{95}\)</span>) have direct biological interpretation</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="id_3-partial-pooling-for-imbalanced-sex-ratios">3. Partial Pooling for Imbalanced Sex Ratios<a class="anchor" aria-label="anchor" href="#id_3-partial-pooling-for-imbalanced-sex-ratios"></a>
@@ -435,16 +447,16 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <div class="section level3">
 <h3 id="id_4-constrained-asymptotic-length-l_infty--l_max">4. Constrained Asymptotic Length (<span class="math inline">\(L_\infty\)</span> &gt; <span class="math inline">\(L_{max}\)</span>)<a class="anchor" aria-label="anchor" href="#id_4-constrained-asymptotic-length-l_infty--l_max"></a>
 </h3>
-<p><strong>The problem:</strong> Unconstrained growth models frequently converge on <span class="math inline">\(L_\infty\)</span> values <em>below</em> the largest observed individuals. This is biologically impossible—asymptotic length must exceed any realized length—yet it occurs regularly when:</p>
+<p><strong>The problem:</strong> Unconstrained growth models frequently converge on <span class="math inline">\(L_\infty\)</span> values <em>below</em> the largest observed individuals. This is biologically impossible — asymptotic length must exceed any realized length — yet this occurs regularly when:</p>
 <ul>
 <li>Data don’t extend to ages near asymptotic size</li>
-<li>Older individuals are undersampled (fishing selectivity, natural mortality)</li>
+<li>Older individuals are undersampled (fishing selectivity, natural mortality, etc.)</li>
 <li>Strong <span class="math inline">\(L_\infty\)</span>–<span class="math inline">\(k\)</span> correlation allows trade-offs</li>
 </ul>
 <p><strong>Our solution:</strong> vitalBayes enforces <span class="math inline">\(L_\infty\)</span> &gt; <span class="math inline">\(L_{max}\)</span> through a shifted lognormal prior:</p>
 <p><span class="math display">\[L_\infty = L_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu_\nu, \sigma_\nu)\]</span></p>
 <p>This ensures <span class="math inline">\(L_\infty\)</span> always exceeds the maximum observed length while still allowing uncertainty about <em>how much</em> it exceeds it.</p>
-<p><strong>Biological rationale:</strong> The largest individual we’ve observed represents a lower bound on the species’ potential size. Natural mortality, fishing pressure, and sampling limitations virtually guarantee we haven’t captured the true maximum. Our prior should encode this biological reality rather than allowing impossible values.</p>
+<p><strong>Biological rationale:</strong> The largest individual we’ve observed represents a lower bound on the species’ potential size. Natural mortality, fishing pressure, and sampling limitations virtually guarantee we haven’t captured the true maximum. Our prior should encode this biological reality rather than allowing unrealistically low values.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Lmax is auto-detected from data</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
@@ -466,9 +478,17 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <h3 id="id_5-cv-based-prior-elicitation">5. CV-Based Prior Elicitation<a class="anchor" aria-label="anchor" href="#id_5-cv-based-prior-elicitation"></a>
 </h3>
 <p><strong>The problem:</strong> Bayesian models require prior distributions, but specifying priors on log-transformed parameters is unintuitive. What does σ = 0.5 on log(<span class="math inline">\(L_{50}\)</span>) mean in practical terms? Researchers often resort to “weakly informative” priors without considering whether they encode reasonable biological information.</p>
-<p><strong>Our solution:</strong> vitalBayes uses <strong>coefficient of variation (CV)</strong> for prior specification. The CV expresses uncertainty as a proportion of the mean — a scale-invariant, intuitive quantity.</p>
-<p>For a parameter θ with prior mean μ and CV = c: - The prior SD on the original scale is σ<sub>θ</sub> = μ · c - Approximately 95% of prior mass falls within μ ± 2μc</p>
-<p><strong>Example:</strong> Setting <code>CV_Linf = 0.2</code> for a species with expected <span class="math inline">\(L_\infty\)</span> ≈ 100 cm means: - Prior SD ≈ 20 cm - 95% prior interval ≈ 60–140 cm</p>
+<p><strong>Our solution:</strong> vitalBayes uses a <strong>coefficient of variation (CV)</strong> for prior specification. The CV expresses uncertainty as a proportion of the mean — a scale-invariant, intuitive quantity.</p>
+<p>For a parameter θ with prior mean μ and CV = c:</p>
+<ul>
+<li>The prior SD on the original scale is σ<sub>θ</sub> = μ · c</li>
+<li>Approximately 95% of prior mass falls within μ ± 2μc</li>
+</ul>
+<p><strong>Example:</strong> Setting <code>CV_Linf = 0.2</code> for a species with expected <span class="math inline">\(L_\infty\)</span> ≈ 100 cm means:</p>
+<ul>
+<li>Prior SD ≈ 20 cm</li>
+<li>95% prior interval ≈ 60–140 cm</li>
+</ul>
 <p>This is far more interpretable than specifying σ = 0.2 on log(<span class="math inline">\(L_\infty\)</span>).</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
@@ -486,7 +506,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <div class="section level3">
 <h3 id="id_6-integrated-three-stage-workflow">6. Integrated Three-Stage Workflow<a class="anchor" aria-label="anchor" href="#id_6-integrated-three-stage-workflow"></a>
 </h3>
-<p><strong>The problem:</strong> Life history parameters are typically estimated independently, ignoring biological connections. Birth size is estimated from embryo data, maturity from reproductive assessments, and growth from age-length pairs—each analysis producing point estimates and confidence intervals that don’t propagate into downstream analyses.</p>
+<p><strong>The problem:</strong> Life history parameters are typically estimated independently, ignoring biological connections. Birth size is estimated from embryo and/or neonatal data, maturity from reproductive assessments, and growth from age-length pairs. Each analysis producing point estimates and confidence intervals which don’t propagate into downstream analyses.</p>
 <p><strong>Our solution:</strong> vitalBayes implements an integrated workflow where <strong>posterior distributions flow forward</strong> through life history stages:</p>
 <pre><code>Birth (b₅₀)  ──▶  prior on L₀ for growth model
                  ╱
@@ -494,7 +514,17 @@ Maturity (L₅₀) ──  prior on Lmat for growth model
                  ╲
 Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 <p>When you pass <code>birth_fit</code>, <code>L50_fit</code>, and <code>t50_fit</code> to <code><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth()</a></code>, the function extracts posterior summaries and constructs informative priors. Uncertainty from upstream models propagates naturally into growth parameter estimates.</p>
-<p><strong>Why this matters:</strong> - <strong>Biological coherence:</strong> Growth curves are constrained to pass through maturity milestones - <strong>Proper uncertainty:</strong> Imprecise maturity estimates → wider growth parameter CIs - <strong>Information efficiency:</strong> All available data inform the final estimates - <strong>Reproducibility:</strong> The entire workflow is encapsulated in a few function calls</p>
+<p><strong>Why this matters:</strong></p>
+<ul>
+<li>
+<strong>Biological coherence:</strong> Growth curves are constrained to pass through maturity milestones</li>
+<li>
+<strong>Proper uncertainty:</strong> Imprecise maturity estimates → wider growth parameter CIs</li>
+<li>
+<strong>Information efficiency:</strong> All available data inform the final estimates</li>
+<li>
+<strong>Reproducibility:</strong> The entire workflow is encapsulated in a few function calls</li>
+</ul>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Complete integrated workflow</span></span>
 <span><span class="va">birth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_birth.html">fit_bayesian_birth</a></span><span class="op">(</span><span class="va">embryo_lts</span>, <span class="va">freeswim_lts</span><span class="op">)</span></span>
@@ -568,7 +598,7 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 </tr>
 </tbody>
 </table>
-<p>For comprehensive statistical background, see the <a href="articles/Understanding_vitalBayes.html">Statistical Methods Guide</a>.</p>
+<p>For a comprehensive statistical background, see the <a href="articles/Understanding_vitalBayes.html">Statistical Methods Guide</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
@@ -579,15 +609,31 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
   title = {vitalBayes: Bayesian Life History Parameter Estimation for Elasmobranchs},
   year = {2025},
   url = {https://github.com/Brian-J-Moe/vitalBayes},
-  version = {0.2.1}
+  version = {0.0.9}
 }</code></pre>
 </div>
 <div class="section level2">
 <h2 id="dependencies">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies"></a>
 </h2>
-<p><strong>Core:</strong> - <a href="https://mc-stan.org/cmdstanr/" class="external-link">cmdstanr</a> — CmdStan interface - <a href="https://github.com/wlandau/instantiate" class="external-link">instantiate</a> — Precompiled Stan models - <a href="https://rdatatable.gitlab.io/data.table/" class="external-link">data.table</a> — Fast data manipulation</p>
-<p><strong>Visualization:</strong> - <a href="https://ggplot2.tidyverse.org/" class="external-link">ggplot2</a> — Publication-quality graphics</p>
-<p><strong>Model Comparison:</strong> - <a href="https://mc-stan.org/loo/" class="external-link">loo</a> — Leave-one-out cross-validation</p>
+<p><strong>Core:</strong></p>
+<ul>
+<li>
+<a href="https://mc-stan.org/cmdstanr/" class="external-link">cmdstanr</a> — CmdStan interface</li>
+<li>
+<a href="https://github.com/wlandau/instantiate" class="external-link">instantiate</a> — Precompiled Stan models</li>
+<li>
+<a href="https://rdatatable.gitlab.io/data.table/" class="external-link">data.table</a> — Fast data manipulation</li>
+</ul>
+<p><strong>Visualization:</strong></p>
+<ul>
+<li>
+<a href="https://ggplot2.tidyverse.org/" class="external-link">ggplot2</a> — Publication-quality graphics</li>
+</ul>
+<p><strong>Model Comparison:</strong></p>
+<ul>
+<li>
+<a href="https://mc-stan.org/loo/" class="external-link">loo</a> — Leave-one-out cross-validation</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
@@ -599,7 +645,7 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 </h2>
 <p><a href="LICENSE.html">MIT License</a></p>
 <hr>
-<p><em>vitalBayes is developed for the elasmobranch research community to support robust, reproducible life history analyses.</em></p>
+<p><em>vitalBayes was developed for the elasmobranch research community to support robust, reproducible life history analyses.</em></p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

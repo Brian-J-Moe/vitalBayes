@@ -244,3 +244,8 @@ growth_fit <- fit_bayesian_growth(
   — Visualization
 - [`fit_bayesian_growth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)
   — Using maturity estimates in growth models
+
+------------------------------------------------------------------------
+
+*This document is part of the vitalBayes R package. For bug reports,
+feature requests, or questions, please visit the GitHub repository.*

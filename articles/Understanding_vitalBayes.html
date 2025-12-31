@@ -83,8 +83,6 @@
       <img src="../logo.png" class="logo" alt=""><h1>Understanding vitalBayes: The Statistics Behind Elasmobranch Life History Modeling</h1>
             <h3 data-toc-skip class="subtitle">A Deep Dive into Bayesian
 Methods for Birth, Maturity, and Growth Estimation</h3>
-                        <h4 data-toc-skip class="author">Brian J.
-Moe</h4>
             
       
       <small class="dont-index">Source: <a href="https://github.com/Brian-J-Moe/vitalBayes/blob/master/vignettes/articles/Understanding_vitalBayes.Rmd" class="external-link"><code>vignettes/articles/Understanding_vitalBayes.Rmd</code></a></small>
@@ -756,16 +754,17 @@ the predicted length from the growth model.</p>
 <div class="why-box">
 <p><strong>Why lognormal instead of normal errors?</strong></p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Positive support</strong>: Lengths can’t be negative.
-Normal errors could produce negative predictions; lognormal
-can’t.</p></li>
-<li><p><strong>Multiplicative errors</strong>: Measurement error is
-often <em>proportional</em> to size. A 1 cm error matters more for a 30
-cm juvenile than a 100 cm adult. Lognormal naturally captures
-this.</p></li>
-<li><p><strong>Heteroscedasticity</strong>: With normal errors, variance
-is constant across all sizes. With lognormal, variance increases with
-predicted length, matching empirical patterns.</p></li>
+<li>
+<strong>Positive support</strong>: Lengths can’t be negative. Normal
+errors could produce negative predictions; lognormal can’t.</li>
+<li>
+<strong>Multiplicative errors</strong>: Measurement error is often
+<em>proportional</em> to size. A 1 cm error matters more for a 30 cm
+juvenile than a 100 cm adult. Lognormal naturally captures this.</li>
+<li>
+<strong>Heteroscedasticity</strong>: With normal errors, variance is
+constant across all sizes. With lognormal, variance increases with
+predicted length, matching empirical patterns.</li>
 </ol>
 <p>On the log scale, we’re essentially fitting a linear model with
 constant variance, which is statistically well-behaved.</p>

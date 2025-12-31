@@ -543,11 +543,9 @@ model.
 
 1.  **Positive support**: Lengths can’t be negative. Normal errors could
     produce negative predictions; lognormal can’t.
-
 2.  **Multiplicative errors**: Measurement error is often *proportional*
     to size. A 1 cm error matters more for a 30 cm juvenile than a 100
     cm adult. Lognormal naturally captures this.
-
 3.  **Heteroscedasticity**: With normal errors, variance is constant
     across all sizes. With lognormal, variance increases with predicted
     length, matching empirical patterns.

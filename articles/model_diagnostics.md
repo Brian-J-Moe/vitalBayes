@@ -381,3 +381,8 @@ When models are equivalent by LOO, prefer:
   — Growth model fitting details
 - [`plot_residuals()`](https://brian-j-moe.github.io/vitalBayes/reference/plot_residuals.md)
   — Residual visualization
+
+------------------------------------------------------------------------
+
+*This document is part of the vitalBayes R package. For bug reports,
+feature requests, or questions, please visit the GitHub repository.*

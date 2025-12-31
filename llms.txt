@@ -149,7 +149,7 @@ All datasets share the same structure with columns: `sex`, `mat`, `fl`,
 
 ## Visualization
 
-vitalBayes includes publication-ready plotting functions with a
+vitalBayes includes publication-ready plotting functions with its
 signature vaporwave color palette:
 
 ``` r
@@ -246,24 +246,30 @@ sizes.
 \\k = \frac{1}{t\_{mat}} \ln\left(\frac{L\_\infty - L_0}{L\_\infty -
 L\_{mat}}\right)\\
 
-This parameterization: - Uses quantities that fall within the data range
-(\\L\_{mat}\\, \\t\_{mat}\\) - Ensures biological consistency: the
-growth curve passes through the maturity point - Propagates uncertainty
-from upstream maturity models
+This parameterization:
+
+- Uses quantities that fall within the data range (\\L\_{mat}\\,
+  \\t\_{mat}\\)
+- Ensures biological consistency: the growth curve passes through the
+  maturity point
+- Propagates uncertainty from upstream maturity models
 
 ### 2. Probit Link for Threshold Models
 
 Both birth and maturity models use a probit link function rather than
-the more common logit. The probit link assumes that underlying
+the more commonly used logit. The probit link assumes that underlying
 developmental readiness is normally distributed across individuals. An
 individual transitions (births or matures) when this latent readiness
 crosses a threshold.
 
-**Why probit?** - **Biological interpretation:** Normal variation in
-developmental readiness is biologically plausible - **Consistent
-reporting:** The transition width (\\x\_{95}\\ − \\x\_{05}\\) has units
-of the predictor (cm or years) - Derived quantities (\\L\_{05}\\,
-\\L\_{95}\\) have direct biological interpretation
+**Why probit?**
+
+- **Biological interpretation:** Normal variation in developmental
+  readiness is biologically plausible
+- **Consistent reporting:** The transition width (\\x\_{95}\\ −
+  \\x\_{05}\\) has units of the predictor (cm or years)
+- Derived quantities (\\L\_{05}\\, \\L\_{95}\\) have direct biological
+  interpretation
 
 ### 3. Partial Pooling for Imbalanced Sex Ratios
 
@@ -332,12 +338,12 @@ for a comprehensive treatment.
 
 **The problem:** Unconstrained growth models frequently converge on
 \\L\_\infty\\ values *below* the largest observed individuals. This is
-biologically impossible—asymptotic length must exceed any realized
-length—yet it occurs regularly when:
+biologically impossible — asymptotic length must exceed any realized
+length — yet this occurs regularly when:
 
 - Data don’t extend to ages near asymptotic size
 - Older individuals are undersampled (fishing selectivity, natural
-  mortality)
+  mortality, etc.)
 - Strong \\L\_\infty\\–\\k\\ correlation allows trade-offs
 
 **Our solution:** vitalBayes enforces \\L\_\infty\\ \> \\L\_{max}\\
@@ -353,7 +359,7 @@ while still allowing uncertainty about *how much* it exceeds it.
 represents a lower bound on the species’ potential size. Natural
 mortality, fishing pressure, and sampling limitations virtually
 guarantee we haven’t captured the true maximum. Our prior should encode
-this biological reality rather than allowing impossible values.
+this biological reality rather than allowing unrealistically low values.
 
 ``` r
 # Lmax is auto-detected from data
@@ -381,17 +387,20 @@ does σ = 0.5 on log(\\L\_{50}\\) mean in practical terms? Researchers
 often resort to “weakly informative” priors without considering whether
 they encode reasonable biological information.
 
-**Our solution:** vitalBayes uses **coefficient of variation (CV)** for
-prior specification. The CV expresses uncertainty as a proportion of the
-mean — a scale-invariant, intuitive quantity.
+**Our solution:** vitalBayes uses a **coefficient of variation (CV)**
+for prior specification. The CV expresses uncertainty as a proportion of
+the mean — a scale-invariant, intuitive quantity.
 
-For a parameter θ with prior mean μ and CV = c: - The prior SD on the
-original scale is σ_(θ) = μ · c - Approximately 95% of prior mass falls
-within μ ± 2μc
+For a parameter θ with prior mean μ and CV = c:
+
+- The prior SD on the original scale is σ_(θ) = μ · c
+- Approximately 95% of prior mass falls within μ ± 2μc
 
 **Example:** Setting `CV_Linf = 0.2` for a species with expected
-\\L\_\infty\\ ≈ 100 cm means: - Prior SD ≈ 20 cm - 95% prior interval ≈
-60–140 cm
+\\L\_\infty\\ ≈ 100 cm means:
+
+- Prior SD ≈ 20 cm
+- 95% prior interval ≈ 60–140 cm
 
 This is far more interpretable than specifying σ = 0.2 on
 log(\\L\_\infty\\).
@@ -414,9 +423,10 @@ growth_fit <- fit_bayesian_growth(
 
 **The problem:** Life history parameters are typically estimated
 independently, ignoring biological connections. Birth size is estimated
-from embryo data, maturity from reproductive assessments, and growth
-from age-length pairs—each analysis producing point estimates and
-confidence intervals that don’t propagate into downstream analyses.
+from embryo and/or neonatal data, maturity from reproductive
+assessments, and growth from age-length pairs. Each analysis producing
+point estimates and confidence intervals which don’t propagate into
+downstream analyses.
 
 **Our solution:** vitalBayes implements an integrated workflow where
 **posterior distributions flow forward** through life history stages:
@@ -433,12 +443,16 @@ the function extracts posterior summaries and constructs informative
 priors. Uncertainty from upstream models propagates naturally into
 growth parameter estimates.
 
-**Why this matters:** - **Biological coherence:** Growth curves are
-constrained to pass through maturity milestones - **Proper
-uncertainty:** Imprecise maturity estimates → wider growth parameter
-CIs - **Information efficiency:** All available data inform the final
-estimates - **Reproducibility:** The entire workflow is encapsulated in
-a few function calls
+**Why this matters:**
+
+- **Biological coherence:** Growth curves are constrained to pass
+  through maturity milestones
+- **Proper uncertainty:** Imprecise maturity estimates → wider growth
+  parameter CIs
+- **Information efficiency:** All available data inform the final
+  estimates
+- **Reproducibility:** The entire workflow is encapsulated in a few
+  function calls
 
 ``` r
 # Complete integrated workflow
@@ -486,7 +500,7 @@ vitalBayes automatically detects sex coding in multiple languages:
 | [`vignette("visualization")`](https://brian-j-moe.github.io/vitalBayes/articles/visualization.md)                 | Plotting functions and color palettes              |
 | [`vignette("model_diagnostics")`](https://brian-j-moe.github.io/vitalBayes/articles/model_diagnostics.md)         | Convergence, PPC, and LOO-CV                       |
 
-For comprehensive statistical background, see the [Statistical Methods
+For a comprehensive statistical background, see the [Statistical Methods
 Guide](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.md).
 
 ## Citation
@@ -498,22 +512,27 @@ If you use vitalBayes in your research, please cite:
       title = {vitalBayes: Bayesian Life History Parameter Estimation for Elasmobranchs},
       year = {2025},
       url = {https://github.com/Brian-J-Moe/vitalBayes},
-      version = {0.2.1}
+      version = {0.0.9}
     }
 
 ## Dependencies
 
-**Core:** - [cmdstanr](https://mc-stan.org/cmdstanr/) — CmdStan
-interface - [instantiate](https://github.com/wlandau/instantiate) —
-Precompiled Stan models -
-[data.table](https://rdatatable.gitlab.io/data.table/) — Fast data
-manipulation
+**Core:**
 
-**Visualization:** - [ggplot2](https://ggplot2.tidyverse.org/) —
-Publication-quality graphics
+- [cmdstanr](https://mc-stan.org/cmdstanr/) — CmdStan interface
+- [instantiate](https://github.com/wlandau/instantiate) — Precompiled
+  Stan models
+- [data.table](https://rdatatable.gitlab.io/data.table/) — Fast data
+  manipulation
 
-**Model Comparison:** - [loo](https://mc-stan.org/loo/) — Leave-one-out
-cross-validation
+**Visualization:**
+
+- [ggplot2](https://ggplot2.tidyverse.org/) — Publication-quality
+  graphics
+
+**Model Comparison:**
+
+- [loo](https://mc-stan.org/loo/) — Leave-one-out cross-validation
 
 ## Contributing
 
@@ -526,7 +545,7 @@ changes or submit a pull request.
 
 ------------------------------------------------------------------------
 
-*vitalBayes is developed for the elasmobranch research community to
+*vitalBayes was developed for the elasmobranch research community to
 support robust, reproducible life history analyses.*
 
 # Package index
