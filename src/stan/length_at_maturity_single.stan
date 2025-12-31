@@ -27,8 +27,12 @@ transformed parameters {
   real<lower=0> L50 = exp(log_L50);
   real<lower=0> slope = exp(log_slope);
   
-  // Linear predictor
-  vector[N] eta = slope * (length - L50);
+  // Linear predictor with clamping for numerical stability
+  vector[N] eta_raw = slope * (length - L50);
+  vector[N] eta;
+  for (i in 1:N) {
+    eta[i] = fmin(fmax(eta_raw[i], -20.0), 20.0);
+  }
   
   // Probability of maturity (probit link)
   vector<lower=0, upper=1>[N] p = Phi(eta);

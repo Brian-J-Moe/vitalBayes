@@ -51,28 +51,20 @@ transformed data {
 }
 
 parameters {
-  // When pooling: non-centered parameterization
-  // log_param[s] = mu_param + tau_param * raw_param[s]
+  // Population means (for pooling)
+  real mu_Linf;
+  real mu_L0;
+  real mu_k;
   
-  // Population means (only used if pooling)
-  array[use_pooling] real mu_Linf;
-  array[use_pooling] real mu_L0;
-  array[use_pooling] real mu_k;
+  // Between-sex standard deviations (for pooling)
+  real<lower=0> tau_Linf;
+  real<lower=0> tau_L0;
+  real<lower=0> tau_k;
   
-  // Between-sex standard deviations (half-normal, only used if pooling)
-  array[use_pooling] real<lower=0> tau_Linf;
-  array[use_pooling] real<lower=0> tau_L0;
-  array[use_pooling] real<lower=0> tau_k;
-  
-  // Raw deviates for non-centered parameterization (only used if pooling)
-  array[use_pooling] vector[2] raw_Linf;
-  array[use_pooling] vector[2] raw_L0;
-  array[use_pooling] vector[2] raw_k;
-  
-  // Direct parameters (only used if not pooling)
-  array[1 - use_pooling] vector[2] log_Linf_direct;
-  array[1 - use_pooling] vector[2] log_L0_direct;
-  array[1 - use_pooling] vector[2] log_k_direct;
+  // Raw deviates (always present)
+  vector[2] raw_Linf;
+  vector[2] raw_L0;
+  vector[2] raw_k;
   
   // Sex-specific observation error
   vector<lower=0>[2] sigma;
@@ -87,17 +79,18 @@ transformed parameters {
   vector[2] log_L0;
   vector[2] log_k;
   
-  if (use_pooling) {
+  if (use_pooling == 1) {
     // Non-centered: log_param = mu + tau * raw
     for (s in 1:2) {
-      log_Linf[s] = mu_Linf[1] + tau_Linf[1] * raw_Linf[1][s];
-      log_L0[s] = mu_L0[1] + tau_L0[1] * raw_L0[1][s];
-      log_k[s] = mu_k[1] + tau_k[1] * raw_k[1][s];
+      log_Linf[s] = mu_Linf + tau_Linf * raw_Linf[s];
+      log_L0[s] = mu_L0 + tau_L0 * raw_L0[s];
+      log_k[s] = mu_k + tau_k * raw_k[s];
     }
   } else {
-    log_Linf = log_Linf_direct[1];
-    log_L0 = log_L0_direct[1];
-    log_k = log_k_direct[1];
+    // No pooling: raw values are direct log parameters
+    log_Linf = raw_Linf;
+    log_L0 = raw_L0;
+    log_k = raw_k;
   }
   
   // Transform to natural scale with constraints
@@ -144,29 +137,37 @@ transformed parameters {
 
 model {
   // Priors
-  if (use_pooling) {
+  if (use_pooling == 1) {
     // Hyperpriors
-    mu_Linf[1] ~ normal(mean(prior_Linf_mu), 1);
-    mu_L0[1] ~ normal(mean(prior_L0_mu), 1);
-    mu_k[1] ~ normal(mean(prior_k_mu), 1);
+    mu_Linf ~ normal(mean(prior_Linf_mu), 1);
+    mu_L0 ~ normal(mean(prior_L0_mu), 1);
+    mu_k ~ normal(mean(prior_k_mu), 1);
     
     // Half-normal priors on between-sex SD
-    tau_Linf[1] ~ normal(0, prior_tau_Linf);
-    tau_L0[1] ~ normal(0, prior_tau_L0);
-    tau_k[1] ~ normal(0, prior_tau_k);
+    tau_Linf ~ normal(0, prior_tau_Linf);
+    tau_L0 ~ normal(0, prior_tau_L0);
+    tau_k ~ normal(0, prior_tau_k);
     
     // Standard normal for non-centered raw deviates
-    raw_Linf[1] ~ std_normal();
-    raw_L0[1] ~ std_normal();
-    raw_k[1] ~ std_normal();
+    raw_Linf ~ std_normal();
+    raw_L0 ~ std_normal();
+    raw_k ~ std_normal();
     
   } else {
-    // Independent priors per sex
+    // Independent priors per sex (raw values are log parameters)
     for (s in 1:2) {
-      log_Linf_direct[1][s] ~ normal(prior_Linf_mu[s], prior_Linf_sigma[s]);
-      log_L0_direct[1][s] ~ normal(prior_L0_mu[s], prior_L0_sigma[s]);
-      log_k_direct[1][s] ~ normal(prior_k_mu[s], prior_k_sigma[s]);
+      raw_Linf[s] ~ normal(prior_Linf_mu[s], prior_Linf_sigma[s]);
+      raw_L0[s] ~ normal(prior_L0_mu[s], prior_L0_sigma[s]);
+      raw_k[s] ~ normal(prior_k_mu[s], prior_k_sigma[s]);
     }
+    
+    // Weakly constrain unused params
+    mu_Linf ~ normal(0, 1);
+    mu_L0 ~ normal(0, 1);
+    mu_k ~ normal(0, 1);
+    tau_Linf ~ normal(0, 1);
+    tau_L0 ~ normal(0, 1);
+    tau_k ~ normal(0, 1);
   }
   
   // Observation error priors

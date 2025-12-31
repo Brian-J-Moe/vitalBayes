@@ -72,6 +72,8 @@ transformed parameters {
   for (i in 1:N) {
     int s = sex[i];
     real eta = slope[s] * (length[i] - L50[s]);
+    // Clamp eta to avoid numerical issues with Phi() at extreme values
+    eta = fmin(fmax(eta, -20.0), 20.0);
     p[i] = Phi(eta);
   }
 }
