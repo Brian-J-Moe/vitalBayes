@@ -493,12 +493,12 @@ Guide](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBaye
 
 If you use vitalBayes in your research, please cite:
 
-    @software{vitalBayes,
-      author = {Moe, Brian J.},
+    @manual{vitalBayes,
+      author = {Brian J Moe},
       title = {vitalBayes: Bayesian Life History Parameter Estimation for Elasmobranchs},
       year = {2025},
-      url = {https://github.com/Brian-J-Moe/vitalBayes},
-      version = {0.3.2}
+      note = {R package version 0.3.2},
+      url = {https://github.com/Brian-J-Moe/vitalBayes}
     }
 
 ## Dependencies
