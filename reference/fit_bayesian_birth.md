@@ -151,14 +151,17 @@ high-probability region of the posterior.
 ## See also
 
 [`vignette("fit_bayesian_birth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_birth.md)
-for usage examples.
+for usage examples with gulper shark data.
+
+`vignette("complete_workflow")` for the full three-stage analysis
+pipeline.
 
 [Statistical Methods: Birth Size
-Estimation](https://brian-j-moe.github.io/vitalBayes/doc/Understanding_vitalBayes.html#birth)
+Estimation](https://brian-j-moe.github.io/vitalBayes/doc/vitalBayes_stats_explained.html#birth)
 for the mathematical derivation.
 
 [Statistical Methods: Probit
-Link](https://brian-j-moe.github.io/vitalBayes/doc/Understanding_vitalBayes.html#probit)
+Link](https://brian-j-moe.github.io/vitalBayes/doc/vitalBayes_stats_explained.html#probit)
 for justification of the probit over logit link.
 
 [`fit_bayesian_maturity`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md),
@@ -169,13 +172,10 @@ for downstream models that use birth estimates as priors.
 
 ``` r
 if (FALSE) { # \dontrun{
-# Load simulated data
-data(growth_data)
-
 # Fit birth model with data-derived priors
 birth_fit <- fit_bayesian_birth(
-  embryo_lts        = growth_data[embryo == TRUE, fl],
-  free_swimming_lts = growth_data[embryo == FALSE, fl]
+  embryo_lts        = sharks[embryo == TRUE, length],
+  free_swimming_lts = sharks[embryo == FALSE, length]
 )
 
 # View summary
@@ -183,19 +183,8 @@ birth_fit$summary(c("b50", "slope", "transition_width"))
 
 # Use b50 posterior as L0 prior for growth model
 growth_fit <- fit_bayesian_growth(
-  lt        = "fl",
-  age       = "age",
-  sex       = "sex",
-  data      = growth_data[embryo == FALSE],
-  birth_fit = birth_fit
-)
-
-# Example with limited data (sparse embryo sample)
-data(limited_data)
-birth_fit_limited <- fit_bayesian_birth(
-  embryo_lts        = limited_data[embryo == TRUE, fl],
-  free_swimming_lts = limited_data[embryo == FALSE, fl],
-  cv_b50            = 0.2  # Tighter prior when data are sparse
+  ...,
+  birth_stanfit = birth_fit
 )
 } # }
 ```
