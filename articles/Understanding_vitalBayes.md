@@ -98,8 +98,8 @@ negligible. However, the *interpretation* differs substantially:
 one-unit increase in length multiplies the odds of maturity by
 \\e^\beta\\. While mathematically elegant, odds ratios aren’t a natural
 way to think about developmental biology. When was the last time you
-read a shark paper reporting “the odds of maturity increased by a factor
-of 1.3 per centimeter”?
+read a fisheries paper reporting “the odds of maturity increased by a
+factor of 1.3 per centimeter”?
 
 **The Probit Interpretation**: The probit link directly models the
 threshold-crossing process described above. The slope \\\beta\\ tells
@@ -202,8 +202,7 @@ misclassification in your data.
 
 Maturity ogives are fundamental to elasmobranch population dynamics. The
 vitalBayes approach extends standard methods in two key ways: using the
-probit link (for consistency with the birth model) and implementing
-partial pooling for two-sex models.
+probit link and implementing partial pooling for two-sex models.
 
 ### Basic Maturity Model
 
@@ -270,15 +269,15 @@ The model learns the appropriate degree of pooling from the data itself!
 
 #### Why This Matters
 
-For our gulper shark example with 150 females and 23 males:
+For our imbalanced sex example with 150 males and 34 females:
 
-- The female \\L\_{50}\\ estimate is well-informed by data
-- The male \\L\_{50}\\ estimate, if fit independently, would have a wide
-  credible interval
-- With partial pooling, the male estimate “borrows” information from the
-  female estimate, resulting in a more precise (and usually more
+- The male \\L\_{50}\\ estimate is well-informed by data
+- The female \\L\_{50}\\ estimate, if fit independently, would have a
+  wide credible interval
+- With partial pooling, the female estimate “borrows” information from
+  the male estimate, resulting in a more precise (and usually more
   accurate) estimate
-- If the males truly are different from females, the data will push
+- If the females truly are different from males, the data will push
   \\\tau\\ larger and the estimates will separate
 
 This isn’t “making up” data—it’s appropriately using biological
@@ -290,8 +289,8 @@ You might have noticed something strange in the model specification: why
 write \\\mu + \tau \cdot \eta\\ instead of just sampling
 \\\log(L\_{50,s}) \sim \mathcal{N}(\mu, \tau^2)\\ directly?
 
-This is called the **non-centered parameterization**, and it solves a
-nasty computational problem called the “funnel.”
+This is called **non-centered parameterization**, and it solves a
+computational problem called the “funnel.”
 
 **The Funnel Problem**: In hierarchical models, when \\\tau\\ is small,
 the group-level parameters (here, \\L\_{50,s}\\) must all be very close

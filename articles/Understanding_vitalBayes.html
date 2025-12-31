@@ -263,7 +263,7 @@ substantially:</p>
 log-odds ratios. A one-unit increase in length multiplies the odds of
 maturity by <span class="math inline">\(e^\beta\)</span>. While
 mathematically elegant, odds ratios aren’t a natural way to think about
-developmental biology. When was the last time you read a shark paper
+developmental biology. When was the last time you read a fisheries paper
 reporting “the odds of maturity increased by a factor of 1.3 per
 centimeter”?</p>
 <p><strong>The Probit Interpretation</strong>: The probit link directly
@@ -380,8 +380,7 @@ data.</p>
 </h2>
 <p>Maturity ogives are fundamental to elasmobranch population dynamics.
 The vitalBayes approach extends standard methods in two key ways: using
-the probit link (for consistency with the birth model) and implementing
-partial pooling for two-sex models.</p>
+the probit link and implementing partial pooling for two-sex models.</p>
 <div class="section level3">
 <h3 id="basic-maturity-model">Basic Maturity Model<a class="anchor" aria-label="anchor" href="#basic-maturity-model"></a>
 </h3>
@@ -467,16 +466,16 @@ itself!</p>
 <div class="section level4">
 <h4 id="why-this-matters">Why This Matters<a class="anchor" aria-label="anchor" href="#why-this-matters"></a>
 </h4>
-<p>For our gulper shark example with 150 females and 23 males:</p>
+<p>For our imbalanced sex example with 150 males and 34 females:</p>
 <ul>
-<li>The female <span class="math inline">\(L_{50}\)</span> estimate is
+<li>The male <span class="math inline">\(L_{50}\)</span> estimate is
 well-informed by data</li>
-<li>The male <span class="math inline">\(L_{50}\)</span> estimate, if
+<li>The female <span class="math inline">\(L_{50}\)</span> estimate, if
 fit independently, would have a wide credible interval</li>
-<li>With partial pooling, the male estimate “borrows” information from
-the female estimate, resulting in a more precise (and usually more
+<li>With partial pooling, the female estimate “borrows” information from
+the male estimate, resulting in a more precise (and usually more
 accurate) estimate</li>
-<li>If the males truly are different from females, the data will push
+<li>If the females truly are different from males, the data will push
 <span class="math inline">\(\tau\)</span> larger and the estimates will
 separate</li>
 </ul>
@@ -492,8 +491,8 @@ Detail<a class="anchor" aria-label="anchor" href="#the-non-centered-parameteriza
 why write <span class="math inline">\(\mu + \tau \cdot \eta\)</span>
 instead of just sampling <span class="math inline">\(\log(L_{50,s}) \sim
 \mathcal{N}(\mu, \tau^2)\)</span> directly?</p>
-<p>This is called the <strong>non-centered parameterization</strong>,
-and it solves a nasty computational problem called the “funnel.”</p>
+<p>This is called <strong>non-centered parameterization</strong>, and it
+solves a computational problem called the “funnel.”</p>
 <div class="math-note">
 <p><strong>The Funnel Problem</strong>: In hierarchical models, when
 <span class="math inline">\(\tau\)</span> is small, the group-level
