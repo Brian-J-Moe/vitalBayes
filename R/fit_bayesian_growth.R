@@ -341,8 +341,12 @@ fit_bayesian_growth <- function(
     stop("No complete observations (both length and age) after filtering.", call. = FALSE)
   }
 
+  # Validate data quality
   sex_for_checks <- if (is_twosex) as.character(sex_vec[newdat$row_id]) else NULL
+
   .validate_growth_data(newdat$length, newdat$age, sex_for_checks)
+
+  # Sample size checks
   .check_sample_size(newdat, sex_for_checks, k_based)
 
   # =========================================================================
@@ -635,6 +639,9 @@ fit_bayesian_growth <- function(
         bad_k <- !is.finite(k0) | is.na(k0) | (k0 <= 0)
         if (any(bad_k)) k0[bad_k] <- k_fallback[bad_k]
 
+        # clamp to a wide but finite range to avoid extreme curvature at init
+        k0 <- pmin(pmax(k0, 1e-4), 5)
+
         ord <- .safe_L0_Linf(
           L0         = mean_L0_nat,
           Linf       = mean_Linf_nat,
@@ -664,13 +671,15 @@ fit_bayesian_growth <- function(
 
           sigma    = c(0.15, 0.15),
 
-          # always include; harmless if robust==FALSE
+          # nu_raw is added/removed below based on robust
           nu_raw   = 10
         )
 
       } else {
 
         k0 <- .safe_pos(k_init, eps = 1e-4, name = "k_init")
+
+        # clamp to a wide but finite range to avoid extreme curvature at init
         k0 <- pmin(pmax(k0, 1e-4), 5)
 
         ord <- .safe_L0_Linf(
@@ -720,10 +729,10 @@ fit_bayesian_growth <- function(
           tau_Lmat = tau0,
           tau_tmat = tau0,
 
-          raw_Linf = .safe_raw_from_target(log(ord$Linf),  mu_Linf, tau0),
-          raw_L0   = .safe_raw_from_target(log(ord$L0),    mu_L0,   tau0),
-          raw_Lmat = .safe_raw_from_target(log(ord$Lmat),  mu_Lmat, tau0),
-          raw_tmat = .safe_raw_from_target(log(pmax(mean_tmat_nat, 1e-3)), mu_tmat, tau0),
+          raw_Linf = if (use_pooling) .safe_raw_from_target(log(ord$Linf),  mu_Linf, tau0) else log(ord$Linf),
+          raw_L0   = if (use_pooling) .safe_raw_from_target(log(ord$L0),    mu_L0,   tau0) else log(ord$L0),
+          raw_Lmat = if (use_pooling) .safe_raw_from_target(log(ord$Lmat),  mu_Lmat, tau0) else log(ord$Lmat),
+          raw_tmat = if (use_pooling) .safe_raw_from_target(log(pmax(mean_tmat_nat, 1e-3)), mu_tmat, tau0) else log(pmax(mean_tmat_nat, 1e-3)),
 
           sigma    = c(0.15, 0.15),
           nu_raw   = 10
@@ -741,8 +750,10 @@ fit_bayesian_growth <- function(
       }
     }
 
+    # IMPORTANT: nu_raw is declared as array[robust] in Stan.
+    # When robust == 0, the parameter has length 0 and MUST NOT be initialized.
     if (!isTRUE(robust)) {
-      base_init$nu_raw <- NULL  # removes the element from the init list
+      base_init$nu_raw <- NULL
     } else {
       base_init$nu_raw <- 10
     }
