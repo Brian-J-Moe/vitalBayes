@@ -632,72 +632,115 @@ fit_bayesian_growth <- function(
   init_fun <- function() {
     base_init <- if (k_based) {
       if (is_twosex) {
-        list(
-          mu_Linf  = mean(log(mean_Linf_nat)),
-          mu_L0    = mean(log(mean_L0_nat)),
-          mu_k     = mean(log(k_init)),
-          tau_Linf = 0.1,
-          tau_L0   = 0.1,
-          tau_k    = 0.1,
-          raw_Linf = if (use_pooling) c(0, 0) else log(mean_Linf_nat),
-          raw_L0   = if (use_pooling) c(0, 0) else log(mean_L0_nat),
-          raw_k = if (use_pooling) c(0, 0) else log(as.numeric(k_init)),
-          sigma    = c(0.1, 0.1)
+
+        k0 <- as.numeric(k_init)
+        k_fallback <- .safe_pos(mean_k_nat, eps = 1e-4, name = "mean_k_nat")
+        bad_k <- !is.finite(k0) | is.na(k0) | (k0 <= 0)
+        if (any(bad_k)) k0[bad_k] <- k_fallback[bad_k]
+
+        ord <- .safe_L0_Linf(
+          L0         = mean_L0_nat,
+          Linf       = mean_Linf_nat,
+          Linf_lower = Linf_lower,
+          margin     = 0.5,
+          eps        = 1e-6
         )
-      } else {
+
+        tau0 <- 0.1
+
+        mu_Linf <- mean(log(ord$Linf))
+        mu_L0   <- mean(log(ord$L0))
+        mu_k    <- mean(log(k0))
+
         list(
-          log_Linf = log(mean_Linf_nat[1]),
-          log_L0   = log(mean_L0_nat[1]),
-          log_k    = log(k_init),
-          sigma    = 0.1
+          mu_Linf  = mu_Linf,
+          mu_L0    = mu_L0,
+          mu_k     = mu_k,
+
+          tau_Linf = tau0,
+          tau_L0   = tau0,
+          tau_k    = tau0,
+
+          raw_Linf = if (use_pooling) .safe_raw_from_target(log(ord$Linf), mu_Linf, tau0) else log(ord$Linf),
+          raw_L0   = if (use_pooling) .safe_raw_from_target(log(ord$L0),   mu_L0,   tau0) else log(ord$L0),
+          raw_k    = if (use_pooling) .safe_raw_from_target(log(k0),        mu_k,    tau0) else log(k0),
+
+          sigma    = c(0.15, 0.15),
+
+          # always include; harmless if robust==FALSE
+          nu_raw   = 10
+        )
+
+      } else {
+
+        k0 <- .safe_pos(k_init, eps = 1e-4, name = "k_init")
+
+        ord <- .safe_L0_Linf(
+          L0         = mean_L0_nat[1],
+          Linf       = mean_Linf_nat[1],
+          Linf_lower = Linf_lower[1],
+          margin     = 0.5,
+          eps        = 1e-6
+        )
+
+        list(
+          log_Linf = log(ord$Linf),
+          log_L0   = log(ord$L0),
+          log_k    = log(k0),
+          sigma    = 0.15,
+          nu_raw   = 10
         )
       }
     } else {
       # Maturity-based
       if (is_twosex) {
 
-        .init_noncentered_from_priors <- function(prior_mu, tau_init_floor = 0.25) {
-          mu0  <- mean(prior_mu)
-          sdmu <- stats::sd(prior_mu)
-          tau0 <- max(tau_init_floor, sdmu)
-          raw0 <- (prior_mu - mu0) / tau0
-          list(mu0 = mu0, tau0 = tau0, raw0 = raw0)
-        }
+        tau0 <- 0.1
 
-        if(use_pooling) {
-          Lmat_init <- .init_noncentered_from_priors(stan_data$prior_Lmat_mu)
-          tmat_init <- .init_noncentered_from_priors(stan_data$prior_tmat_mu)
-        }
+        # start from your natural-scale means
+        ord <- .safe_maturity_order(
+          L0         = mean_L0_nat,
+          Lmat       = mean_Lmat_nat,
+          Linf       = mean_Linf_nat,
+          Linf_lower = Linf_lower,
+          eps        = 0.5
+        )
+
+        mu_Linf <- mean(log(ord$Linf))
+        mu_L0   <- mean(log(ord$L0))
+        mu_Lmat <- mean(log(ord$Lmat))
+        mu_tmat <- mean(log(pmax(mean_tmat_nat, 1e-3)))
 
         list(
-          mu_Linf  = mean(log(mean_Linf_nat)),
-          mu_L0    = mean(log(mean_L0_nat)),
-          mu_Lmat = if (use_pooling) Lmat_init$mu0 else mean(log(mean_Lmat_nat)),
-          mu_tmat = if (use_pooling) tmat_init$mu0 else mean(log(mean_tmat_nat)),
-          tau_Linf = 0.1,
-          tau_L0   = 0.1,
-          tau_Lmat = 0.1,
-          tau_tmat = 0.1,
-          raw_Linf = if (use_pooling) c(0, 0) else log(mean_Linf_nat),
-          raw_L0   = if (use_pooling) c(0, 0) else log(mean_L0_nat),
-          raw_Lmat = if (use_pooling) c(0, 0) else log(mean_Lmat_nat),
-          raw_tmat = if (use_pooling) c(0, 0) else log(mean_tmat_nat),
-          sigma    = c(0.1, 0.1)
+          mu_Linf  = mu_Linf,
+          mu_L0    = mu_L0,
+          mu_Lmat  = mu_Lmat,
+          mu_tmat  = mu_tmat,
+
+          tau_Linf = tau0,
+          tau_L0   = tau0,
+          tau_Lmat = tau0,
+          tau_tmat = tau0,
+
+          raw_Linf = .safe_raw_from_target(log(ord$Linf),  mu_Linf, tau0),
+          raw_L0   = .safe_raw_from_target(log(ord$L0),    mu_L0,   tau0),
+          raw_Lmat = .safe_raw_from_target(log(ord$Lmat),  mu_Lmat, tau0),
+          raw_tmat = .safe_raw_from_target(log(pmax(mean_tmat_nat, 1e-3)), mu_tmat, tau0),
+
+          sigma    = c(0.15, 0.15),
+          nu_raw   = 10
         )
+
       } else {
         list(
           log_Linf = log(mean_Linf_nat[1]),
           log_L0   = log(mean_L0_nat[1]),
           log_Lmat = log(mean_Lmat_nat[1]),
           log_tmat = log(mean_tmat_nat[1]),
-          sigma    = 0.1
+          sigma    = 0.1,
+          nu_raw   = 10
         )
       }
-    }
-
-    # Add nu_raw initialization for robust models
-    if (robust) {
-      base_init$nu_raw <- 10  # Moderate tails as starting point
     }
 
     base_init

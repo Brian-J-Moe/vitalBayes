@@ -1007,3 +1007,94 @@ standardize_sex <- function(sex_values, female = NULL, male = NULL, silent = FAL
 
   invisible(NULL)
 }
+
+
+#' Compute non-centered raw values that reproduce target log-scale values
+#'
+#' @param target_log Numeric vector of target values on log scale (e.g., log(mean_Linf_nat)).
+#' @param mu Numeric scalar population mean on log scale.
+#' @param tau Numeric scalar population SD (must be > 0).
+#' @param eps Small positive number to avoid division by 0.
+#'
+#' @return Numeric vector of same length as target_log.
+#' @keywords internal
+.safe_raw_from_target <- function(target_log, mu, tau, eps = 1e-6) {
+  tau <- max(tau, eps)
+  (target_log - mu) / tau
+}
+
+#' Enforce L0 < Lmat < Linf and Linf >= Linf_lower for stable maturity-based inits
+#'
+#' @param L0,Lmat,Linf Numeric vectors (length 1 or 2).
+#' @param Linf_lower Numeric vector (length 1 or 2) lower bound(s) for Linf.
+#' @param eps Margin to keep parameters away from boundaries.
+#'
+#' @return List with L0, Lmat, Linf adjusted.
+#' @keywords internal
+.safe_maturity_order <- function(L0, Lmat, Linf, Linf_lower, eps = 0.5) {
+  L0 <- pmax(L0, eps)
+  Linf <- pmax(Linf, Linf_lower + eps)
+
+  # keep Lmat between L0 and Linf
+  Lmat <- pmax(Lmat, L0 + eps)
+  Lmat <- pmin(Lmat, Linf - eps)
+
+  list(L0 = L0, Lmat = Lmat, Linf = Linf)
+}
+
+
+#' Clamp values to be positive and finite
+#'
+#' @param x Numeric vector.
+#' @param eps Small positive lower bound.
+#' @param name Character label used in warnings.
+#'
+#' @return Numeric vector with non-finite values replaced by eps, and values < eps set to eps.
+#' @keywords internal
+.safe_pos <- function(x, eps = 1e-6, name = "value") {
+  x <- as.numeric(x)
+  bad <- !is.finite(x) | is.na(x) | (x < eps)
+  if (any(bad)) {
+    warning("Non-finite or non-positive ", name, " in init; clamping/replacing with ", eps, call. = FALSE)
+    x[bad] <- eps
+  }
+  x
+}
+
+#' Make Linf and L0 consistent with constraints
+#'
+#' Ensures: Linf >= Linf_lower + margin, L0 >= eps, and Linf >= L0 + margin.
+#'
+#' @param L0,Linf Numeric vectors (length 1 or 2).
+#' @param Linf_lower Numeric vector of Linf lower bounds (length 1 or 2).
+#' @param margin Positive margin to keep away from boundaries.
+#' @param eps Small lower bound for positivity.
+#'
+#' @return List with adjusted L0 and Linf.
+#' @keywords internal
+.safe_L0_Linf <- function(L0, Linf, Linf_lower, margin = 0.5, eps = 1e-6) {
+  L0   <- .safe_pos(L0,   eps = eps, name = "L0")
+  Linf <- .safe_pos(Linf, eps = eps, name = "Linf")
+
+  # enforce Linf above lower bound + margin
+  Linf <- pmax(Linf, Linf_lower + margin)
+
+  # enforce Linf above L0 + margin
+  Linf <- pmax(Linf, L0 + margin)
+
+  list(L0 = L0, Linf = Linf)
+}
+
+#' Compute non-centered raw values to reproduce target log-scale values
+#'
+#' @param target_log Numeric vector of targets on log scale.
+#' @param mu Population mean on log scale.
+#' @param tau Population SD (> 0).
+#' @param eps Small positive number to avoid division by 0.
+#'
+#' @return Numeric vector of raws.
+#' @keywords internal
+.safe_raw_from_target <- function(target_log, mu, tau, eps = 1e-6) {
+  tau <- max(as.numeric(tau), eps)
+  (as.numeric(target_log) - as.numeric(mu)) / tau
+}
