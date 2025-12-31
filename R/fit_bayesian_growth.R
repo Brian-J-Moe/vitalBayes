@@ -341,12 +341,9 @@ fit_bayesian_growth <- function(
     stop("No complete observations (both length and age) after filtering.", call. = FALSE)
   }
 
-  # Validate data quality
-  .validate_growth_data(newdat$length, newdat$age,
-                        if (is_twosex) newdat$sex else NULL)
-
-  # Sample size checks
-  .check_sample_size(newdat, if (is_twosex) newdat$sex else NULL, k_based)
+  sex_for_checks <- if (is_twosex) as.character(sex_vec[newdat$row_id]) else NULL
+  .validate_growth_data(newdat$length, newdat$age, sex_for_checks)
+  .check_sample_size(newdat, sex_for_checks, k_based)
 
   # =========================================================================
   # Report Model Configuration
@@ -674,6 +671,7 @@ fit_bayesian_growth <- function(
       } else {
 
         k0 <- .safe_pos(k_init, eps = 1e-4, name = "k_init")
+        k0 <- pmin(pmax(k0, 1e-4), 5)
 
         ord <- .safe_L0_Linf(
           L0         = mean_L0_nat[1],
