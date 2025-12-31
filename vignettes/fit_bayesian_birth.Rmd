@@ -143,3 +143,7 @@ birth_fit_limited <- fit_bayesian_birth(
 - [Statistical Methods: Birth Size Estimation](Understanding_vitalBayes.html#birth) — Full mathematical derivation
 - `plot_birth_ogive()` — Visualization function
 - `fit_bayesian_maturity()` — Similar approach for maturity estimation
+
+---
+
+*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

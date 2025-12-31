@@ -334,3 +334,7 @@ create_parameter_table(
 - [Statistical Methods: CV-Based Priors](Understanding_vitalBayes.html#cv-priors) — How priors are specified
 - `plot_growth_curve()`, `compare_growth_models()` — Visualization
 - `compute_loo()`, `compare_loo()` — Model comparison
+
+---
+
+*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

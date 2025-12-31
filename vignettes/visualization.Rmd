@@ -419,3 +419,7 @@ plot_maturity_ogive(
 - `list_vital_palettes()`, `is_colorblind_safe()` — Palette information
 - `vignette("fit_bayesian_maturity")` — Maturity model fitting
 - `vignette("fit_bayesian_growth")` — Growth model fitting
+
+---
+
+*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

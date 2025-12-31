@@ -381,3 +381,7 @@ When models are equivalent by LOO, prefer:
 - [Statistical Methods: Integrated Workflow](Understanding_vitalBayes.html#workflow) — How stages connect
 - `vignette("fit_bayesian_growth")` — Growth model fitting details
 - `plot_residuals()` — Residual visualization
+
+---
+
+*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

@@ -236,3 +236,7 @@ growth_fit <- fit_bayesian_growth(
 - [Statistical Methods: Probit Link](Understanding_vitalBayes.html#probit) — Why probit over logit
 - `plot_maturity_ogive()` — Visualization
 - `fit_bayesian_growth()` — Using maturity estimates in growth models
+
+---
+
+*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

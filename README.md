@@ -57,7 +57,9 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 -->
 
 ## Installation
-vitalBayes requires a working C++ toolchain for Stan. See the [RStan Getting Started Guide](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for setup instructions.
+vitalBayes requires a working C++ toolchain for Stan. See the 
+[RStan Getting Started Guide](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) 
+for setup instructions.
 
 ```r
 # Install dependencies
@@ -167,7 +169,7 @@ All datasets share the same structure with columns: `sex`, `mat`, `fl`, `age`, `
 
 ## Visualization
 
-vitalBayes includes publication-ready plotting functions with a signature 
+vitalBayes includes publication-ready plotting functions with its signature 
 vaporwave color palette:
 ```r
 # Growth curves with credible intervals
@@ -260,6 +262,7 @@ when data don't extend to near-asymptotic sizes.
 $$k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)$$
 
 This parameterization:
+
 - Uses quantities that fall within the data range ($L_{mat}$, $t_{mat}$)
 - Ensures biological consistency: the growth curve passes through the maturity point
 - Propagates uncertainty from upstream maturity models
@@ -267,11 +270,12 @@ This parameterization:
 ### 2. Probit Link for Threshold Models
 
 Both birth and maturity models use a probit link function rather than the more 
-common logit. The probit link assumes that underlying developmental readiness 
+commonly used logit. The probit link assumes that underlying developmental readiness 
 is normally distributed across individuals. An individual transitions (births or 
 matures) when this latent readiness crosses a threshold.
 
 **Why probit?**
+
 - **Biological interpretation:** Normal variation in developmental readiness is 
 biologically plausible
 - **Consistent reporting:** The transition width ($x_{95}$ − $x_{05}$) has units 
@@ -341,11 +345,11 @@ See `vignette("partial_pooling")` for a comprehensive treatment.
 
 **The problem:** Unconstrained growth models frequently converge on $L_\infty$ 
 values *below* the largest observed individuals. This is biologically 
-impossible—asymptotic length must exceed any realized length—yet it occurs 
+impossible — asymptotic length must exceed any realized length — yet this occurs 
 regularly when:
 
 - Data don't extend to ages near asymptotic size
-- Older individuals are undersampled (fishing selectivity, natural mortality)
+- Older individuals are undersampled (fishing selectivity, natural mortality, etc.)
 - Strong $L_\infty$–$k$ correlation allows trade-offs
 
 **Our solution:** vitalBayes enforces $L_\infty$ > $L_{max}$ through a shifted 
@@ -360,7 +364,7 @@ allowing uncertainty about *how much* it exceeds it.
 lower bound on the species' potential size. Natural mortality, fishing pressure, 
 and sampling limitations virtually guarantee we haven't captured the true 
 maximum. Our prior should encode this biological reality rather than allowing 
-impossible values.
+unrealistically low values.
 
 ```r
 # Lmax is auto-detected from data
@@ -388,15 +392,17 @@ log($L_{50}$) mean in practical terms? Researchers often resort to "weakly
 informative" priors without considering whether they encode reasonable 
 biological information.
 
-**Our solution:** vitalBayes uses **coefficient of variation (CV)** for prior 
+**Our solution:** vitalBayes uses a **coefficient of variation (CV)** for prior 
 specification. The CV expresses uncertainty as a proportion of the mean — a 
 scale-invariant, intuitive quantity.
 
 For a parameter θ with prior mean μ and CV = c:
+
 - The prior SD on the original scale is σ<sub>θ</sub> = μ · c
 - Approximately 95% of prior mass falls within μ ± 2μc
 
 **Example:** Setting `CV_Linf = 0.2` for a species with expected $L_\infty$ ≈ 100 cm means:
+
 - Prior SD ≈ 20 cm
 - 95% prior interval ≈ 60–140 cm
 
@@ -419,9 +425,9 @@ growth_fit <- fit_bayesian_growth(
 ### 6. Integrated Three-Stage Workflow
 
 **The problem:** Life history parameters are typically estimated independently, 
-ignoring biological connections. Birth size is estimated from embryo data, 
-maturity from reproductive assessments, and growth from age-length pairs—each 
-analysis producing point estimates and confidence intervals that don't propagate 
+ignoring biological connections. Birth size is estimated from embryo and/or neonatal data, 
+maturity from reproductive assessments, and growth from age-length pairs. Each 
+analysis producing point estimates and confidence intervals which don't propagate 
 into downstream analyses.
 
 **Our solution:** vitalBayes implements an integrated workflow where 
@@ -441,6 +447,7 @@ Uncertainty from upstream models propagates naturally into growth parameter
 estimates.
 
 **Why this matters:**
+
 - **Biological coherence:** Growth curves are constrained to pass through maturity milestones
 - **Proper uncertainty:** Imprecise maturity estimates → wider growth parameter CIs
 - **Information efficiency:** All available data inform the final estimates
@@ -492,7 +499,7 @@ vitalBayes automatically detects sex coding in multiple languages:
 | `vignette("visualization")` | Plotting functions and color palettes |
 | `vignette("model_diagnostics")` | Convergence, PPC, and LOO-CV |
 
-For comprehensive statistical background, see the 
+For a comprehensive statistical background, see the 
 [Statistical Methods Guide](articles/Understanding_vitalBayes.html).
 
 ## Citation
@@ -505,21 +512,24 @@ If you use vitalBayes in your research, please cite:
   title = {vitalBayes: Bayesian Life History Parameter Estimation for Elasmobranchs},
   year = {2025},
   url = {https://github.com/Brian-J-Moe/vitalBayes},
-  version = {0.2.1}
+  version = {0.0.9}
 }
 ```
 
 ## Dependencies
 
 **Core:**
+
 - [cmdstanr](https://mc-stan.org/cmdstanr/) — CmdStan interface
 - [instantiate](https://github.com/wlandau/instantiate) — Precompiled Stan models
 - [data.table](https://rdatatable.gitlab.io/data.table/) — Fast data manipulation
 
 **Visualization:**
+
 - [ggplot2](https://ggplot2.tidyverse.org/) — Publication-quality graphics
 
 **Model Comparison:**
+
 - [loo](https://mc-stan.org/loo/) — Leave-one-out cross-validation
 
 ## Contributing
@@ -533,4 +543,4 @@ submit a pull request.
 
 ---
 
-*vitalBayes is developed for the elasmobranch research community to support robust, reproducible life history analyses.*
+*vitalBayes was developed for the elasmobranch research community to support robust, reproducible life history analyses.*
