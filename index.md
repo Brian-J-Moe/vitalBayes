@@ -195,21 +195,6 @@ vital_colors(2, "sex_cb")     # Orange/blue for sex
 vital_colors(5, "okabe_ito")  # Okabe-Ito palette
 ```
 
-### Multilingual Support
-
-Sex labels in plots support multiple languages:
-
-``` r
-# French
-plot_maturity_ogive(L50_fit, sex_labels = c("1" = "Femelle", "2" = "Mâle"))
-
-# Spanish
-plot_growth_curve(growth_fit, sex_labels = c("1" = "Hembra", "2" = "Macho"))
-
-# Japanese
-plot_maturity_ogive(L50_fit, sex_labels = c("1" = "メス", "2" = "オス"))
-```
-
 ## Model Comparison
 
 Compare alternative models using leave-one-out cross-validation:
@@ -473,7 +458,8 @@ growth_fit <- fit_bayesian_growth(
 
 ### 7. Automatic Multilingual Sex Coding
 
-vitalBayes automatically detects sex coding in multiple languages:
+vitalBayes automatically detects sex coding in multiple languages, and
+plotting features offer multilingual support:
 
 ``` r
 # All of these work automatically:

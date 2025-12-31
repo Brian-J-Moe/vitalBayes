@@ -338,26 +338,12 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <span><span class="fu"><a href="reference/vital_colors.html">vital_colors</a></span><span class="op">(</span><span class="fl">2</span>, <span class="st">"sex_cb"</span><span class="op">)</span>     <span class="co"># Orange/blue for sex</span></span>
 <span><span class="fu"><a href="reference/vital_colors.html">vital_colors</a></span><span class="op">(</span><span class="fl">5</span>, <span class="st">"okabe_ito"</span><span class="op">)</span>  <span class="co"># Okabe-Ito palette</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="multilingual-support">Multilingual Support<a class="anchor" aria-label="anchor" href="#multilingual-support"></a>
-</h3>
-<p>Sex labels in plots support multiple languages:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># French</span></span>
-<span><span class="fu"><a href="reference/plot_maturity_ogive.html">plot_maturity_ogive</a></span><span class="op">(</span><span class="va">L50_fit</span>, sex_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span> <span class="op">=</span> <span class="st">"Femelle"</span>, <span class="st">"2"</span> <span class="op">=</span> <span class="st">"Mâle"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Spanish</span></span>
-<span><span class="fu"><a href="reference/plot_growth_curve.html">plot_growth_curve</a></span><span class="op">(</span><span class="va">growth_fit</span>, sex_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span> <span class="op">=</span> <span class="st">"Hembra"</span>, <span class="st">"2"</span> <span class="op">=</span> <span class="st">"Macho"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Japanese</span></span>
-<span><span class="fu"><a href="reference/plot_maturity_ogive.html">plot_maturity_ogive</a></span><span class="op">(</span><span class="va">L50_fit</span>, sex_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span> <span class="op">=</span> <span class="st">"メス"</span>, <span class="st">"2"</span> <span class="op">=</span> <span class="st">"オス"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</div>
 </div>
 <div class="section level2">
 <h2 id="model-comparison">Model Comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a>
 </h2>
 <p>Compare alternative models using leave-one-out cross-validation:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compute LOO-CV</span></span>
 <span><span class="va">loo_vb</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/compute_loo.html">compute_loo</a></span><span class="op">(</span><span class="va">vb_fit</span><span class="op">)</span></span>
 <span><span class="va">loo_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/compute_loo.html">compute_loo</a></span><span class="op">(</span><span class="va">gomp_fit</span><span class="op">)</span></span>
@@ -424,7 +410,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 </ul>
 <p><strong>Non-centered parameterization:</strong> We use the non-centered form (estimating η rather than θ directly) because it dramatically improves MCMC sampling when τ is small. When between-sex variation is minimal, centered parameterizations create a “funnel” geometry that causes divergent transitions.</p>
 <p><strong>Half-normal prior on τ:</strong> We place τ ~ Half-Normal(0, σ<sub>τ</sub>) rather than the commonly-used half-Cauchy. The half-Cauchy’s heavy tails can pull τ toward implausibly large values, especially with only two groups (sexes). The half-normal provides gentle regularization while still allowing substantial between-sex variation when warranted.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Enable partial pooling (especially useful for imbalanced data)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">imbalanced_data</span><span class="op">)</span>  <span class="co"># 150 females, 34 males</span></span>
 <span></span>
@@ -457,7 +443,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <p><span class="math display">\[L_\infty = L_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu_\nu, \sigma_\nu)\]</span></p>
 <p>This ensures <span class="math inline">\(L_\infty\)</span> always exceeds the maximum observed length while still allowing uncertainty about <em>how much</em> it exceeds it.</p>
 <p><strong>Biological rationale:</strong> The largest individual we’ve observed represents a lower bound on the species’ potential size. Natural mortality, fishing pressure, and sampling limitations virtually guarantee we haven’t captured the true maximum. Our prior should encode this biological reality rather than allowing unrealistically low values.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Lmax is auto-detected from data</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
@@ -490,7 +476,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <li>95% prior interval ≈ 60–140 cm</li>
 </ul>
 <p>This is far more interpretable than specifying σ = 0.2 on log(<span class="math inline">\(L_\infty\)</span>).</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
 <span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
@@ -525,7 +511,7 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 <li>
 <strong>Reproducibility:</strong> The entire workflow is encapsulated in a few function calls</li>
 </ul>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Complete integrated workflow</span></span>
 <span><span class="va">birth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_birth.html">fit_bayesian_birth</a></span><span class="op">(</span><span class="va">embryo_lts</span>, <span class="va">freeswim_lts</span><span class="op">)</span></span>
 <span><span class="va">L50_fit</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span>maturity <span class="op">=</span> <span class="st">"mat"</span>, lt <span class="op">=</span> <span class="st">"fl"</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -544,8 +530,8 @@ Maturity (t₅₀)  ──▶  prior on tmat for growth model</code></pre>
 <div class="section level3">
 <h3 id="id_7-automatic-multilingual-sex-coding">7. Automatic Multilingual Sex Coding<a class="anchor" aria-label="anchor" href="#id_7-automatic-multilingual-sex-coding"></a>
 </h3>
-<p>vitalBayes automatically detects sex coding in multiple languages:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<p>vitalBayes automatically detects sex coding in multiple languages, and plotting features offer multilingual support:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># All of these work automatically:</span></span>
 <span><span class="co"># English:    "F"/"M", "Female"/"Male"</span></span>
 <span><span class="co"># Spanish:    "H"/"M", "Hembra"/"Macho"</span></span>
