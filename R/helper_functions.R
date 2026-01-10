@@ -1023,7 +1023,7 @@ standardize_sex <- function(sex_values, female = NULL, male = NULL, silent = FAL
 #' @param eps Small positive number to avoid division by 0.
 #'
 #' @return Numeric vector of same length as target_log.
-#' @keywords internal
+#' @noRd
 .safe_raw_from_target <- function(target_log, mu, tau, eps = 1e-6) {
   tau <- max(tau, eps)
   (target_log - mu) / tau
@@ -1036,7 +1036,7 @@ standardize_sex <- function(sex_values, female = NULL, male = NULL, silent = FAL
 #' @param eps Margin to keep parameters away from boundaries.
 #'
 #' @return List with L0, Lmat, Linf adjusted.
-#' @keywords internal
+#' @noRd
 .safe_maturity_order <- function(L0, Lmat, Linf, Linf_lower, eps = 0.5) {
   L0 <- pmax(L0, eps)
   Linf <- pmax(Linf, Linf_lower + eps)
@@ -1056,7 +1056,7 @@ standardize_sex <- function(sex_values, female = NULL, male = NULL, silent = FAL
 #' @param name Character label used in warnings.
 #'
 #' @return Numeric vector with non-finite values replaced by eps, and values < eps set to eps.
-#' @keywords internal
+#' @noRd
 .safe_pos <- function(x, eps = 1e-6, name = "value") {
   x <- as.numeric(x)
   bad <- !is.finite(x) | is.na(x) | (x < eps)
@@ -1077,7 +1077,7 @@ standardize_sex <- function(sex_values, female = NULL, male = NULL, silent = FAL
 #' @param eps Small lower bound for positivity.
 #'
 #' @return List with adjusted L0 and Linf.
-#' @keywords internal
+#' @noRd
 .safe_L0_Linf <- function(L0, Linf, Linf_lower, margin = 0.5, eps = 1e-6) {
   L0   <- .safe_pos(L0,   eps = eps, name = "L0")
   Linf <- .safe_pos(Linf, eps = eps, name = "Linf")
@@ -1099,7 +1099,7 @@ standardize_sex <- function(sex_values, female = NULL, male = NULL, silent = FAL
 #' @param eps Small positive number to avoid division by 0.
 #'
 #' @return Numeric vector of raws.
-#' @keywords internal
+#' @noRd
 .safe_raw_from_target <- function(target_log, mu, tau, eps = 1e-6) {
   tau <- max(as.numeric(tau), eps)
   (as.numeric(target_log) - as.numeric(mu)) / tau

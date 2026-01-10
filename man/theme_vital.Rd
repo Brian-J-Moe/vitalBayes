@@ -26,7 +26,7 @@ while maintaining visual consistency with the package branding.
 \examples{
 \dontrun{
 library(ggplot2)
-ggplot(mtcars, aes(wt, mpg)) + 
+ggplot(mtcars, aes(wt, mpg)) +
   geom_point(color = vital_colors(1)) +
   theme_vital()
 }
