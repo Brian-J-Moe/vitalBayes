@@ -46,27 +46,27 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><h6 class="dropdown-header" data-toc-skip>Understanding vitalBayes</h6></li>
     <li><a class="dropdown-item" href="../articles/Understanding_vitalBayes.html">The Statistics Behind Elasmobranch Life History Modeling</a></li>
+    <li><a class="dropdown-item" href="../articles/partial_pooling.html">Partial Pooling for Imbalanced Sex Ratios</a></li>
+    <li><a class="dropdown-item" href="../articles/chen_watanabe_reparameterization.html">Chen-Watanabe Reparameterization: From t₀ to L₀</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>vitalBayes Functions</h6></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_birth.html">Estimating Birth Size with fit_bayesian_birth()</a></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_maturity.html">Maturity Ogive Estimation with fit_bayesian_maturity()</a></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_growth.html">Growth Modeling with fit_bayesian_growth()</a></li>
-    <li><a class="dropdown-item" href="../articles/partial_pooling.html">Partial Pooling for Imbalanced Sex Ratios</a></li>
     <li><a class="dropdown-item" href="../articles/model_diagnostics.html">Model Diagnostics and Comparison</a></li>
+    <li><a class="dropdown-item" href="../articles/mortality_estimation.html">Natural Mortality Estimation with get_stochastic_mortality()</a></li>
+    <li><a class="dropdown-item" href="../articles/survivorship_simulation.html">Cohort Survival Simulation with simulate_survivorship()</a></li>
     <li><a class="dropdown-item" href="../articles/visualization.html">Visualizing vitalBayes Results</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul>
 <ul class="navbar-nav">
-<li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
-</form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/Brian-J-Moe/vitalBayes/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
@@ -550,23 +550,6 @@ components:</p>
 <span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmat</span></span></code></pre></div>
 <p>See <code><a href="../articles/survivorship_simulation.html">vignette("survivorship_simulation")</a></code> for
 comprehensive survival analysis.</p>
-</div>
-<div class="section level2">
-<h2 id="reporting-results">Reporting Results<a class="anchor" aria-label="anchor" href="#reporting-results"></a>
-</h2>
-<p>When reporting mortality estimates:</p>
-<p><strong>Methods text example:</strong></p>
-<blockquote>
-<p>“Natural mortality was estimated using the Chen-Watanabe model (Chen
-&amp; Watanabe 1989) with L₀ parameterization and Gompertz senescence,
-implemented in vitalBayes v0.4.0. Growth parameters were derived from a
-Gompertz growth model selected by LOO-CV; VB-equivalent k was computed
-from biological milestones (L∞, L₀, Lₘₐₜ, tₘₐₜ) following [cite
-vitalBayes paper]. Mortality schedules were scaled to 0.1% survival at
-estimated maximum age. Mean M was 0.18 yr⁻¹ (95% CI: 0.14–0.23),
-declining from M₀ = 0.42 yr⁻¹ at birth to M₁₀ = 0.11 yr⁻¹ at age
-10.”</p>
-</blockquote>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

@@ -468,22 +468,6 @@ See
 [`vignette("survivorship_simulation")`](https://brian-j-moe.github.io/vitalBayes/articles/survivorship_simulation.md)
 for comprehensive survival analysis.
 
-## Reporting Results
-
-When reporting mortality estimates:
-
-**Methods text example:**
-
-> “Natural mortality was estimated using the Chen-Watanabe model (Chen &
-> Watanabe 1989) with L₀ parameterization and Gompertz senescence,
-> implemented in vitalBayes v0.4.0. Growth parameters were derived from
-> a Gompertz growth model selected by LOO-CV; VB-equivalent k was
-> computed from biological milestones (L∞, L₀, Lₘₐₜ, tₘₐₜ) following
-> \[cite vitalBayes paper\]. Mortality schedules were scaled to 0.1%
-> survival at estimated maximum age. Mean M was 0.18 yr⁻¹ (95% CI:
-> 0.14–0.23), declining from M₀ = 0.42 yr⁻¹ at birth to M₁₀ = 0.11 yr⁻¹
-> at age 10.”
-
 ## References
 
 Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
