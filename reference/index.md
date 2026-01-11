@@ -2,6 +2,14 @@
 
 ## All functions
 
+- [`M_chen_watanabe()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe.md)
+  : Chen-Watanabe Natural Mortality Model
+- [`M_lorenzen()`](https://brian-j-moe.github.io/vitalBayes/reference/M_lorenzen.md)
+  : Lorenzen Natural Mortality Model
+- [`M_peterson_wroblewski()`](https://brian-j-moe.github.io/vitalBayes/reference/M_peterson_wroblewski.md)
+  : Peterson-Wroblewski Natural Mortality Model
+- [`approx_sd()`](https://brian-j-moe.github.io/vitalBayes/reference/approx_sd.md)
+  : Approximate a Standard Deviation from a Confidence Interval
 - [`compare_growth_models()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_growth_models.md)
   : Compare Multiple Growth Models
 - [`compare_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_loo.md)
@@ -14,12 +22,16 @@
   : Create LOO Comparison Table
 - [`create_parameter_table()`](https://brian-j-moe.github.io/vitalBayes/reference/create_parameter_table.md)
   : Create Parameter Summary Table
+- [`extract_lh_params()`](https://brian-j-moe.github.io/vitalBayes/reference/extract_lh_params.md)
+  : Extract Life History Parameters from vitalBayes Fits
 - [`fit_bayesian_birth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_birth.md)
   : Fit Bayesian Length-at-Birth Model
 - [`fit_bayesian_growth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)
   : Fit Bayesian Individual Growth Models
 - [`fit_bayesian_maturity()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md)
   : Fit Bayesian Maturity Models
+- [`get_stochastic_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
+  : Stochastic Simulation of Age-Specific Natural Mortality
 - [`is_colorblind_safe()`](https://brian-j-moe.github.io/vitalBayes/reference/is_colorblind_safe.md)
   : Check if Palette is Colorblind-Friendly
 - [`list_vital_palettes()`](https://brian-j-moe.github.io/vitalBayes/reference/list_vital_palettes.md)
@@ -36,6 +48,10 @@
   : Posterior Predictive Summary
 - [`print(`*`<vitalBayes_ppc>`*`)`](https://brian-j-moe.github.io/vitalBayes/reference/print.vitalBayes_ppc.md)
   : Print PPC Summary
+- [`scale_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/scale_mortality.md)
+  : Scale Mortality Schedule to Target
+- [`simulate_survivorship()`](https://brian-j-moe.github.io/vitalBayes/reference/simulate_survivorship.md)
+  : Monte Carlo Simulation of Survivorship
 - [`imbalanced_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
   [`growth_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
   [`limited_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)
@@ -44,3 +60,5 @@
   : vitalBayes ggplot2 Theme
 - [`vital_colors()`](https://brian-j-moe.github.io/vitalBayes/reference/vital_colors.md)
   : Vital Package Color Palette
+- [`vital_palette()`](https://brian-j-moe.github.io/vitalBayes/reference/vital_palette.md)
+  : vitalBayes Extended Color Palette

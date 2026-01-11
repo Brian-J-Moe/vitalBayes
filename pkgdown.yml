@@ -6,10 +6,12 @@ articles:
   fit_bayesian_growth: fit_bayesian_growth.html
   fit_bayesian_maturity: fit_bayesian_maturity.html
   model_diagnostics: model_diagnostics.html
+  mortality_estimation: mortality_estimation.html
   partial_pooling: partial_pooling.html
+  survivorship_simulation: survivorship_simulation.html
   articles/Understanding_vitalBayes: Understanding_vitalBayes.html
   visualization: visualization.html
-last_built: 2025-12-31T18:33Z
+last_built: 2026-01-11T02:13Z
 urls:
   reference: https://brian-j-moe.github.io/vitalBayes/reference
   article: https://brian-j-moe.github.io/vitalBayes/articles
