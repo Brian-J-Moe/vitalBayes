@@ -22,6 +22,7 @@ Imports:
     loo,
     methods,
     parallel,
+    pracma,
     Rcpp (>= 0.12.0),
     RcppParallel (>= 5.0.1),
     stats
@@ -44,4 +45,3 @@ URL: https://github.com/Brian-J-Moe/vitalBayes, https://brian-j-moe.github.io/vi
 BugReports: https://github.com/Brian-J-Moe/vitalBayes/issues
 Additional_repositories: https://stan-dev.r-universe.dev
 Remotes: stan-dev/cmdstanr
-
