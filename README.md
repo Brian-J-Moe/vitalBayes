@@ -1,5 +1,6 @@
 # vitalBayes <img src="man/figures/logo.png" align="right" height="139" />
 ## From Birth to Death: 
+
 ## Bayesian Estimation of Population Vital Rates for Elasmobranch Fishes
 
 <!-- badges: start -->
