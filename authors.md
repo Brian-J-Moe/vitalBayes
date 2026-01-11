@@ -9,14 +9,14 @@
 Source:
 [`DESCRIPTION`](https://github.com/Brian-J-Moe/vitalBayes/blob/master/DESCRIPTION)
 
-Moe BJ (2026). *vitalBayes: Bayesian Life History Parameter Estimation
-for Elasmobranchs*. R package version 0.3.2,
+Moe BJ (2026). *vitalBayes: Bayesian Vital Rate Estimation for
+Elasmobranchs*. R package version 0.4.0,
 <https://github.com/Brian-J-Moe/vitalBayes>.
 
     @Manual{,
-      title = {vitalBayes: Bayesian Life History Parameter Estimation for Elasmobranchs},
+      title = {vitalBayes: Bayesian Vital Rate Estimation for Elasmobranchs},
       author = {Brian J Moe},
       year = {2026},
-      note = {R package version 0.3.2},
+      note = {R package version 0.4.0},
       url = {https://github.com/Brian-J-Moe/vitalBayes},
     }

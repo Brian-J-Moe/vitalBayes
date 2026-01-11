@@ -19,7 +19,7 @@ two-sex models with optional partial pooling between sexes."><meta property="og:
 
     <a class="navbar-brand me-2" href="../index.html">vitalBayes</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,6 +89,7 @@ two-sex models with optional partial pooling between sexes.</p>
 <span>  prior_tmat <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prior_k <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  pool_maturity <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prior_tau <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  robust <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  loc_sig <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -216,6 +217,22 @@ Ignored if <code>birth_stanfit</code> provided.</p></dd>
 parameters? Default <code>TRUE</code>. Slope parameters are never pooled.</p></dd>
 
 
+<dt id="arg-pool-maturity">pool_maturity<a class="anchor" aria-label="anchor" href="#arg-pool-maturity"></a></dt>
+<dd><p>Logical or <code>NULL</code>. For two-sex maturity-based models
+with <code>use_pooling = TRUE</code>, controls whether maturity parameters (Lmat, tmat)
+are included in the hierarchical pooling structure.</p><ul><li><p><code>NULL</code> (default): Auto-detect based on maturity fit source.
+Set to <code>FALSE</code> if both <code>length.mature_stanfit</code> and
+<code>age.mature_stanfit</code> are CmdStanMCMC objects (vitalBayes fits);
+otherwise <code>TRUE</code>.</p></li>
+<li><p><code>FALSE</code>: Selective pooling. Only Linf and L0 are pooled;
+Lmat and tmat use direct sex-specific priors. Recommended when maturity
+priors come from vitalBayes fits (avoids double-pooling).</p></li>
+<li><p><code>TRUE</code>: Full pooling with anchoring. All parameters are pooled,
+but maturity parameters use widened priors (3x SD) to prevent
+over-constraint.</p></li>
+</ul></dd>
+
+
 <dt id="arg-prior-tau">prior_tau<a class="anchor" aria-label="anchor" href="#arg-prior-tau"></a></dt>
 <dd><p>Scale for half-normal priors on between-sex SD. Default 0.2.</p></dd>
 
@@ -259,8 +276,32 @@ Defaults: <code>loc_sig = 0</code>, <code>scale_sig = 1</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>CmdStanMCMC</code> object.</p>
-    </div>
+    <p>A <code>CmdStanMCMC</code> object with the following key parameters:</p><dl><dt>Linf</dt>
+<dd><p>Asymptotic length(s) by sex</p></dd>
+
+<dt>L0</dt>
+<dd><p>Length at age 0 (birth size) by sex</p></dd>
+
+<dt>k</dt>
+<dd><p>Growth coefficient(s) by sex (derived if maturity-based)</p></dd>
+
+<dt>Lmat, tmat</dt>
+<dd><p>Maturity parameters (if maturity-based)</p></dd>
+
+<dt>sigma</dt>
+<dd><p>Observation error SD by sex</p></dd>
+
+<dt>*_diff</dt>
+<dd><p>Sex differences (female - male) for each parameter</p></dd>
+
+<dt>log_lik</dt>
+<dd><p>Pointwise log-likelihood for LOO-CV</p></dd>
+
+<dt>y_pred, y_rep</dt>
+<dd><p>Posterior predictions and replications</p></dd>
+
+
+</dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
 
@@ -274,6 +315,41 @@ $$L(t) = L_\infty - (L_\infty - L_0) e^{-kt}$$</p>
 $$L(t) = L_\infty \exp\left(-\ln\left(\frac{L_\infty}{L_0}\right) e^{-kt}\right)$$</p>
 <p><strong>Logistic (model = "l"):</strong>
 $$L(t) = \frac{L_\infty}{1 + \left(\frac{L_\infty}{L_0} - 1\right) e^{-kt}}$$</p>
+</div>
+
+<div class="section">
+<h3 id="maturity-based-parameterization">Maturity-Based Parameterization<a class="anchor" aria-label="anchor" href="#maturity-based-parameterization"></a></h3>
+
+
+<p>When <code>k_based = FALSE</code>, the growth coefficient \(k\) is derived from
+maturity parameters rather than estimated directly:</p>
+<p>$$k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)$$</p>
+<p>This parameterization breaks the notorious \((L_\infty, k)\) correlation and
+anchors the growth curve to observable maturity milestones.</p>
+</div>
+
+<div class="section">
+<h3 id="selective-pooling-two-sex-models-">Selective Pooling (Two-Sex Models)<a class="anchor" aria-label="anchor" href="#selective-pooling-two-sex-models-"></a></h3>
+
+
+<p>When fitting two-sex models with maturity-based parameterization and partial
+pooling enabled, the function implements <strong>selective pooling</strong> to avoid
+double-pooling maturity parameters that already carry information from
+upstream maturity model fits.</p>
+<p>The <code>pool_maturity</code> argument controls this behavior:</p><ul><li><p><code>pool_maturity = FALSE</code> (default when vitalBayes maturity fits provided):
+Only \(L_\infty\) and \(L_0\) are pooled hierarchically. Maturity
+parameters (\(L_{mat}\), \(t_{mat}\)) use direct sex-specific priors
+from the upstream fits, preserving biological signal without risk of
+double-pooling.</p></li>
+<li><p><code>pool_maturity = TRUE</code> (default when manual priors provided):
+All parameters are pooled, but maturity parameters use widened anchoring
+priors (3x original SD) to prevent over-constraint while still allowing
+some regularization.</p></li>
+</ul><p>The auto-detection logic sets <code>pool_maturity = FALSE</code> when
+<code>length.mature_stanfit</code> and <code>age.mature_stanfit</code> are both
+CmdStanMCMC objects (i.e., vitalBayes maturity model fits), since these
+already contain pooled estimates when <code>use_pooling = TRUE</code> was used
+in the maturity models.</p>
 </div>
 
 <div class="section">
@@ -324,31 +400,47 @@ for why Linf must exceed maximum observed length.</p>
 <span class="r-in"><span>  free_swimming_lts <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">length</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Step 2: Fit maturity models</span></span></span>
-<span class="r-in"><span><span class="va">mat_fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  maturity <span class="op">=</span> <span class="va">mat</span>, lt <span class="op">=</span> <span class="va">length</span>, age <span class="op">=</span> <span class="va">age</span>, sex <span class="op">=</span> <span class="va">sex</span>,</span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="co"># Step 2: Fit maturity models (with pooling)</span></span></span>
+<span class="r-in"><span><span class="va">mat_length_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  maturity <span class="op">=</span> <span class="va">mat</span>, lt <span class="op">=</span> <span class="va">length</span>, sex <span class="op">=</span> <span class="va">sex</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Step 3: Fit growth model (maturity-based, pooled)</span></span></span>
+<span class="r-in"><span><span class="va">mat_age_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  maturity <span class="op">=</span> <span class="va">mat</span>, age <span class="op">=</span> <span class="va">age</span>, sex <span class="op">=</span> <span class="va">sex</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span></span>
+<span class="r-in"><span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Step 3: Fit growth model (maturity-based, selective pooling)</span></span></span>
+<span class="r-in"><span><span class="co"># pool_maturity auto-detects to FALSE since maturity fits are CmdStanMCMC</span></span></span>
 <span class="r-in"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu">fit_bayesian_growth</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  lt <span class="op">=</span> <span class="va">length</span>, age <span class="op">=</span> <span class="va">age</span>, sex <span class="op">=</span> <span class="va">sex</span>,</span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span>,  <span class="co"># Can include incomplete cases for Lmax</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span>,</span></span>
 <span class="r-in"><span>  model <span class="op">=</span> <span class="st">"v"</span>,</span></span>
 <span class="r-in"><span>  k_based <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>  birth_stanfit <span class="op">=</span> <span class="va">birth_fit</span>,</span></span>
-<span class="r-in"><span>  length.mature_stanfit <span class="op">=</span> <span class="va">mat_fits</span><span class="op">$</span><span class="va">length</span>,</span></span>
-<span class="r-in"><span>  age.mature_stanfit <span class="op">=</span> <span class="va">mat_fits</span><span class="op">$</span><span class="va">age</span>,</span></span>
+<span class="r-in"><span>  length.mature_stanfit <span class="op">=</span> <span class="va">mat_length_fit</span>,</span></span>
+<span class="r-in"><span>  age.mature_stanfit <span class="op">=</span> <span class="va">mat_age_fit</span>,</span></span>
 <span class="r-in"><span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>  robust <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Alternative: Specify Lmax if you know it exceeds observed data</span></span></span>
-<span class="r-in"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu">fit_bayesian_growth</span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="co"># Explicit control: force full pooling even with vitalBayes fits</span></span></span>
+<span class="r-in"><span><span class="va">growth_fit_full</span> <span class="op">&lt;-</span> <span class="fu">fit_bayesian_growth</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">...</span>,</span></span>
+<span class="r-in"><span>  pool_maturity <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># Override auto-detection</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Alternative: Manual priors (auto-detects pool_maturity = TRUE)</span></span></span>
+<span class="r-in"><span><span class="va">growth_fit_manual</span> <span class="op">&lt;-</span> <span class="fu">fit_bayesian_growth</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  lt <span class="op">=</span> <span class="va">length</span>, age <span class="op">=</span> <span class="va">age</span>, sex <span class="op">=</span> <span class="va">sex</span>,</span></span>
-<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,  <span class="co"># Complete cases only</span></span></span>
-<span class="r-in"><span>  Lmax <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">140</span><span class="op">)</span>,  <span class="co"># Known max: females, males</span></span></span>
-<span class="r-in"><span>  <span class="va">...</span></span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="va">sharks</span>,</span></span>
+<span class="r-in"><span>  k_based <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>  prior_Lmat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">10</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">65</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span>,  <span class="co"># Female, Male</span></span></span>
+<span class="r-in"><span>  prior_tmat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

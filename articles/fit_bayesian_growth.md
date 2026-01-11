@@ -11,13 +11,13 @@ observable maturity metrics rather than estimating it directly.
 
 ## Growth Model Equations
 
-**von Bertalanffy** (`model = "vb"`): \\L(t) = L\_\infty - (L\_\infty -
+**von Bertalanffy** (`model = "v"`): \\L(t) = L\_\infty - (L\_\infty -
 L_0) e^{-kt}\\
 
-**Gompertz** (`model = "gompertz"`): \\L(t) = L\_\infty
+**Gompertz** (`model = "g"`): \\L(t) = L\_\infty
 \exp\left\[-\ln\left(\frac{L\_\infty}{L_0}\right) e^{-kt}\right\]\\
 
-**Logistic** (`model = "logistic"`): \\L(t) = \frac{L\_\infty}{1 +
+**Logistic** (`model = "l"`): \\L(t) = \frac{L\_\infty}{1 +
 \left(\frac{L\_\infty}{L_0} - 1\right) e^{-kt}}\\
 
 ## Two Parameterization Approaches
@@ -38,14 +38,14 @@ gdata <- growth_data[embryo == FALSE & !is.na(age)]
 
 # Traditional k-based von Bertalanffy
 growth_k <- fit_bayesian_growth(
- lt      = "fl",
- age     = "age",
- sex     = "sex",
- data    = gdata,
- model   = "vb",
- k_based = TRUE,
- CV_k    = 0.5,        # 50% CV on k prior (high uncertainty)
- parallel = TRUE
+  lt      = "fl",
+  age     = "age",
+  sex     = "sex",
+  data    = gdata,
+  model   = "v",
+  k_based = TRUE,
+  CV_k    = 0.5,        # 50% CV on k prior (high uncertainty)
+  parallel = TRUE
 )
 
 growth_k$summary(c("Linf", "L0", "k", "sigma"))
@@ -64,33 +64,35 @@ L\_{mat}}\right)\\
 mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
 L50_fit <- fit_bayesian_maturity(
- maturity = "mat", lt = "fl", sex = "sex",
- data = mat_data
+  maturity = "mat", lt = "fl", sex = "sex",
+  data = mat_data,
+  use_pooling = TRUE
 )
 
 t50_fit <- fit_bayesian_maturity(
- maturity = "mat", age = "age", sex = "sex",
- data = mat_data[!is.na(age)]
+  maturity = "mat", age = "age", sex = "sex",
+  data = mat_data[!is.na(age)],
+  use_pooling = TRUE
 )
 
 # Optional: fit birth model for L0 prior
 birth_fit <- fit_bayesian_birth(
- embryo_lts = growth_data[embryo == TRUE, fl],
- free_swimming_lts = growth_data[embryo == FALSE, fl]
+  embryo_lts = growth_data[embryo == TRUE, fl],
+  free_swimming_lts = growth_data[embryo == FALSE, fl]
 )
 
 # Maturity-based growth model
 growth_mat <- fit_bayesian_growth(
- lt        = "fl",
- age       = "age",
- sex       = "sex",
- data      = gdata,
- model     = "vb",
- k_based   = FALSE,          # Use maturity-based parameterization
- L50_fit   = L50_fit,        # Provides Lmat prior
- t50_fit   = t50_fit,        # Provides tmat prior
- birth_fit = birth_fit,      # Provides L0 prior
- parallel  = TRUE
+  lt        = "fl",
+  age       = "age",
+  sex       = "sex",
+  data      = gdata,
+  model     = "v",
+  k_based   = FALSE,                    # Use maturity-based parameterization
+  length.mature_stanfit = L50_fit,      # Provides Lmat prior
+  age.mature_stanfit    = t50_fit,      # Provides tmat prior
+  birth_stanfit         = birth_fit,    # Provides L0 prior
+  parallel  = TRUE
 )
 
 # k is now a derived quantity
@@ -126,71 +128,152 @@ in the Statistical Methods guide.
 ``` r
 # Lmax is auto-detected from data
 growth_fit <- fit_bayesian_growth(
- lt   = "fl",
- age  = "age",
- data = gdata
+  lt   = "fl",
+  age  = "age",
+  data = gdata
 )
 # Message: "Lmax from data: 98.5 cm"
 
 # Or specify manually (e.g., if you have length data without age)
 growth_fit <- fit_bayesian_growth(
- lt   = "fl",
- age  = "age",
- data = gdata,
- Lmax = c(100, 95)  # Female, Male
+  lt   = "fl",
+  age  = "age",
+  data = gdata,
+  Lmax = c(100, 95)  # Female, Male
 )
 ```
 
-## Two-Sex Models with Partial Pooling
+## Two-Sex Models: Pooling Strategies
 
 When sample sizes are imbalanced between sexes (common in elasmobranch
 research), partial pooling borrows strength across sexes to reduce
-uncertainty for the sparse group:
+uncertainty for the sparse group.
+
+### The Double-Pooling Problem
+
+A subtle issue arises when using **maturity-based parameterization**
+with **partial pooling**: if the upstream maturity models
+([`fit_bayesian_maturity()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md))
+were themselves fit with `use_pooling = TRUE`, the maturity parameters
+(\\L\_{mat}\\, \\t\_{mat}\\) already contain pooled estimates. Pooling
+them *again* in the growth model can:
+
+1.  Over-shrink sex differences toward the population mean
+2.  In extreme cases, reverse genuine biological dimorphism
+3.  Artificially tighten credible intervals
+
+### Selective Pooling (Default)
+
+The `pool_maturity` argument controls whether maturity parameters enter
+the hierarchical structure:
 
 ``` r
+# When both maturity fits are CmdStanMCMC objects from vitalBayes,
+# pool_maturity auto-detects to FALSE (selective pooling)
 growth_2sex <- fit_bayesian_growth(
- lt          = "fl",
- age         = "age",
- sex         = "sex",
- data        = gdata,
- model       = "vb",
- k_based     = FALSE,
- L50_fit     = L50_fit,
- t50_fit     = t50_fit,
- use_pooling = TRUE,    # Partial pooling between sexes
- prior_tau   = 0.2,     # Half-normal scale for between-sex SD
- parallel    = TRUE
+  lt          = "fl",
+  age         = "age",
+  sex         = "sex",
+  data        = gdata,
+  model       = "v",
+  k_based     = FALSE,
+  length.mature_stanfit = L50_fit,
+  age.mature_stanfit    = t50_fit,
+  use_pooling = TRUE,     # Partial pooling enabled
+  # pool_maturity = NULL  # Auto-detects to FALSE
+  parallel    = TRUE
 )
-
-# Sex-specific estimates
-growth_2sex$summary("Linf")
-growth_2sex$summary("k")
-
-# Sex differences
-growth_2sex$summary(c("Linf_diff", "k_diff"))
+# Message: "Auto-detected vitalBayes maturity fits: using selective pooling"
 ```
 
-For a comprehensive treatment of partial pooling mechanics, shrinkage
-effects, and when to use it, see
-[`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md).
+**Under selective pooling (`pool_maturity = FALSE`):**
+
+| Parameter     | Pooled? | Prior Source                        |
+|---------------|---------|-------------------------------------|
+| \\L\_\infty\\ | ✅ Yes  | Data-derived (needs regularization) |
+| \\L_0\\       | ✅ Yes  | Birth model or default              |
+| \\L\_{mat}\\  | ❌ No   | Direct from maturity fit            |
+| \\t\_{mat}\\  | ❌ No   | Direct from maturity fit            |
+
+This ensures \\L\_{mat}\\ and \\t\_{mat}\\ preserve their sex-specific
+biological signal while \\L\_\infty\\ and \\L_0\\ benefit from
+hierarchical shrinkage.
+
+### Full Pooling with Anchoring
+
+If you prefer full pooling (or must use it with manual priors), the
+function uses **widened anchoring priors** (3× original SD) to prevent
+over-constraint:
+
+``` r
+# Force full pooling explicitly
+growth_full <- fit_bayesian_growth(
+  lt          = "fl",
+  age         = "age",
+  sex         = "sex",
+  data        = gdata,
+  model       = "v",
+  k_based     = FALSE,
+  length.mature_stanfit = L50_fit,
+  age.mature_stanfit    = t50_fit,
+  use_pooling   = TRUE,
+  pool_maturity = TRUE,   # Override auto-detection
+  parallel      = TRUE
+)
+# Note: "pool_maturity = TRUE with vitalBayes maturity fits may cause 
+#        double-pooling. Using widened priors (3x SD) to mitigate."
+```
+
+### Manual Priors (Auto-Detects Full Pooling)
+
+When providing manual priors instead of vitalBayes fits, full pooling is
+the default since there’s no prior pooling to double:
+
+``` r
+# Manual priors: pool_maturity defaults to TRUE
+growth_manual <- fit_bayesian_growth(
+  lt          = "fl",
+  age         = "age", 
+  sex         = "sex",
+  data        = gdata,
+  model       = "v",
+  k_based     = FALSE,
+  prior_Lmat  = rbind(c(72, 8), c(68, 8)),   # Female, Male: mean, SD
+  prior_tmat  = rbind(c(13, 2), c(11, 2)),
+  use_pooling = TRUE
+  # pool_maturity auto-detects to TRUE
+)
+```
+
+### Decision Guide
+
+| Scenario                                                     | `pool_maturity`   | Rationale                                         |
+|--------------------------------------------------------------|-------------------|---------------------------------------------------|
+| vitalBayes maturity fits + `use_pooling = TRUE` in maturity  | `FALSE` (auto)    | Avoid double-pooling                              |
+| vitalBayes maturity fits + `use_pooling = FALSE` in maturity | Could use `TRUE`  | Single pooling stage is safe                      |
+| Manual priors                                                | `TRUE` (auto)     | No prior pooling to compound                      |
+| Want maximum shrinkage                                       | `TRUE` (explicit) | Accept tighter CIs, check for dimorphism reversal |
 
 ## Comparing Growth Models
 
 ``` r
 # Fit all three models
 vb_fit <- fit_bayesian_growth(
- lt = "fl", age = "age", sex = "sex", data = gdata,
- model = "vb", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+  lt = "fl", age = "age", sex = "sex", data = gdata,
+  model = "v", k_based = FALSE,
+  length.mature_stanfit = L50_fit, age.mature_stanfit = t50_fit
 )
 
 gomp_fit <- fit_bayesian_growth(
- lt = "fl", age = "age", sex = "sex", data = gdata,
- model = "gompertz", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+  lt = "fl", age = "age", sex = "sex", data = gdata,
+  model = "g", k_based = FALSE,
+  length.mature_stanfit = L50_fit, age.mature_stanfit = t50_fit
 )
 
 logis_fit <- fit_bayesian_growth(
- lt = "fl", age = "age", sex = "sex", data = gdata,
- model = "logistic", k_based = FALSE, L50_fit = L50_fit, t50_fit = t50_fit
+  lt = "fl", age = "age", sex = "sex", data = gdata,
+  model = "l", k_based = FALSE,
+  length.mature_stanfit = L50_fit, age.mature_stanfit = t50_fit
 )
 
 # Compare via LOO-CV
@@ -199,9 +282,9 @@ loo_gomp <- compute_loo(gomp_fit)
 loo_logis <- compute_loo(logis_fit)
 
 compare_loo(
- "von Bertalanffy" = loo_vb,
- "Gompertz" = loo_gomp,
- "Logistic" = loo_logis
+  "von Bertalanffy" = loo_vb,
+  "Gompertz" = loo_gomp,
+  "Logistic" = loo_logis
 )
 ```
 
@@ -211,19 +294,19 @@ Priors are specified via coefficient of variation for intuitive scaling:
 
 ``` r
 growth_fit <- fit_bayesian_growth(
- lt   = "fl",
- age  = "age",
- data = gdata,
- 
- # Prior CVs (proportion of mean)
- CV_Linf = 0.20,    # 20% uncertainty on Linf
- CV_L0   = 0.30,    # 30% uncertainty on L0
- CV_k    = 0.50,    # 50% uncertainty on k (if k_based = TRUE)
- CV_Lmat = 0.20,    # 20% uncertainty on Lmat
- CV_tmat = 0.30,    # 30% uncertainty on tmat
- 
- # Linf prior mean = 1.05 * Lmax by default
- Linf_multiplier = 1.05
+  lt   = "fl",
+  age  = "age",
+  data = gdata,
+  
+  # Prior CVs (proportion of mean)
+  CV_Linf = 0.20,    # 20% uncertainty on Linf
+  CV_L0   = 0.30,    # 30% uncertainty on L0
+  CV_k    = 0.50,    # 50% uncertainty on k (if k_based = TRUE)
+  CV_Lmat = 0.20,    # 20% uncertainty on Lmat
+  CV_tmat = 0.30,    # 30% uncertainty on tmat
+  
+  # Linf prior mean = 1.05 * Lmax by default
+  Linf_multiplier = 1.05
 )
 ```
 
@@ -232,30 +315,30 @@ growth_fit <- fit_bayesian_growth(
 ``` r
 # Basic growth curve
 plot_growth_curve(
- fit        = growth_2sex,
- data       = gdata,
- age_col    = "age",
- length_col = "fl",
- sex_col    = "sex"
+  fit        = growth_2sex,
+  data       = gdata,
+  age_col    = "age",
+  length_col = "fl",
+  sex_col    = "sex"
 )
 
 # Multilingual support
 plot_growth_curve(
- fit        = growth_2sex,
- data       = gdata,
- sex_labels = c("female" = "Hembra", "male" = "Macho"),
- x_lab      = "Edad (años)",
- y_lab      = "Longitud (cm)"
+  fit        = growth_2sex,
+  data       = gdata,
+  sex_labels = c("female" = "Hembra", "male" = "Macho"),
+  x_lab      = "Edad (años)",
+  y_lab      = "Longitud (cm)"
 )
 
 # Compare models visually
 compare_growth_models(
- "von Bertalanffy" = vb_fit,
- "Gompertz" = gomp_fit,
- "Logistic" = logis_fit,
- data = gdata,
- age_col = "age",
- length_col = "fl"
+  "von Bertalanffy" = vb_fit,
+  "Gompertz" = gomp_fit,
+  "Logistic" = logis_fit,
+  data = gdata,
+  age_col = "age",
+  length_col = "fl"
 )
 ```
 
@@ -263,15 +346,15 @@ compare_growth_models(
 
 ``` r
 # Built-in PPC metrics
-growth_2sex$summary(c("rmse", "mae", "prop_in_95ci"))
+growth_2sex$summary(c("rmse_f", "rmse_m", "mean_residual_f", "mean_residual_m"))
 
 # Residual diagnostics
 plot_residuals(
- fit        = growth_2sex,
- data       = gdata,
- age_col    = "age",
- length_col = "fl",
- type       = "all"
+  fit        = growth_2sex,
+  data       = gdata,
+  age_col    = "age",
+  length_col = "fl",
+  type       = "all"
 )
 ```
 
@@ -283,54 +366,60 @@ data(growth_data)
 
 # ---- Stage 1: Birth ----
 birth_fit <- fit_bayesian_birth(
- embryo_lts = growth_data[embryo == TRUE, fl],
- free_swimming_lts = growth_data[embryo == FALSE, fl]
+  embryo_lts = growth_data[embryo == TRUE, fl],
+  free_swimming_lts = growth_data[embryo == FALSE, fl]
 )
 
 # ---- Stage 2: Maturity ----
 mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
 L50_fit <- fit_bayesian_maturity(
- maturity = "mat", lt = "fl", sex = "sex",
- data = mat_data, use_pooling = TRUE
+  maturity = "mat", lt = "fl", sex = "sex",
+  data = mat_data, 
+  use_pooling = TRUE
 )
 
 t50_fit <- fit_bayesian_maturity(
- maturity = "mat", age = "age", sex = "sex",
- data = mat_data[!is.na(age)], use_pooling = TRUE
+  maturity = "mat", age = "age", sex = "sex",
+  data = mat_data[!is.na(age)], 
+  use_pooling = TRUE
 )
 
 # ---- Stage 3: Growth ----
+# Note: pool_maturity auto-detects to FALSE (selective pooling)
+# since L50_fit and t50_fit are CmdStanMCMC objects
 growth_fit <- fit_bayesian_growth(
- lt        = "fl",
- age       = "age",
- sex       = "sex",
- data      = growth_data[embryo == FALSE & !is.na(age)],
- model     = "vb",
- k_based   = FALSE,
- birth_fit = birth_fit,
- L50_fit   = L50_fit,
- t50_fit   = t50_fit,
- use_pooling = TRUE
+  lt        = "fl",
+  age       = "age",
+  sex       = "sex",
+  data      = growth_data[embryo == FALSE & !is.na(age)],
+  model     = "v",
+  k_based   = FALSE,
+  birth_stanfit         = birth_fit,
+  length.mature_stanfit = L50_fit,
+  age.mature_stanfit    = t50_fit,
+  use_pooling = TRUE
 )
 
 # ---- Summary ----
 create_parameter_table(
- birth = birth_fit,
- L50 = L50_fit,
- t50 = t50_fit,
- growth = growth_fit
+  birth = birth_fit,
+  L50 = L50_fit,
+  t50 = t50_fit,
+  growth = growth_fit
 )
 ```
 
 ## Troubleshooting
 
-| Issue                    | Solution                                                              |
-|--------------------------|-----------------------------------------------------------------------|
-| Divergent transitions    | Increase `adapt_delta` (0.95 → 0.99)                                  |
-| \\k\\ hitting boundaries | Check that \\L\_{mat} \< L\_\infty\\ and \\L_0 \< L\_{mat}\\          |
-| \\L\_\infty\\ too low    | Increase `Lmax` or `Linf_multiplier`                                  |
-| Poor fit at young ages   | Consider different growth model (Gompertz often better for juveniles) |
+| Issue                         | Solution                                                              |
+|-------------------------------|-----------------------------------------------------------------------|
+| Divergent transitions         | Increase `adapt_delta` (0.95 → 0.99)                                  |
+| \\k\\ hitting boundaries      | Check that \\L\_{mat} \< L\_\infty\\ and \\L_0 \< L\_{mat}\\          |
+| \\L\_\infty\\ too low         | Increase `Lmax` or `Linf_multiplier`                                  |
+| Poor fit at young ages        | Consider different growth model (Gompertz often better for juveniles) |
+| Sex differences reversed      | Check `pool_maturity`; try `pool_maturity = FALSE`                    |
+| Over-tight credible intervals | May indicate double-pooling; use selective pooling                    |
 
 ## See Also
 
