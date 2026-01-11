@@ -169,11 +169,13 @@ navbar:
 home:
   title: "vitalBayes"
   description: "Bayesian Life History Parameter Estimation for Elasmobranchs"
+  sidebar:
+    structure: [links, license, community, citation, authors, dev, toc]
 
 footer:
   structure:
-    left: developed_by
-    right: built_with
+    left:  developed_by
+    right:  built_with
 
 authors:
   Brian J Moe:
