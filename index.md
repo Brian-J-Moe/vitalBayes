@@ -1,6 +1,6 @@
 # vitalBayes
 
-## From Birth to Death: Bayesian Estimation of Vital Rates for Elasmobranchs
+## From Birth to Death: Bayesian Estimation of Vital Rates for Elasmobranch Fishes
 
 `vitalBayes` provides a coherent Bayesian framework for estimating
 population vital rates in elasmobranchs — from birth and maturity
