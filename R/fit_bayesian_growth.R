@@ -26,6 +26,43 @@
 #' **Logistic (model = "l"):**
 #' \deqn{L(t) = \frac{L_\infty}{1 + \left(\frac{L_\infty}{L_0} - 1\right) e^{-kt}}}
 #'
+#' ## Maturity-Based Parameterization
+#'
+#' When \code{k_based = FALSE}, the growth coefficient \eqn{k} is derived from
+#' maturity parameters rather than estimated directly:
+#'
+#' \deqn{k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
+#'
+#' This parameterization breaks the notorious \eqn{(L_\infty, k)} correlation and
+
+#' anchors the growth curve to observable maturity milestones.
+#'
+#' ## Selective Pooling (Two-Sex Models)
+#'
+#' When fitting two-sex models with maturity-based parameterization and partial
+#' pooling enabled, the function implements **selective pooling** to avoid
+#' double-pooling maturity parameters that already carry information from
+#' upstream maturity model fits.
+#'
+#' The \code{pool_maturity} argument controls this behavior:
+#' \itemize{
+#'   \item \code{pool_maturity = FALSE} (default when vitalBayes maturity fits provided):
+#'     Only \eqn{L_\infty} and \eqn{L_0} are pooled hierarchically. Maturity
+#'     parameters (\eqn{L_{mat}}, \eqn{t_{mat}}) use direct sex-specific priors
+#'     from the upstream fits, preserving biological signal without risk of
+#'     double-pooling.
+#'   \item \code{pool_maturity = TRUE} (default when manual priors provided):
+#'     All parameters are pooled, but maturity parameters use widened anchoring
+#'     priors (3x original SD) to prevent over-constraint while still allowing
+#'     some regularization.
+#' }
+#'
+#' The auto-detection logic sets \code{pool_maturity = FALSE} when
+#' \code{length.mature_stanfit} and \code{age.mature_stanfit} are both
+#' CmdStanMCMC objects (i.e., vitalBayes maturity model fits), since these
+#' already contain pooled estimates when \code{use_pooling = TRUE} was used
+#' in the maturity models.
+#'
 #' ## Prior Specification
 #'
 #' Priors are constructed using coefficient of variation (CV) arguments:
@@ -90,6 +127,21 @@
 #'
 #' @param use_pooling Logical. For two-sex models, use partial pooling on location
 #'   parameters? Default \code{TRUE}. Slope parameters are never pooled.
+#' @param pool_maturity Logical or \code{NULL}. For two-sex maturity-based models
+#'   with \code{use_pooling = TRUE}, controls whether maturity parameters (Lmat, tmat)
+#'   are included in the hierarchical pooling structure.
+#'   \itemize{
+#'     \item \code{NULL} (default): Auto-detect based on maturity fit source.
+#'       Set to \code{FALSE} if both \code{length.mature_stanfit} and
+#'       \code{age.mature_stanfit} are CmdStanMCMC objects (vitalBayes fits);
+#'       otherwise \code{TRUE}.
+#'     \item \code{FALSE}: Selective pooling. Only Linf and L0 are pooled;
+#'       Lmat and tmat use direct sex-specific priors. Recommended when maturity
+#'       priors come from vitalBayes fits (avoids double-pooling).
+#'     \item \code{TRUE}: Full pooling with anchoring. All parameters are pooled,
+#'       but maturity parameters use widened priors (3x SD) to prevent
+#'       over-constraint.
+#'   }
 #' @param prior_tau Scale for half-normal priors on between-sex SD. Default 0.2.
 #'
 #' @param robust Logical. Use Student-t observation model? Default \code{FALSE}.
@@ -104,7 +156,17 @@
 #' @param seed Integer. Random seed. Default 1234.
 #' @param ... Additional arguments passed to \code{$sample()}.
 #'
-#' @return A \code{CmdStanMCMC} object.
+#' @return A \code{CmdStanMCMC} object with the following key parameters:
+#' \describe{
+#'   \item{Linf}{Asymptotic length(s) by sex}
+#'   \item{L0}{Length at age 0 (birth size) by sex}
+#'   \item{k}{Growth coefficient(s) by sex (derived if maturity-based)}
+#'   \item{Lmat, tmat}{Maturity parameters (if maturity-based)}
+#'   \item{sigma}{Observation error SD by sex}
+#'   \item{*_diff}{Sex differences (female - male) for each parameter}
+#'   \item{log_lik}{Pointwise log-likelihood for LOO-CV}
+#'   \item{y_pred, y_rep}{Posterior predictions and replications}
+#' }
 #'
 #' @seealso
 #' \code{vignette("fit_bayesian_growth")} for usage examples with gulper shark data.
@@ -133,31 +195,47 @@
 #'   free_swimming_lts = sharks[embryo == FALSE, length]
 #' )
 #'
-#' # Step 2: Fit maturity models
-#' mat_fits <- fit_bayesian_maturity(
-#'   maturity = mat, lt = length, age = age, sex = sex,
-#'   data = sharks[embryo == FALSE]
+#' # Step 2: Fit maturity models (with pooling)
+#' mat_length_fit <- fit_bayesian_maturity(
+#'   maturity = mat, lt = length, sex = sex,
+#'   data = sharks[embryo == FALSE],
+#'   use_pooling = TRUE
 #' )
 #'
-#' # Step 3: Fit growth model (maturity-based, pooled)
+#' mat_age_fit <- fit_bayesian_maturity(
+#'   maturity = mat, age = age, sex = sex,
+#'   data = sharks[embryo == FALSE & !is.na(age)],
+#'   use_pooling = TRUE
+#' )
+#'
+#' # Step 3: Fit growth model (maturity-based, selective pooling)
+#' # pool_maturity auto-detects to FALSE since maturity fits are CmdStanMCMC
 #' growth_fit <- fit_bayesian_growth(
 #'   lt = length, age = age, sex = sex,
-#'   data = sharks,  # Can include incomplete cases for Lmax
+#'   data = sharks,
 #'   model = "v",
 #'   k_based = FALSE,
 #'   birth_stanfit = birth_fit,
-#'   length.mature_stanfit = mat_fits$length,
-#'   age.mature_stanfit = mat_fits$age,
+#'   length.mature_stanfit = mat_length_fit,
+#'   age.mature_stanfit = mat_age_fit,
 #'   use_pooling = TRUE,
 #'   robust = TRUE
 #' )
 #'
-#' # Alternative: Specify Lmax if you know it exceeds observed data
-#' growth_fit <- fit_bayesian_growth(
+#' # Explicit control: force full pooling even with vitalBayes fits
+#' growth_fit_full <- fit_bayesian_growth(
+#'   ...,
+#'   pool_maturity = TRUE  # Override auto-detection
+#' )
+#'
+#' # Alternative: Manual priors (auto-detects pool_maturity = TRUE)
+#' growth_fit_manual <- fit_bayesian_growth(
 #'   lt = length, age = age, sex = sex,
-#'   data = sharks[!is.na(age)],  # Complete cases only
-#'   Lmax = c(150, 140),  # Known max: females, males
-#'   ...
+#'   data = sharks,
+#'   k_based = FALSE,
+#'   prior_Lmat = rbind(c(70, 10), c(65, 10)),  # Female, Male
+#'   prior_tmat = rbind(c(12, 2), c(10, 2)),
+#'   use_pooling = TRUE
 #' )
 #' }
 #'
@@ -197,6 +275,7 @@ fit_bayesian_growth <- function(
 
     # Pooling options
     use_pooling   = TRUE,
+    pool_maturity = NULL,
     prior_tau     = 0.2,
 
     # Observation error
@@ -222,6 +301,14 @@ fit_bayesian_growth <- function(
     stop(
       "Package 'instantiate' is required for precompiled Stan models.\n",
       "Install via: install.packages('instantiate')",
+      call. = FALSE
+    )
+  }
+
+  if (!requireNamespace("cmdstanr", quietly = TRUE)) {
+    stop(
+      "Package 'cmdstanr' is required.\n",
+      "Install via: install.packages('cmdstanr', repos = c('https://mc-stan.org/r-packages/', getOption('repos')))",
       call. = FALSE
     )
   }
@@ -265,6 +352,7 @@ fit_bayesian_growth <- function(
   # =========================================================================
 
   lt_vec <- .resolve_or_vector(substitute(lt), data, "numeric", "length")
+
   age_vec <- .resolve_or_vector(substitute(age), data, "numeric", "age")
 
   sex_vec <- if (!missing(sex) && !is.null(substitute(sex))) {
@@ -350,6 +438,42 @@ fit_bayesian_growth <- function(
   .check_sample_size(newdat, sex_for_checks, k_based)
 
   # =========================================================================
+  # Determine pool_maturity Setting
+  # =========================================================================
+
+  # Auto-detect whether maturity fits are from vitalBayes (CmdStanMCMC objects)
+  maturity_from_vitalbayes <- .detect_vitalbayes_maturity(
+    length.mature_stanfit,
+    age.mature_stanfit
+  )
+
+  if (is.null(pool_maturity)) {
+    if (!k_based && is_twosex && use_pooling) {
+      if (maturity_from_vitalbayes) {
+        pool_maturity <- FALSE
+        message("Auto-detected vitalBayes maturity fits: using selective pooling (pool_maturity = FALSE)")
+      } else {
+        pool_maturity <- TRUE
+        message("Manual priors detected: using full pooling with anchoring (pool_maturity = TRUE)")
+      }
+    } else {
+      # Not relevant for k-based, single-sex, or non-pooled models
+      pool_maturity <- TRUE
+    }
+  } else {
+    # User explicitly specified
+    if (!k_based && is_twosex && use_pooling) {
+      if (pool_maturity && maturity_from_vitalbayes) {
+        message("Note: pool_maturity = TRUE with vitalBayes maturity fits may cause double-pooling. ",
+                "Using widened priors (3x SD) to mitigate.")
+      } else if (!pool_maturity && !maturity_from_vitalbayes) {
+        message("Note: pool_maturity = FALSE with manual priors. ",
+                "Maturity parameters will use direct priors only.")
+      }
+    }
+  }
+
+  # =========================================================================
   # Report Model Configuration
   # =========================================================================
 
@@ -360,6 +484,9 @@ fit_bayesian_growth <- function(
   message("Sex structure: ", if (is_twosex) "two-sex" else "single-sex")
   if (is_twosex) {
     message("Pooling: ", if (use_pooling) "partial pooling" else "independent")
+    if (use_pooling && !k_based) {
+      message("Maturity pooling: ", if (pool_maturity) "full (with anchoring)" else "selective (Lmat/tmat excluded)")
+    }
   }
   message("Observation error: ", if (robust) "Student-t (robust)" else "lognormal")
   message("Sample size: ", nrow(newdat))
@@ -561,6 +688,7 @@ fit_bayesian_growth <- function(
         which_model = which_model,
         robust      = as.integer(robust),
         use_pooling = as.integer(use_pooling),
+        pool_maturity = as.integer(pool_maturity),
 
         prior_Linf_mu    = sapply(Linf_priors, `[[`, "log_mean"),
         prior_Linf_sigma = sapply(Linf_priors, `[[`, "log_sd"),
@@ -718,6 +846,17 @@ fit_bayesian_growth <- function(
         mu_Lmat <- mean(log(ord$Lmat))
         mu_tmat <- mean(log(pmax(mean_tmat_nat, 1e-3)))
 
+        # For raw_Lmat and raw_tmat, initialization depends on pool_maturity
+        if (use_pooling && pool_maturity) {
+          # Full pooling: use non-centered parameterization
+          raw_Lmat_init <- .safe_raw_from_target(log(ord$Lmat), mu_Lmat, tau0)
+          raw_tmat_init <- .safe_raw_from_target(log(pmax(mean_tmat_nat, 1e-3)), mu_tmat, tau0)
+        } else {
+          # Selective pooling or no pooling: raw values are direct log params
+          raw_Lmat_init <- log(ord$Lmat)
+          raw_tmat_init <- log(pmax(mean_tmat_nat, 1e-3))
+        }
+
         list(
           mu_Linf  = mu_Linf,
           mu_L0    = mu_L0,
@@ -731,8 +870,8 @@ fit_bayesian_growth <- function(
 
           raw_Linf = if (use_pooling) .safe_raw_from_target(log(ord$Linf),  mu_Linf, tau0) else log(ord$Linf),
           raw_L0   = if (use_pooling) .safe_raw_from_target(log(ord$L0),    mu_L0,   tau0) else log(ord$L0),
-          raw_Lmat = if (use_pooling) .safe_raw_from_target(log(ord$Lmat),  mu_Lmat, tau0) else log(ord$Lmat),
-          raw_tmat = if (use_pooling) .safe_raw_from_target(log(pmax(mean_tmat_nat, 1e-3)), mu_tmat, tau0) else log(pmax(mean_tmat_nat, 1e-3)),
+          raw_Lmat = raw_Lmat_init,
+          raw_tmat = raw_tmat_init,
 
           sigma    = c(0.15, 0.15),
           nu_raw   = 10
@@ -812,5 +951,29 @@ fit_bayesian_growth <- function(
 }
 
 
+# =============================================================================
+# Helper Functions
+# =============================================================================
 
+#' Detect if maturity fits are from vitalBayes
+#'
+#' Checks whether the provided maturity stanfit objects are CmdStanMCMC objects,
+#' indicating they came from vitalBayes maturity model fits.
+#'
+#' @param length_fit Object passed as length.mature_stanfit
+#' @param age_fit Object passed as age.mature_stanfit
+#'
+#' @return Logical. TRUE if both are CmdStanMCMC objects.
+#'
+#' @noRd
+.detect_vitalbayes_maturity <- function(length_fit, age_fit) {
 
+  # Check if both are CmdStanMCMC objects (from cmdstanr)
+  is_cmdstan_length <- inherits(length_fit, "CmdStanMCMC")
+  is_cmdstan_age <- inherits(age_fit, "CmdStanMCMC")
+
+  # Both must be CmdStanMCMC for auto-detection to return TRUE
+  both_vitalbayes <- is_cmdstan_length && is_cmdstan_age
+
+  return(both_vitalbayes)
+}

@@ -1,32 +1,33 @@
 # vitalBayes <img src="man/figures/logo.png" align="right" height="139" />
-## Bayesian Life History Parameter Estimation for Elasmobranchs
+## From Birth to Death: Bayesian Estimation of Vital Rates for Elasmobranchs
 
 <!-- badges: start -->
-[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen.svg)](https://github.com/your-username/vitalBayes)
+[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen.svg)](https://github.com/Brian-J-Moe/vitalBayes)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 
-`vitalBayes` provides a coherent statistical framework for estimating birth size, 
-maturity, and growth parameters in elasmobranchs using Bayesian methods. The 
-package implements hierarchical models via [Stan](https://mc-stan.org/) with 
-precompiled models for fast, reliable inference. 
+`vitalBayes` provides a coherent Bayesian framework for estimating population 
+vital rates in elasmobranchs — from birth and maturity through growth to natural 
+mortality and survival. The package implements hierarchical models via 
+[Stan](https://mc-stan.org/) with precompiled models for fast, reliable inference.
 
-The package addresses critical methodological challenges, including sparse 
-datasets, imbalanced sex ratios, and the need for biologically coherent 
-parameter estimation across life stages. 
+The package addresses critical methodological challenges in elasmobranch research: 
+sparse datasets, imbalanced sex ratios, strong parameter correlations, and the 
+need for biologically coherent estimates that propagate uncertainty across life 
+stages.
 
 ## Why vitalBayes?
 
-Elasmobranch life history estimation presents unique challenges:
+Elasmobranch vital rate estimation presents unique challenges:
 
 - **Sparse embryo samples** make birth size estimation uncertain
 - **Imbalanced sex ratios** lead to unreliable parameter estimates for the 
 undersampled sex
 - **Strong parameter correlations** (especially $L_\infty$ and $k$) complicate 
 growth model inference
-- **Data limitations** may result in unrealistic parameter estimates using 
-traditional modeling approaches
+- **Mortality is rarely measured directly** — it must be derived from life 
+history parameters with appropriate uncertainty propagation
 
 vitalBayes addresses these challenges through:
 
@@ -36,6 +37,7 @@ vitalBayes addresses these challenges through:
 | Parameter correlation | **Maturity-based parameterization** derives $k$ from observable maturity milestones |
 | Threshold estimation | **Probit link** provides biologically intuitive interpretation for birth and maturity |
 | Prior specification | **CV-based priors** offer scale-invariant, intuitive parameter uncertainty |
+| Mortality uncertainty | **Joint posterior sampling** preserves correlations when deriving mortality schedules |
 | Reproducibility | **Precompiled Stan models** ensure consistent, fast inference |
 
 <!--
@@ -57,6 +59,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 -->
 
 ## Installation
+
 vitalBayes requires a working C++ toolchain for Stan. See the 
 [RStan Getting Started Guide](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) 
 for setup instructions.
@@ -73,24 +76,25 @@ cmdstanr::install_cmdstan()
 pak::pak("Brian-J-Moe/vitalBayes")
 ```
 
-## The Three-Stage Workflow
+## The Four-Stage Workflow
 
 vitalBayes implements an integrated workflow where information flows forward 
-through life history stages:
+through life stages — from individual-level parameters to population-level 
+vital rates:
 
 ```
-  Birth      ───▶      Maturity      ───▶      Growth    
-  (b₅₀)               (L₅₀, t₅₀)              (L∞, k, L₀) 
+  Birth      ───▶      Maturity      ───▶      Growth      ───▶    Mortality/Survival    
+  (b₅₀)               (L₅₀, t₅₀)              (L∞, k, L₀)              (M, S(t))
 
-    │                     │                       │
-    │                     │                       │
-    ▼                     ▼                       ▼
- Informs L₀            Informs               Derived from
-  prior              Lmat, tmat             maturity params
+    │                     │                       │                       │
+    │                     │                       │                       │
+    ▼                     ▼                       ▼                       ▼
+ Informs L₀            Informs               Derived from           Derived from
+  prior              Lmat, tmat             maturity params        growth posterior
 ```
 
-Each stage produces posterior distributions that become informative priors 
-for the next, creating a biologically coherent analysis.
+Each stage produces posterior distributions that inform the next, creating a 
+biologically coherent analysis with fully propagated uncertainty.
 
 ## Quick Start
 
@@ -153,6 +157,31 @@ growth_fit <- fit_bayesian_growth(
 )
 
 growth_fit$summary(c("Linf", "L0", "k", "Lmat", "tmat"))
+
+# ─────────────────────────────────────────────────────────────
+# Stage 4: Mortality & Survival
+# ─────────────────────────────────────────────────────────────
+# Generate age-specific mortality schedules with uncertainty
+mort <- get_stochastic_mortality(
+  method       = "CW",           # Chen-Watanabe model
+  growth_fit   = growth_fit,     # Joint posterior sampling
+  maturity_fit = t50_fit,        # Age-at-maturity for two-phase CW
+  sex          = 2,              # Males
+  iter         = 2000,
+  scaled       = TRUE,           # Scale to survival probability
+  p            = 0.001           # 0.1% survive to tmax
+)
+
+# Simulate cohort survival
+surv <- simulate_survivorship(
+  mc_object = mort,
+  n         = 50000,             # Cohort size
+  n_iter    = 2000               # Simulation iterations
+)
+
+# Key demographic metrics
+surv$Aggregate$Age_of_Death      # Mean lifespan with 95% CI
+surv$Aggregate$Survival_to_tmat  # Probability of reaching maturity
 ```
 
 ## Example Datasets
@@ -170,7 +199,8 @@ All datasets share the same structure with columns: `sex`, `mat`, `fl`, `age`, `
 ## Visualization
 
 vitalBayes includes publication-ready plotting functions with its signature 
-vaporwave color palette:
+synthwave color palette:
+
 ```r
 # Growth curves with credible intervals
 plot_growth_curve(
@@ -191,6 +221,12 @@ plot_maturity_ogive(
   sex_col = "sex"
 )
 
+# Mortality schedules
+mort$Plot  # Auto-generated by get_stochastic_mortality()
+
+# Survivorship curves
+surv$Plot  # Auto-generated by simulate_survivorship()
+
 # Compare growth models
 compare_growth_models(
   "von Bertalanffy" = vb_fit,
@@ -207,16 +243,16 @@ compare_growth_models(
 list_vital_palettes()
 
 # Use colorblind-safe alternatives
-plot_growth_curve(growth_fit, data = growth_data, colorblind = TRUE)
+plot_growth_curve(growth_fit, data = growth_data, palette = "okabe")
 
-# Or specify directly
-vital_colors(2, "sex_cb")     # Orange/blue for sex
-vital_colors(5, "okabe_ito")  # Okabe-Ito palette
+# Available palettes: synthwave (default), viridis, okabe, plasma, inferno
+vital_palette(n = 4, type = "okabe")
 ```
 
 ## Model Comparison
 
 Compare alternative models using leave-one-out cross-validation:
+
 ```r
 # Compute LOO-CV
 loo_vb   <- compute_loo(vb_fit)
@@ -247,36 +283,29 @@ when data don't extend to near-asymptotic sizes.
 
 $$k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)$$
 
-This parameterization:
-
-- Uses quantities that fall within the data range ($L_{mat}$, $t_{mat}$)
-- Ensures biological consistency: the growth curve passes through the maturity point
-- Propagates uncertainty from upstream maturity models
+This parameterization uses quantities that fall within the data range ($L_{mat}$, 
+$t_{mat}$), ensures biological consistency by forcing the growth curve through 
+the maturity point, and propagates uncertainty from upstream maturity models.
 
 ### 2. Probit Link for Threshold Models
 
 Both birth and maturity models use a probit link function rather than the more 
-commonly used logit. The probit link assumes that underlying developmental readiness 
-is normally distributed across individuals. An individual transitions (births or 
-matures) when this latent readiness crosses a threshold.
+commonly used logit. The probit link assumes that underlying developmental 
+readiness is normally distributed across individuals. An individual transitions 
+(births or matures) when this latent readiness crosses a threshold.
 
-**Why probit?**
-
-- **Biological interpretation:** Normal variation in developmental readiness is 
-biologically plausible
-- **Consistent reporting:** The transition width ($x_{95}$ − $x_{05}$) has units 
-of the predictor (cm or years)
-- Derived quantities ($L_{05}$, $L_{95}$) have direct biological interpretation
+**Why probit?** Normal variation in developmental readiness is biologically 
+plausible, the transition width ($x_{95}$ − $x_{05}$) has units of the predictor 
+(cm or years), and derived quantities ($L_{05}$, $L_{95}$) have direct biological 
+interpretation.
 
 ### 3. Partial Pooling for Imbalanced Sex Ratios
 
 **The problem:** Elasmobranch sampling frequently yields imbalanced sex ratios. 
 A dataset might contain 150 females but only 34 males. Fitting separate models 
-produces:
-
-- Wide, unreliable credible intervals for the sparse sex
-- Estimates driven by a few influential observations  
-- Inefficient use of information (both sexes are the same species)
+produces wide, unreliable credible intervals for the sparse sex, estimates 
+driven by a few influential observations, and inefficient use of information 
+(both sexes are the same species).
 
 Complete pooling (ignoring sex) is biologically unrealistic. No pooling (fully 
 separate) wastes information.
@@ -288,22 +317,16 @@ $$\log(\theta_s) = \mu + \tau \cdot \eta_s, \quad \eta_s \sim \mathcal{N}(0, 1)$
 
 where μ is the population mean, τ is between-sex standard deviation, and 
 η<sub>s</sub> are standardized sex deviations. The model **learns τ from the 
-data**:
-
-- If sexes appear similar → small τ → estimates shrink together
-- If sexes appear different → large τ → estimates stay separated
-- Sparse sex → borrows strength from data-rich sex
+data**: if sexes appear similar, estimates shrink together; if sexes appear 
+different, estimates stay separated; sparse sex borrows strength from data-rich sex.
 
 **Non-centered parameterization:** We use the non-centered form (estimating η 
 rather than θ directly) because it dramatically improves MCMC sampling when τ 
-is small. When between-sex variation is minimal, centered parameterizations 
-create a "funnel" geometry that causes divergent transitions.
+is small.
 
 **Half-normal prior on τ:** We place τ ~ Half-Normal(0, σ<sub>τ</sub>) rather 
 than the commonly-used half-Cauchy. The half-Cauchy's heavy tails can pull τ 
-toward implausibly large values, especially with only two groups (sexes). The 
-half-normal provides gentle regularization while still allowing substantial 
-between-sex variation when warranted.
+toward implausibly large values, especially with only two groups.
 
 ```r
 # Enable partial pooling (especially useful for imbalanced data)
@@ -330,13 +353,8 @@ See `vignette("partial_pooling")` for a comprehensive treatment.
 ### 4. Constrained Asymptotic Length ($L_\infty$ > $L_{max}$)
 
 **The problem:** Unconstrained growth models frequently converge on $L_\infty$ 
-values *below* the largest observed individuals. This is biologically 
-impossible — asymptotic length must exceed any realized length — yet this occurs 
-regularly when:
-
-- Data don't extend to ages near asymptotic size
-- Older individuals are undersampled (fishing selectivity, natural mortality, etc.)
-- Strong $L_\infty$–$k$ correlation allows trade-offs
+values *below* the largest observed individuals — biologically impossible, yet 
+common when data don't extend to ages near asymptotic size.
 
 **Our solution:** vitalBayes enforces $L_\infty$ > $L_{max}$ through a shifted 
 lognormal prior:
@@ -345,12 +363,6 @@ $$L_\infty = L_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu_\nu, \sigma_\nu
 
 This ensures $L_\infty$ always exceeds the maximum observed length while still 
 allowing uncertainty about *how much* it exceeds it.
-
-**Biological rationale:** The largest individual we've observed represents a 
-lower bound on the species' potential size. Natural mortality, fishing pressure, 
-and sampling limitations virtually guarantee we haven't captured the true 
-maximum. Our prior should encode this biological reality rather than allowing 
-unrealistically low values.
 
 ```r
 # Lmax is auto-detected from data
@@ -370,29 +382,92 @@ growth_fit <- fit_bayesian_growth(
 )
 ```
 
-### 5. CV-Based Prior Elicitation
+### 5. Joint Posterior Sampling for Mortality
 
-**The problem:** Bayesian models require prior distributions, but specifying 
-priors on log-transformed parameters is unintuitive. What does σ = 0.5 on 
-log($L_{50}$) mean in practical terms? Researchers often resort to "weakly 
-informative" priors without considering whether they encode reasonable 
-biological information.
+**The problem:** Mortality models (Chen-Watanabe, Peterson-Wroblewski, Lorenzen) 
+require growth parameters as inputs. Traditional approaches specify these as 
+independent point estimates with uncertainty — e.g., $L_\infty \sim N(100, 5)$ 
+and $k \sim N(0.1, 0.02)$ — ignoring that these parameters are typically strongly 
+correlated in the posterior.
 
-**Our solution:** vitalBayes uses a **coefficient of variation (CV)** for prior 
+Independent sampling occasionally generates biologically implausible combinations 
+(high $L_\infty$ with high $k$) that never appeared in the original growth model 
+posterior, artificially inflating mortality uncertainty.
+
+**Our solution:** `get_stochastic_mortality()` accepts vitalBayes growth fits 
+directly, drawing from the **joint posterior distribution**. Parameter correlations 
+are preserved, yielding mortality schedules with narrower but more honest 
+uncertainty intervals.
+
+```r
+# Traditional approach (ignores correlations)
+mort_naive <- get_stochastic_mortality(
+  method = "CW",
+  Linf   = c(100, 5),   # Specified as mean, sd
+  k      = c(0.1, 0.02),
+  t0     = c(-1, 0.2)
+)
+
+# vitalBayes approach (preserves correlations)
+mort_joint <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = growth_fit,  # Full posterior
+  sex        = 2
+)
+```
+
+### 6. Multiple Mortality Models
+
+vitalBayes implements three natural mortality models, each with distinct assumptions:
+
+| Model | Best For | Key Feature |
+|-------|----------|-------------|
+| **Chen-Watanabe** | Species with distinct life phases | Two-phase: declining juvenile M, late-life senescence |
+| **Peterson-Wroblewski** | Weight-mortality relationships | Allometric: $M \propto W^{-0.25}$ |
+| **Lorenzen** | General applications | Growth-based or weight-based formulations |
+
+The Chen-Watanabe model supports multiple late-life senescence options (Gompertz, 
+logistic) and can be scaled to empirical mortality estimators (Hoenig, Then et al.).
+
+```r
+# Chen-Watanabe with Gompertz senescence
+mort_cw <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = growth_fit,
+  sex        = 1,
+  two_phase  = TRUE,
+  late_model = "gompertz"
+)
+
+# Peterson-Wroblewski (requires length-weight function)
+lw_fun <- function(L) 0.0001 * L^3.1
+mort_pw <- get_stochastic_mortality(
+  method     = "PW",
+  growth_fit = growth_fit,
+  sex        = 1,
+  lw_fun     = lw_fun
+)
+
+# Lorenzen growth-based (no L-W function needed)
+mort_lor <- get_stochastic_mortality(
+  method       = "L",
+  growth_fit   = growth_fit,
+  sex          = 1,
+  weight_based = FALSE
+)
+```
+
+### 7. CV-Based Prior Elicitation
+
+**The problem:** Specifying priors on log-transformed parameters is unintuitive. 
+What does σ = 0.5 on log($L_{50}$) mean in practical terms?
+
+**Our solution:** vitalBayes uses **coefficient of variation (CV)** for prior 
 specification. The CV expresses uncertainty as a proportion of the mean — a 
 scale-invariant, intuitive quantity.
 
-For a parameter θ with prior mean μ and CV = c:
-
-- The prior SD on the original scale is σ<sub>θ</sub> = μ · c
-- Approximately 95% of prior mass falls within μ ± 2μc
-
-**Example:** Setting `CV_Linf = 0.2` for a species with expected $L_\infty$ ≈ 100 cm means:
-
-- Prior SD ≈ 20 cm
-- 95% prior interval ≈ 60–140 cm
-
-This is far more interpretable than specifying σ = 0.2 on log($L_\infty$).
+**Example:** Setting `CV_Linf = 0.2` for a species with expected $L_\infty$ ≈ 100 cm 
+means prior SD ≈ 20 cm and 95% prior interval ≈ 60–140 cm.
 
 ```r
 growth_fit <- fit_bayesian_growth(
@@ -408,58 +483,9 @@ growth_fit <- fit_bayesian_growth(
 )
 ```
 
-### 6. Integrated Three-Stage Workflow
+### 8. Automatic Multilingual Sex Coding
 
-**The problem:** Life history parameters are typically estimated independently, 
-ignoring biological connections. Birth size is estimated from embryo and/or neonatal data, 
-maturity from reproductive assessments, and growth from age-length pairs. Each 
-analysis producing point estimates and confidence intervals which don't propagate 
-into downstream analyses.
-
-**Our solution:** vitalBayes implements an integrated workflow where 
-**posterior distributions flow forward** through life history stages:
-
-```
-Birth (b₅₀)  ──▶  prior on L₀ for growth model
-                 ╱
-Maturity (L₅₀) ──  prior on Lmat for growth model
-                 ╲
-Maturity (t₅₀)  ──▶  prior on tmat for growth model
-```
-
-When you pass `birth_fit`, `L50_fit`, and `t50_fit` to `fit_bayesian_growth()`, 
-the function extracts posterior summaries and constructs informative priors. 
-Uncertainty from upstream models propagates naturally into growth parameter 
-estimates.
-
-**Why this matters:**
-
-- **Biological coherence:** Growth curves are constrained to pass through maturity milestones
-- **Proper uncertainty:** Imprecise maturity estimates → wider growth parameter CIs
-- **Information efficiency:** All available data inform the final estimates
-- **Reproducibility:** The entire workflow is encapsulated in a few function calls
-
-```r
-# Complete integrated workflow
-birth_fit <- fit_bayesian_birth(embryo_lts, freeswim_lts)
-L50_fit   <- fit_bayesian_maturity(maturity = "mat", lt = "fl", ...)
-t50_fit   <- fit_bayesian_maturity(maturity = "mat", age = "age", ...)
-
-growth_fit <- fit_bayesian_growth(
-  lt        = "fl",
-  age       = "age",
-  data      = growth_data[embryo == FALSE],
-  birth_fit = birth_fit,  # Informs L₀
-  L50_fit   = L50_fit,    # Informs Lmat
-  t50_fit   = t50_fit,    # Informs tmat
-  k_based   = FALSE       # Derive k from maturity
-)
-```
-
-### 7. Automatic Multilingual Sex Coding
-
-vitalBayes automatically detects sex coding in multiple languages, and plotting 
-features offer multilingual support:
+vitalBayes automatically detects sex coding in multiple languages:
 
 ```r
 # All of these work automatically:
@@ -483,6 +509,8 @@ features offer multilingual support:
 | `vignette("fit_bayesian_maturity")` | L₅₀ and t₅₀ estimation |
 | `vignette("fit_bayesian_growth")` | Growth models with maturity-based parameterization |
 | `vignette("partial_pooling")` | Hierarchical modeling for imbalanced data |
+| `vignette("mortality_estimation")` | Natural mortality models and uncertainty propagation |
+| `vignette("survivorship_simulation")` | Cohort survival analysis |
 | `vignette("visualization")` | Plotting functions and color palettes |
 | `vignette("model_diagnostics")` | Convergence, PPC, and LOO-CV |
 
@@ -495,10 +523,10 @@ If you use vitalBayes in your research, please cite:
 
 ```
 @manual{,
-  title = {vitalBayes: Bayesian Life History Parameter Estimation for Elasmobranchs},
+  title = {vitalBayes: Bayesian Vital Rate Estimation for Elasmobranchs},
   author = {Brian J Moe},
   year = {2025},
-  note = {R package version 0.3.2},
+  note = {R package version 0.4.0},
   url = {https://github.com/Brian-J-Moe/vitalBayes}
 }
 ```
@@ -519,6 +547,10 @@ If you use vitalBayes in your research, please cite:
 
 - [loo](https://mc-stan.org/loo/) — Leave-one-out cross-validation
 
+**Numerical Integration:**
+
+- [pracma](https://CRAN.R-project.org/package=pracma) — Trapezoidal integration for survival curves
+
 ## Contributing
 
 Contributions are welcome! Please open an issue to discuss proposed changes or 
@@ -530,4 +562,5 @@ submit a pull request.
 
 ---
 
-*vitalBayes was developed for the elasmobranch research community to support robust, reproducible life history analyses.*
+*vitalBayes was developed for the elasmobranch research community to support 
+robust, reproducible vital rate analyses — from birth to mortality.*

@@ -2,6 +2,7 @@
 // Two-sex growth model with maturity-based parameterization
 // k is derived from Lmat and tmat for biological interpretability
 // Supports optional partial pooling via hyperparameters (use_pooling flag)
+// Supports selective pooling: pool_maturity controls whether Lmat/tmat are pooled
 // Non-centered parameterization for numerical stability
 // Supports von Bertalanffy (1), Gompertz (2), and Logistic (3) growth curves
 
@@ -15,6 +16,7 @@ data {
   int<lower=1, upper=3> which_model; // 1=VBGM, 2=Gompertz, 3=Logistic
   int<lower=0, upper=1> robust;      // 0=lognormal, 1=Student-t errors
   int<lower=0, upper=1> use_pooling; // 0=independent, 1=partial pooling
+  int<lower=0, upper=1> pool_maturity; // 0=direct priors for Lmat/tmat, 1=also pool Lmat/tmat
 
   // Priors for Linf (log scale) - vectors of length 2 for [female, male]
   vector[2] prior_Linf_mu;
@@ -57,17 +59,17 @@ transformed data {
 }
 
 parameters {
-  // Population means (for pooling)
+  // Population means (for pooling - Linf and L0 always, Lmat/tmat conditional)
   real mu_Linf;
   real mu_L0;
-  real mu_Lmat;
-  real mu_tmat;
+  real mu_Lmat;  // Only used when pool_maturity == 1
+  real mu_tmat;  // Only used when pool_maturity == 1
 
   // Between-sex standard deviations (for pooling)
   real<lower=0> tau_Linf;
   real<lower=0> tau_L0;
-  real<lower=0> tau_Lmat;
-  real<lower=0> tau_tmat;
+  real<lower=0> tau_Lmat;  // Only used when pool_maturity == 1
+  real<lower=0> tau_tmat;  // Only used when pool_maturity == 1
 
   // Raw deviates (always present)
   vector[2] raw_Linf;
@@ -90,12 +92,22 @@ transformed parameters {
   vector[2] log_tmat;
 
   if (use_pooling == 1) {
-    // Non-centered: log_param = mu + tau * raw
+    // Linf and L0 always use hierarchical structure when pooling is on
     for (s in 1:2) {
       log_Linf[s] = mu_Linf + tau_Linf * raw_Linf[s];
       log_L0[s] = mu_L0 + tau_L0 * raw_L0[s];
-      log_Lmat[s] = mu_Lmat + tau_Lmat * raw_Lmat[s];
-      log_tmat[s] = mu_tmat + tau_tmat * raw_tmat[s];
+    }
+
+    // Lmat and tmat: hierarchical only if pool_maturity == 1
+    if (pool_maturity == 1) {
+      for (s in 1:2) {
+        log_Lmat[s] = mu_Lmat + tau_Lmat * raw_Lmat[s];
+        log_tmat[s] = mu_tmat + tau_tmat * raw_tmat[s];
+      }
+    } else {
+      // Direct parameterization for Lmat/tmat (no pooling)
+      log_Lmat = raw_Lmat;
+      log_tmat = raw_tmat;
     }
   } else {
     // No pooling: raw values are direct log parameters
@@ -186,31 +198,51 @@ transformed parameters {
 model {
   // Priors
   if (use_pooling == 1) {
-    // Hyperpriors for population means - use actual prior SDs from maturity fits
+    // Hyperpriors for population means (Linf, L0 always pooled)
     mu_Linf ~ normal(mean(prior_Linf_mu), mean(prior_Linf_sigma));
     mu_L0 ~ normal(mean(prior_L0_mu), mean(prior_L0_sigma));
-    mu_Lmat ~ normal(mean(prior_Lmat_mu), 2 * mean(prior_Lmat_sigma));
-    mu_tmat ~ normal(mean(prior_tmat_mu), 2 * mean(prior_tmat_sigma));
 
-    // Half-normal priors on between-sex SD
+    // Half-normal priors on between-sex SD (Linf, L0)
     tau_Linf ~ normal(0, prior_tau_Linf);
     tau_L0 ~ normal(0, prior_tau_L0);
-    tau_Lmat ~ normal(0, prior_tau_Lmat);
-    tau_tmat ~ normal(0, prior_tau_tmat);
 
-    // Standard normal for non-centered raw deviates
+    // Standard normal for non-centered raw deviates (Linf, L0)
     raw_Linf ~ std_normal();
     raw_L0 ~ std_normal();
-    raw_Lmat ~ std_normal();
-    raw_tmat ~ std_normal();
 
-    // Keep sex-specific priors even under pooling
-    // (prevents collapse to the geometric mean when use_pooling==1).
-    for (s in 1:2) {
-      target += normal_lpdf(log_Linf[s] | prior_Linf_mu[s], prior_Linf_sigma[s]);
-      target += normal_lpdf(log_L0[s]   | prior_L0_mu[s],   prior_L0_sigma[s]);
-      target += normal_lpdf(log_Lmat[s] | prior_Lmat_mu[s], prior_Lmat_sigma[s]);
-      target += normal_lpdf(log_tmat[s] | prior_tmat_mu[s], prior_tmat_sigma[s]);
+    if (pool_maturity == 1) {
+      // Full pooling: Lmat/tmat also get hierarchical structure
+      // Use widened hyperpriors (3x original SD) to prevent over-constraint
+      // since maturity params already carry information from upstream fits
+      mu_Lmat ~ normal(mean(prior_Lmat_mu), 3 * mean(prior_Lmat_sigma));
+      mu_tmat ~ normal(mean(prior_tmat_mu), 3 * mean(prior_tmat_sigma));
+
+      tau_Lmat ~ normal(0, prior_tau_Lmat);
+      tau_tmat ~ normal(0, prior_tau_tmat);
+
+      raw_Lmat ~ std_normal();
+      raw_tmat ~ std_normal();
+
+      // Add anchoring priors to prevent collapse toward geometric mean
+      // These act as soft guardrails while allowing some shrinkage
+      // Widened to 3x original SD to avoid over-constraining
+      for (s in 1:2) {
+        target += normal_lpdf(log_Lmat[s] | prior_Lmat_mu[s], 3 * prior_Lmat_sigma[s]);
+        target += normal_lpdf(log_tmat[s] | prior_tmat_mu[s], 3 * prior_tmat_sigma[s]);
+      }
+    } else {
+      // Selective pooling: Lmat/tmat use direct sex-specific priors only
+      // (no hierarchical machinery, no double-pooling risk)
+      for (s in 1:2) {
+        raw_Lmat[s] ~ normal(prior_Lmat_mu[s], prior_Lmat_sigma[s]);
+        raw_tmat[s] ~ normal(prior_tmat_mu[s], prior_tmat_sigma[s]);
+      }
+
+      // Weakly constrain unused hyperparams for numerical stability
+      mu_Lmat ~ normal(0, 1);
+      mu_tmat ~ normal(0, 1);
+      tau_Lmat ~ normal(0, 0.1);
+      tau_tmat ~ normal(0, 0.1);
     }
 
   } else {
@@ -227,10 +259,10 @@ model {
     mu_L0 ~ normal(0, 1);
     mu_Lmat ~ normal(0, 1);
     mu_tmat ~ normal(0, 1);
-    tau_Linf ~ normal(0, 1);
-    tau_L0 ~ normal(0, 1);
-    tau_Lmat ~ normal(0, 1);
-    tau_tmat ~ normal(0, 1);
+    tau_Linf ~ normal(0, 0.1);
+    tau_L0 ~ normal(0, 0.1);
+    tau_Lmat ~ normal(0, 0.1);
+    tau_tmat ~ normal(0, 0.1);
   }
 
   // Observation error priors

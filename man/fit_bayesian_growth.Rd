@@ -28,6 +28,7 @@ fit_bayesian_growth(
   prior_tmat = NULL,
   prior_k = NULL,
   use_pooling = TRUE,
+  pool_maturity = NULL,
   prior_tau = 0.2,
   robust = FALSE,
   loc_sig = 0,
@@ -105,6 +106,22 @@ Ignored if \code{birth_stanfit} provided.}
 \item{use_pooling}{Logical. For two-sex models, use partial pooling on location
 parameters? Default \code{TRUE}. Slope parameters are never pooled.}
 
+\item{pool_maturity}{Logical or \code{NULL}. For two-sex maturity-based models
+with \code{use_pooling = TRUE}, controls whether maturity parameters (Lmat, tmat)
+are included in the hierarchical pooling structure.
+\itemize{
+\item \code{NULL} (default): Auto-detect based on maturity fit source.
+Set to \code{FALSE} if both \code{length.mature_stanfit} and
+\code{age.mature_stanfit} are CmdStanMCMC objects (vitalBayes fits);
+otherwise \code{TRUE}.
+\item \code{FALSE}: Selective pooling. Only Linf and L0 are pooled;
+Lmat and tmat use direct sex-specific priors. Recommended when maturity
+priors come from vitalBayes fits (avoids double-pooling).
+\item \code{TRUE}: Full pooling with anchoring. All parameters are pooled,
+but maturity parameters use widened priors (3x SD) to prevent
+over-constraint.
+}}
+
 \item{prior_tau}{Scale for half-normal priors on between-sex SD. Default 0.2.}
 
 \item{robust}{Logical. Use Student-t observation model? Default \code{FALSE}.}
@@ -127,7 +144,17 @@ Defaults: \code{loc_sig = 0}, \code{scale_sig = 1}.}
 \item{...}{Additional arguments passed to \code{$sample()}.}
 }
 \value{
-A \code{CmdStanMCMC} object.
+A \code{CmdStanMCMC} object with the following key parameters:
+\describe{
+\item{Linf}{Asymptotic length(s) by sex}
+\item{L0}{Length at age 0 (birth size) by sex}
+\item{k}{Growth coefficient(s) by sex (derived if maturity-based)}
+\item{Lmat, tmat}{Maturity parameters (if maturity-based)}
+\item{sigma}{Observation error SD by sex}
+\item{*_diff}{Sex differences (female - male) for each parameter}
+\item{log_lik}{Pointwise log-likelihood for LOO-CV}
+\item{y_pred, y_rep}{Posterior predictions and replications}
+}
 }
 \description{
 Fits von Bertalanffy, Gompertz, or Logistic growth models using precompiled
@@ -146,6 +173,44 @@ two-sex models with optional partial pooling between sexes.
 
 \strong{Logistic (model = "l"):}
 \deqn{L(t) = \frac{L_\infty}{1 + \left(\frac{L_\infty}{L_0} - 1\right) e^{-kt}}}
+}
+
+\subsection{Maturity-Based Parameterization}{
+
+When \code{k_based = FALSE}, the growth coefficient \eqn{k} is derived from
+maturity parameters rather than estimated directly:
+
+\deqn{k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
+
+This parameterization breaks the notorious \eqn{(L_\infty, k)} correlation and
+anchors the growth curve to observable maturity milestones.
+}
+
+\subsection{Selective Pooling (Two-Sex Models)}{
+
+When fitting two-sex models with maturity-based parameterization and partial
+pooling enabled, the function implements \strong{selective pooling} to avoid
+double-pooling maturity parameters that already carry information from
+upstream maturity model fits.
+
+The \code{pool_maturity} argument controls this behavior:
+\itemize{
+\item \code{pool_maturity = FALSE} (default when vitalBayes maturity fits provided):
+Only \eqn{L_\infty} and \eqn{L_0} are pooled hierarchically. Maturity
+parameters (\eqn{L_{mat}}, \eqn{t_{mat}}) use direct sex-specific priors
+from the upstream fits, preserving biological signal without risk of
+double-pooling.
+\item \code{pool_maturity = TRUE} (default when manual priors provided):
+All parameters are pooled, but maturity parameters use widened anchoring
+priors (3x original SD) to prevent over-constraint while still allowing
+some regularization.
+}
+
+The auto-detection logic sets \code{pool_maturity = FALSE} when
+\code{length.mature_stanfit} and \code{age.mature_stanfit} are both
+CmdStanMCMC objects (i.e., vitalBayes maturity model fits), since these
+already contain pooled estimates when \code{use_pooling = TRUE} was used
+in the maturity models.
 }
 
 \subsection{Prior Specification}{
@@ -179,31 +244,47 @@ birth_fit <- fit_bayesian_birth(
   free_swimming_lts = sharks[embryo == FALSE, length]
 )
 
-# Step 2: Fit maturity models
-mat_fits <- fit_bayesian_maturity(
-  maturity = mat, lt = length, age = age, sex = sex,
-  data = sharks[embryo == FALSE]
+# Step 2: Fit maturity models (with pooling)
+mat_length_fit <- fit_bayesian_maturity(
+  maturity = mat, lt = length, sex = sex,
+  data = sharks[embryo == FALSE],
+  use_pooling = TRUE
 )
 
-# Step 3: Fit growth model (maturity-based, pooled)
+mat_age_fit <- fit_bayesian_maturity(
+  maturity = mat, age = age, sex = sex,
+  data = sharks[embryo == FALSE & !is.na(age)],
+  use_pooling = TRUE
+)
+
+# Step 3: Fit growth model (maturity-based, selective pooling)
+# pool_maturity auto-detects to FALSE since maturity fits are CmdStanMCMC
 growth_fit <- fit_bayesian_growth(
   lt = length, age = age, sex = sex,
-  data = sharks,  # Can include incomplete cases for Lmax
+  data = sharks,
   model = "v",
   k_based = FALSE,
   birth_stanfit = birth_fit,
-  length.mature_stanfit = mat_fits$length,
-  age.mature_stanfit = mat_fits$age,
+  length.mature_stanfit = mat_length_fit,
+  age.mature_stanfit = mat_age_fit,
   use_pooling = TRUE,
   robust = TRUE
 )
 
-# Alternative: Specify Lmax if you know it exceeds observed data
-growth_fit <- fit_bayesian_growth(
+# Explicit control: force full pooling even with vitalBayes fits
+growth_fit_full <- fit_bayesian_growth(
+  ...,
+  pool_maturity = TRUE  # Override auto-detection
+)
+
+# Alternative: Manual priors (auto-detects pool_maturity = TRUE)
+growth_fit_manual <- fit_bayesian_growth(
   lt = length, age = age, sex = sex,
-  data = sharks[!is.na(age)],  # Complete cases only
-  Lmax = c(150, 140),  # Known max: females, males
-  ...
+  data = sharks,
+  k_based = FALSE,
+  prior_Lmat = rbind(c(70, 10), c(65, 10)),  # Female, Male
+  prior_tmat = rbind(c(12, 2), c(10, 2)),
+  use_pooling = TRUE
 )
 }
 

@@ -1,13 +1,19 @@
 Package: vitalBayes
-Title: Bayesian Life History Parameter Estimation for Elasmobranchs
-Version: 0.3.2
+Title: Bayesian Vital Rate Estimation for Elasmobranchs
+Version: 0.4.0
 Authors@R: 
     person(given = c("Brian", "J"), family = "Moe", email = "brian.moe@MYFWC.com", role = c("aut", "cre"))
-Description: `vitalBayes` is an R package implementing innovative Bayesian 
-    hierarchical models for estimating life history parameters in elasmobranch 
-    populations. The package addresses critical methodological challenges in 
-    shark and ray research, including sparse datasets, imbalanced sex ratios, 
-    and the need for biologically coherent parameter estimation.
+Description: A comprehensive framework for estimating population vital rates in 
+    elasmobranch fishes using Bayesian hierarchical models. The package implements 
+    an integrated four-stage workflow: birth size estimation, maturity ogives 
+    (length and age at 50% maturity), individual growth curves (von Bertalanffy, 
+    Gompertz, Logistic), and natural mortality with survival simulation. Key 
+    features include partial pooling for imbalanced sex ratios, maturity-based 
+    growth parameterization that derives k from observable milestones, joint 
+    posterior sampling for mortality estimation preserving parameter correlations, 
+    and CV-based prior specification. Implements Chen-Watanabe, Peterson-Wroblewski, 
+    and Lorenzen mortality models with Monte Carlo uncertainty propagation. All 
+    models are fit via Stan using precompiled models for fast, reproducible inference.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -33,7 +39,7 @@ LinkingTo:
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
     RcppEigen (>= 0.3.3.3.0),
-    RcppParallel (>= 5.0.1),
+    RcppParallel (>= 5.0.1)
 SystemRequirements: C++17, GNU make
 LazyData: true
 Suggests: 
