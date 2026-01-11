@@ -4,41 +4,59 @@
 \alias{M_peterson_wroblewski}
 \title{Peterson-Wroblewski Natural Mortality Model}
 \usage{
-M_peterson_wroblewski(age, Linf, k, t0, lw_fun)
+M_peterson_wroblewski(
+  age,
+  Linf,
+  L0,
+  k,
+  lw_fun,
+  growth_model = c("vb", "gompertz", "logistic")
+)
 }
 \arguments{
 \item{age}{Numeric vector of ages at which to compute mortality.}
 
 \item{Linf}{Asymptotic length.}
 
-\item{k}{von Bertalanffy growth coefficient.}
+\item{L0}{Length at birth.}
 
-\item{t0}{Theoretical age at length zero.}
+\item{k}{Growth coefficient (model-specific, not necessarily VB).}
 
-\item{lw_fun}{Function mapping length to weight in grams: \code{lw_fun(length)}.}
+\item{lw_fun}{Function mapping length to weight in grams: \code{lw_fun(L)}.}
+
+\item{growth_model}{Character. Growth model for length prediction:
+\code{"vb"}, \code{"gompertz"}, or \code{"logistic"}. Default \code{"vb"}.}
 }
 \value{
 Numeric vector of instantaneous mortality rates.
 }
 \description{
-Computes weight-based natural mortality following Peterson & Wroblewski (1984).
+Computes weight-based natural mortality following Peterson & Wroblewski
+(1984). Mortality scales allometrically with body weight.
 }
 \details{
-The model expresses mortality as an allometric function of body weight:
-\deqn{M(W) = 1.92 W^{-0.25}}
+The model expresses mortality as a power function of body weight:
+\deqn{M(W) = 1.92 \cdot W^{-0.25}}
 where \eqn{W} is body weight in grams.
+
+This model is growth-model-agnostic: it only requires predicted body weight
+at age, which can be derived from any growth model via a length-weight
+relationship.
 }
 \examples{
 \dontrun{
-lw <- function(lt) 1e-5 * lt^3  # Weight in grams
-ages <- seq(0.1, 30, length.out = 100)
-M <- M_peterson_wroblewski(ages, Linf = 200, k = 0.15, t0 = -1, lw_fun = lw)
-plot(ages, M, type = "l")
+lw_fun <- function(L) 0.0001 * L^3.1  # Length in cm, weight in g
+ages <- seq(0.5, 30, by = 0.5)
+
+M <- M_peterson_wroblewski(
+  age = ages, Linf = 100, L0 = 25, k = 0.1,
+  lw_fun = lw_fun, growth_model = "gompertz"
+)
 }
 
 }
 \references{
 Peterson, I., & Wroblewski, J. S. (1984). Mortality rate of fishes in the
-pelagic ecosystem. Canadian Journal of Fisheries and Aquatic Sciences, 41(7),
-1117-1120.
+pelagic ecosystem. \emph{Canadian Journal of Fisheries and Aquatic Sciences},
+41(7), 1117-1120.
 }

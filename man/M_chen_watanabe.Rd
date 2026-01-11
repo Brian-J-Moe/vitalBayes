@@ -2,24 +2,21 @@
 % Please edit documentation in R/estimate_mortality.R
 \name{M_chen_watanabe}
 \alias{M_chen_watanabe}
-\title{Chen-Watanabe Natural Mortality Model}
+\title{Chen-Watanabe Natural Mortality (L₀ Parameterization)}
 \usage{
 M_chen_watanabe(
   age,
   Linf,
+  L0,
   k,
-  t0,
-  tmax,
-  tmat = NULL,
+  tmax = NULL,
+  Linf_factor = 0.99,
   two_phase = TRUE,
+  tmat = NULL,
   late_model = c("gompertz", "logistic"),
   tm_factor = 2/3,
   M_mult = 2,
-  M_cap_factor = 1/4,
-  smooth_factor = 1/3,
-  mode = c("K_mult", "r_target"),
-  alpha = 3,
-  r_given = NULL
+  smooth_factor = 1/3
 )
 }
 \arguments{
@@ -27,57 +24,110 @@ M_chen_watanabe(
 
 \item{Linf}{Asymptotic length.}
 
-\item{k}{von Bertalanffy growth coefficient.}
+\item{L0}{Length at birth.}
 
-\item{t0}{Theoretical age at length zero.}
+\item{k}{VB-equivalent growth coefficient. Can be computed from any growth
+model using \code{\link{compute_k_vb_equivalent}}.}
 
-\item{tmax}{Maximum age (used for late-phase parameterization).}
+\item{tmax}{Maximum age. If \code{NULL}, estimated from growth parameters
+as age when \eqn{L(t) = } \code{Linf_factor} \eqn{\times L_\infty}.}
 
-\item{tmat}{Optional age at maturity (used to estimate transition age).}
+\item{Linf_factor}{Numeric in (0, 1). Fraction of \eqn{L_\infty} used to
+estimate \eqn{t_{max}}. Default 0.99 (age at 99\\% of asymptotic length).}
 
-\item{two_phase}{Logical. If TRUE, includes late-life senescence phase.}
+\item{two_phase}{Logical. If \code{TRUE}, applies two-phase model with
+late-life senescence. Default \code{TRUE}.}
 
-\item{late_model}{Character. Senescence model: \code{"gompertz"} or \code{"logistic"}.}
+\item{tmat}{Age at maturity. Required if \code{two_phase = TRUE}.}
 
-\item{tm_factor}{Proportion of adult lifespan where late-phase transition occurs.
-Default 2/3.}
+\item{late_model}{Character. Senescence model: \code{"gompertz"} (default)
+or \code{"logistic"}.}
 
-\item{M_mult}{Multiplier for mortality at tmax relative to M at transition age.}
+\item{tm_factor}{Numeric. Fraction of \eqn{t_{mat}} at which transition to
+senescence begins. Default 2/3.}
 
-\item{M_cap_factor}{Cap for M_tmax as proportion of maximum early-phase M.}
+\item{M_mult}{Numeric. Multiplier for senescence mortality plateau relative
+to mortality at \eqn{t_m}. Default 2.}
 
-\item{smooth_factor}{Controls width of transition zone between phases.}
-
-\item{mode}{Logistic mode: \code{"K_mult"} or \code{"r_target"}.}
-
-\item{alpha}{Logistic K multiplier (if mode = "K_mult").}
-
-\item{r_given}{Fixed logistic rate (if mode = "r_target").}
+\item{smooth_factor}{Numeric. Controls smoothness of transition between
+phases. Default 1/3.}
 }
 \value{
-Numeric vector of instantaneous mortality rates.
+Numeric vector of instantaneous mortality rates (same length as
+\code{age}).
 }
 \description{
-Computes age-specific natural mortality using the Chen & Watanabe (1989) model,
-with optional late-life mortality phase following Gompertz or logistic senescence.
+Computes age-specific natural mortality using the Chen & Watanabe (1989)
+model with an \eqn{L_0} parameterization that eliminates dependence on the
+theoretical parameter \eqn{t_0}.
 }
 \details{
-The Chen-Watanabe model expresses mortality as a function of the von Bertalanffy
-growth parameters:
-\deqn{M(t) = k / (1 - e^{-k(t - t_0)})}
+The standard Chen-Watanabe formulation expresses mortality as:
+\deqn{M(t) = \frac{k}{1 - e^{-k(t - t_0)}}}
 
-For the two-phase model, mortality transitions from the stable CW formulation to
-a senescence phase (Gompertz or logistic) after a transition age \eqn{t_m}.
+where \eqn{t_0} is the theoretical age at length zero — a parameter with no
+direct biological interpretation that can take implausible values,
+particularly when growth data are sparse.
+
+We reparameterize using the relationship between \eqn{t_0} and \eqn{L_0}
+(birth length) under von Bertalanffy dynamics:
+\deqn{L_0 = L_\infty(1 - e^{kt_0})}
+
+After algebraic manipulation (see vignette), the \eqn{L_0}-parameterized form
+becomes:
+\deqn{M(t) = \frac{k \cdot L_\infty}{L(t)}}
+
+where \eqn{L(t) = L_\infty - (L_\infty - L_0)e^{-kt}} is the predicted length
+at age \eqn{t}.
 }
+\section{Mathematical Foundation}{
+
+This reformulation reveals that Chen-Watanabe mortality is inversely
+proportional to body size — smaller (younger) individuals experience higher
+mortality. The ratio \eqn{L_\infty / L(t)} represents how far an individual
+is from asymptotic size, with mortality declining as this ratio approaches 1.
+}
+
+\section{Two-Phase Extension}{
+
+The original CW model produces unrealistic mortality trajectories at old ages
+(approaching zero asymptotically). The two-phase extension adds a senescence
+component where mortality increases after maturity, more realistically
+capturing late-life dynamics.
+
+When \code{two_phase = TRUE}, mortality follows the standard CW model until
+age \eqn{t_m} (a fraction of \eqn{t_{mat}}), then transitions to a senescence
+model (Gompertz or logistic) that increases mortality toward \eqn{t_{max}}.
+}
+
 \examples{
 \dontrun{
-ages <- seq(0.1, 30, length.out = 100)
-M <- M_chen_watanabe(ages, Linf = 200, k = 0.15, t0 = -1, tmax = 30)
-plot(ages, M, type = "l")
+ages <- seq(0.1, 30, by = 0.5)
+
+# Single-phase CW
+M_single <- M_chen_watanabe(
+  age = ages, Linf = 100, L0 = 25, k = 0.1,
+  two_phase = FALSE
+)
+
+# Two-phase with Gompertz senescence
+M_two <- M_chen_watanabe(
+  age = ages, Linf = 100, L0 = 25, k = 0.1,
+  two_phase = TRUE, tmat = 10, late_model = "gompertz"
+)
+
+plot(ages, M_single, type = "l", ylim = c(0, 1))
+lines(ages, M_two, col = "red")
 }
 
 }
 \references{
-Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality coefficient
-in fish population dynamics. Nippon Suisan Gakkaishi, 55(2), 205-208.
+Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
+coefficient in fish population dynamics. \emph{Nippon Suisan Gakkaishi},
+55(2), 205-208.
+}
+\seealso{
+\code{\link{compute_k_vb_equivalent}} for deriving \eqn{k} from any
+growth model, \code{\link{get_stochastic_mortality}} for Monte Carlo
+mortality estimation with uncertainty.
 }

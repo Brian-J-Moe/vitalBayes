@@ -2,42 +2,57 @@
 % Please edit documentation in R/estimate_mortality.R
 \name{scale_mortality}
 \alias{scale_mortality}
-\title{Scale Mortality Schedule to Target}
+\title{Scale Mortality Schedule to Target Mean}
 \usage{
 scale_mortality(M, M_target = NULL, tmax = NULL, p = 0.001)
 }
 \arguments{
 \item{M}{Numeric vector of instantaneous mortality rates.}
 
-\item{M_target}{Target mean mortality. Can be a numeric scalar, a function
-of tmax (e.g., \code{function(tmax) ...}), or NULL to derive from survival
-probability \code{p}.}
+\item{M_target}{Target mean mortality. Can be:
+\itemize{
+\item Numeric scalar (fixed target)
+\item Function of tmax: \code{function(tmax) ...}
+\item \code{NULL} to derive from survival probability \code{p}
+}}
 
-\item{tmax}{Maximum age (required if M_target is a function or NULL).}
+\item{tmax}{Maximum age (required if \code{M_target} is a function or
+\code{NULL}).}
 
-\item{p}{Probability of surviving to tmax. Used only if M_target is NULL.
-Default 0.001 (0.1 percent survival to tmax).}
+\item{p}{Probability of surviving to \code{tmax}. Used only if
+\code{M_target = NULL}. Default 0.001 (0.1\\% survival).}
 }
 \value{
-Numeric vector of scaled mortality rates.
+Numeric vector of scaled mortality rates (same length as \code{M}).
 }
 \description{
-Rescales an age-specific mortality schedule so the mean mortality equals a
-target value.
+Rescales an age-specific mortality schedule so its mean equals a target
+value derived from empirical relationships (e.g., Hoenig, Then et al.) or
+survival probability constraints.
 }
 \details{
-The scaling applies: \eqn{M_{scaled} = M_{raw} / \bar{M}_{raw} \times M_{target}}
+The scaling applies:
+\deqn{M_{scaled}(t) = M_{raw}(t) \times \frac{M_{target}}{\bar{M}_{raw}}}
 
-If \code{M_target = NULL}, it is derived as \eqn{-\ln(p) / t_{max}}.
+This preserves the \emph{shape} of the age-specific mortality curve while
+adjusting its overall level. Scaling is useful because theoretical mortality
+models often produce absolute levels that don't match empirical observations,
+but the relative age pattern may still be informative.
 }
 \examples{
 \dontrun{
-M_raw <- M_chen_watanabe(0:30, Linf = 200, k = 0.15, t0 = -1, tmax = 30)
+M_raw <- M_chen_watanabe(0:30, Linf = 100, L0 = 25, k = 0.1,
+                             two_phase = FALSE)
+
+# Scale to fixed target
 M_scaled <- scale_mortality(M_raw, M_target = 0.2)
 
-# Using Hoenig-style target
-hoenig_target <- function(tmax) 4.899 * tmax^(-0.916)
-M_scaled <- scale_mortality(M_raw, M_target = hoenig_target, tmax = 30)
+# Scale using Then et al. (2015) relationship
+then_2015 <- function(tmax) 4.899 * tmax^(-0.916)
+M_scaled <- scale_mortality(M_raw, M_target = then_2015, tmax = 30)
+
+# Scale to survival probability
+M_scaled <- scale_mortality(M_raw, M_target = NULL, tmax = 30, p = 0.01)
 }
 
 }

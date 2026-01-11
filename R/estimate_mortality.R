@@ -64,8 +64,7 @@
 #' @param L0 Numeric vector. Length at birth posterior draws.
 #' @param Lmat Numeric vector. Length at maturity posterior draws.
 #' @param tmat Numeric vector. Age at maturity posterior draws.
-#' @param warn Logical. If \code{TRUE} (default
-), warns when draws produce
+#' @param warn Logical. If \code{TRUE} (default) warns when draws produce
 #'   invalid \eqn{k} values.
 #'
 #' @return Numeric vector of VB-equivalent \eqn{k} values. Invalid values
@@ -91,7 +90,7 @@
 #' )
 #' }
 #'
-#' @seealso \code{\link{M_chen_watanabe_L0}} for the L0-parameterized CW model,
+#' @seealso \code{\link{M_chen_watanabe}} for the L0-parameterized CW model,
 #'   \code{\link{extract_growth_parameters}} for posterior extraction.
 #'
 #' @export
@@ -299,13 +298,11 @@ extract_growth_parameters <- function(
 
 #' Chen-Watanabe Natural Mortality (L₀ Parameterization)
 #'
-#' @description
 #' Computes age-specific natural mortality using the Chen & Watanabe (1989)
 #' model with an \eqn{L_0} parameterization that eliminates dependence on the
 #' theoretical parameter \eqn{t_0}.
 #'
 #' @details
-#' \subsection{Mathematical Foundation}{
 #' The standard Chen-Watanabe formulation expresses mortality as:
 #' \deqn{M(t) = \frac{k}{1 - e^{-k(t - t_0)}}}
 #'
@@ -323,16 +320,14 @@ extract_growth_parameters <- function(
 #'
 #' where \eqn{L(t) = L_\infty - (L_\infty - L_0)e^{-kt}} is the predicted length
 #' at age \eqn{t}.
-#' }
 #'
-#' \subsection{Biological Interpretation}{
+#' @section Mathematical Foundation:
 #' This reformulation reveals that Chen-Watanabe mortality is inversely
 #' proportional to body size — smaller (younger) individuals experience higher
 #' mortality. The ratio \eqn{L_\infty / L(t)} represents how far an individual
 #' is from asymptotic size, with mortality declining as this ratio approaches 1.
-#' }
 #'
-#' \subsection{Two-Phase Extension}{
+#' @section Two-Phase Extension:
 #' The original CW model produces unrealistic mortality trajectories at old ages
 #' (approaching zero asymptotically). The two-phase extension adds a senescence
 #' component where mortality increases after maturity, more realistically
@@ -341,7 +336,6 @@ extract_growth_parameters <- function(
 #' When \code{two_phase = TRUE}, mortality follows the standard CW model until
 #' age \eqn{t_m} (a fraction of \eqn{t_{mat}}), then transitions to a senescence
 #' model (Gompertz or logistic) that increases mortality toward \eqn{t_{max}}.
-#' }
 #'
 #' @param age Numeric vector of ages at which to compute mortality.
 #' @param Linf Asymptotic length.
@@ -377,13 +371,13 @@ extract_growth_parameters <- function(
 #' ages <- seq(0.1, 30, by = 0.5)
 #'
 #' # Single-phase CW
-#' M_single <- M_chen_watanabe_L0(
+#' M_single <- M_chen_watanabe(
 #'   age = ages, Linf = 100, L0 = 25, k = 0.1,
 #'   two_phase = FALSE
 #' )
 #'
 #' # Two-phase with Gompertz senescence
-#' M_two <- M_chen_watanabe_L0(
+#' M_two <- M_chen_watanabe(
 #'   age = ages, Linf = 100, L0 = 25, k = 0.1,
 #'   two_phase = TRUE, tmat = 10, late_model = "gompertz"
 #' )
@@ -397,7 +391,7 @@ extract_growth_parameters <- function(
 #'   mortality estimation with uncertainty.
 #'
 #' @export
-M_chen_watanabe_L0 <- function(
+M_chen_watanabe <- function(
     age,
     Linf,
     L0,
@@ -708,7 +702,6 @@ M_lorenzen <- function(
 
 #' Scale Mortality Schedule to Target Mean
 #'
-#' @description
 #' Rescales an age-specific mortality schedule so its mean equals a target
 #' value derived from empirical relationships (e.g., Hoenig, Then et al.) or
 #' survival probability constraints.
@@ -738,7 +731,7 @@ M_lorenzen <- function(
 #'
 #' @examples
 #' \dontrun{
-#' M_raw <- M_chen_watanabe_L0(0:30, Linf = 100, L0 = 25, k = 0.1,
+#' M_raw <- M_chen_watanabe(0:30, Linf = 100, L0 = 25, k = 0.1,
 #'                              two_phase = FALSE)
 #'
 #' # Scale to fixed target
@@ -787,14 +780,12 @@ scale_mortality <- function(M, M_target = NULL, tmax = NULL, p = 0.001) {
 
 #' Stochastic Estimation of Age-Specific Natural Mortality
 #'
-#' @description
 #' Monte Carlo simulation of age-specific natural mortality schedules with
 #' full uncertainty propagation from growth model posteriors. Supports
 #' Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
 #' derivation of VB-equivalent \eqn{k} from any growth model fit.
 #'
 #' @details
-#' \subsection{Growth Model Flexibility}{
 #' A key feature of this function is growth-model-agnostic mortality estimation.
 #' When a growth fit from \code{\link{fit_bayesian_growth}} is provided, the
 #' function extracts biological milestones \eqn{(L_\infty, L_0, L_{mat}, t_{mat})}
@@ -804,22 +795,19 @@ scale_mortality <- function(M, M_target = NULL, tmax = NULL, p = 0.001) {
 #' This allows users to fit whichever growth model (von Bertalanffy, Gompertz,
 #' or Logistic) best describes their data, then estimate mortality without
 #' theoretical compromise.
-#' }
 #'
-#' \subsection{Joint Posterior Sampling}{
+#' @section Growth Model Flexibility:
 #' When \code{growth_fit} is provided, parameters are drawn from the joint
 #' posterior distribution, preserving correlations. This yields mortality
 #' estimates with appropriate (often narrower) uncertainty bounds compared to
 #' independent sampling of each parameter.
-#' }
 #'
-#' \subsection{Mortality Models}{
+#' @section Mortality Models:
 #' \describe{
 #'   \item{CW}{Chen-Watanabe (1989) with L0 parameterization and optional
 #'     two-phase senescence.}
 #'   \item{PW}{Peterson-Wroblewski (1984) weight-based allometric model.}
 #'   \item{L}{Lorenzen (1996/2022) in weight-based or growth-based form.}
-#' }
 #' }
 #'
 #' @param method Character. Mortality model: \code{"CW"}, \code{"PW"}, or
@@ -1071,7 +1059,7 @@ get_stochastic_mortality <- function(
     M_raw <- switch(
       method,
 
-      "CW" = M_chen_watanabe_L0(
+      "CW" = M_chen_watanabe(
         age          = ages,
         Linf         = p_i$Linf,
         L0           = p_i$L0,

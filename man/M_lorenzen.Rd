@@ -7,11 +7,12 @@
 M_lorenzen(
   age,
   Linf,
+  L0,
   k,
-  t0,
-  weight_based = FALSE,
   lw_fun = NULL,
-  sample_params = TRUE
+  weight_based = FALSE,
+  growth_model = c("vb", "gompertz", "logistic"),
+  sample_params = FALSE
 )
 }
 \arguments{
@@ -19,49 +20,49 @@ M_lorenzen(
 
 \item{Linf}{Asymptotic length.}
 
-\item{k}{von Bertalanffy growth coefficient.}
+\item{L0}{Length at birth.}
 
-\item{t0}{Theoretical age at length zero.}
+\item{k}{Growth coefficient. For \code{weight_based = FALSE}, should be
+VB-equivalent \eqn{k} (use \code{\link{compute_k_vb_equivalent}}).}
 
-\item{weight_based}{Logical. If TRUE, uses weight-based formulation requiring
-\code{lw_fun}. If FALSE, uses growth-based formulation.}
+\item{lw_fun}{Function mapping length to weight (required if
+\code{weight_based = TRUE}).}
 
-\item{lw_fun}{Function mapping length to weight in grams (required if weight_based = TRUE).}
+\item{weight_based}{Logical. If \code{TRUE}, uses weight-based formulation.
+If \code{FALSE} (default), uses growth-based formulation.}
 
-\item{sample_params}{Logical. If TRUE, samples allometric parameters from their
-distributions (for Monte Carlo simulation). If FALSE, uses mean values.}
+\item{growth_model}{Character. Growth model for length prediction (only
+used for weight-based formulation): \code{"vb"}, \code{"gompertz"}, or
+\code{"logistic"}.}
+
+\item{sample_params}{Logical. If \code{TRUE}, samples allometric parameters
+from their distributions. If \code{FALSE}, uses mean values.}
 }
 \value{
 Numeric vector of instantaneous mortality rates.
 }
 \description{
 Computes size-dependent natural mortality following Lorenzen (1996, 2022).
-Supports both weight-based and von Bertalanffy growth-based formulations.
+Supports both weight-based and growth-based formulations.
 }
 \details{
-\strong{Weight-based formulation:}
-\deqn{M(W) = \alpha W^{\beta}}
+\subsection{Weight-based formulation (Lorenzen 1996)}{
+\deqn{M(W) = \alpha \cdot W^{\beta}}
 where \eqn{\alpha \sim N(3.69, 0.502)} and \eqn{\beta \sim N(-0.305, 0.029)}.
+}
 
-\strong{Growth-based formulation (Lorenzen 2022):}
+\subsection{Growth-based formulation (Lorenzen 2022)}{
 \deqn{\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)}
-with uncertainty incorporated via parameter distributions.
+This formulation was calibrated using von Bertalanffy parameters, so
+\eqn{k} should be the VB-equivalent \eqn{k} when using fits from other
+growth models.
 }
-\examples{
-\dontrun{
-# Growth-based formulation
-ages <- seq(0.1, 30, length.out = 100)
-M <- M_lorenzen(ages, Linf = 200, k = 0.15, t0 = -1, weight_based = FALSE)
-plot(ages, M, type = "l")
-}
-
 }
 \references{
-Lorenzen, K. (1996). The relationship between body weight and natural mortality
-in juvenile and adult fish: a comparison of natural ecosystems and aquaculture.
-Journal of Fish Biology, 49(4), 627-642.
+Lorenzen, K. (1996). The relationship between body weight and natural
+mortality in juvenile and adult fish. \emph{Journal of Fish Biology},
+49(4), 627-642.
 
-Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish populations:
-Biology, models, implications, and a generalized length-inverse model.
-Fisheries Research, 255, 106454.
+Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish
+populations. \emph{Fisheries Research}, 255, 106454.
 }
