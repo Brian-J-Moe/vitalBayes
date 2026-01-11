@@ -260,6 +260,9 @@ home:
   title: "vitalBayes"
   description: "From Birth to Mortality: Bayesian Vital Rates for Elasmobranchs"
 
+  sidebar:
+    structure: [toc, links, citation, license, authors]
+
 footer:
   structure:
     left:  developed_by
