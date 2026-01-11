@@ -94,6 +94,96 @@ R package version 0.4.0, <a href="https://github.com/Brian-J-Moe/vitalBayes" cla
   <script>
 document.addEventListener('DOMContentLoaded', function() {
   // ===========================================
+  // HOMEPAGE TABLE OF CONTENTS GENERATOR
+  // ===========================================
+  if (document.body.classList.contains('template-home')) {
+    var mainContent = document.querySelector('main .contents, main');
+    var headings = mainContent.querySelectorAll('h2, h3');
+
+    if (headings.length > 3) {  // Only create TOC if there are enough headings
+      // Create TOC container
+      var tocContainer = document.createElement('div');
+      tocContainer.id = 'home-toc-container';
+
+      // Add header
+      var tocHeader = document.createElement('div');
+      tocHeader.className = 'toc-header';
+      tocHeader.textContent = 'On This Page';
+      tocContainer.appendChild(tocHeader);
+
+      // Create nav and ul
+      var nav = document.createElement('nav');
+      var ul = document.createElement('ul');
+      var currentH2Li = null;
+      var currentSubUl = null;
+
+      headings.forEach(function(heading, index) {
+        // Create ID if doesn't exist
+        if (!heading.id) {
+          heading.id = 'section-' + index;
+        }
+
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = '#' + heading.id;
+        a.textContent = heading.textContent.replace(/^[\d.]+\s*/, ''); // Remove numbering
+
+        // Smooth scroll
+        a.addEventListener('click', function(e) {
+          e.preventDefault();
+          var target = document.getElementById(heading.id);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            history.pushState(null, null, '#' + heading.id);
+          }
+        });
+
+        li.appendChild(a);
+
+        if (heading.tagName === 'H2') {
+          ul.appendChild(li);
+          currentH2Li = li;
+          currentSubUl = null;
+        } else if (heading.tagName === 'H3' && currentH2Li) {
+          if (!currentSubUl) {
+            currentSubUl = document.createElement('ul');
+            currentH2Li.appendChild(currentSubUl);
+          }
+          currentSubUl.appendChild(li);
+        }
+      });
+
+      nav.appendChild(ul);
+      tocContainer.appendChild(nav);
+      document.body.appendChild(tocContainer);
+
+      // Scroll spy - highlight current section
+      var tocLinks = tocContainer.querySelectorAll('a');
+
+      function updateActiveLink() {
+        var scrollPos = window.scrollY + 120;
+        var currentActive = null;
+
+        headings.forEach(function(heading) {
+          if (heading.offsetTop <= scrollPos) {
+            currentActive = heading.id;
+          }
+        });
+
+        tocLinks.forEach(function(link) {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + currentActive) {
+            link.classList.add('active');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', updateActiveLink);
+      updateActiveLink();
+    }
+  }
+
+  // ===========================================
   // Make hex logo clickable to redirect to homepage
   // ===========================================
   var logos = document.querySelectorAll('img[src*="logo"], img.logo, .logo img');
