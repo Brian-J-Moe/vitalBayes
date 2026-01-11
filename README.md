@@ -1,5 +1,5 @@
 # vitalBayes <img src="man/figures/logo.png" align="right" height="139" />
-# From Birth to Mortality:<br>Bayesian Estimation of Population Vital Rates for Elasmobranch Fishes
+## From Birth to Mortality:<br>Bayesian Vital Rates for Elasmobranchs
 
 <!-- badges: start -->
 [![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen.svg)](https://github.com/Brian-J-Moe/vitalBayes)
@@ -382,13 +382,79 @@ growth_fit <- fit_bayesian_growth(
 )
 ```
 
-### 5. Joint Posterior Sampling for Mortality
+### 5. Growth-Model-Agnostic Mortality Estimation
 
-**The problem:** Mortality models (Chen-Watanabe, Peterson-Wroblewski, Lorenzen) 
-require growth parameters as inputs. Traditional approaches specify these as 
-independent point estimates with uncertainty — e.g., $L_\infty \sim N(100, 5)$ 
-and $k \sim N(0.1, 0.02)$ — ignoring that these parameters are typically strongly 
-correlated in the posterior.
+**The problem:** The Chen-Watanabe mortality model was derived under von Bertalanffy 
+growth assumptions, requiring specifically the VB growth coefficient $k$. But the 
+VB model often performs poorly on elasmobranch data — when adult observations are 
+sparse, it tends to produce biologically implausible $L_\infty$ estimates (sometimes 
+below observed maximum lengths). Gompertz and Logistic models frequently fit better, 
+but traditionally couldn't be used with Chen-Watanabe.
+
+**Our solution:** vitalBayes computes a **VB-equivalent $k$** from biological 
+milestones that all growth models estimate:
+
+$$k_{VB}^{equiv} = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)$$
+
+This is the growth coefficient that would produce a von Bertalanffy curve passing 
+through the same biological milestones — regardless of which growth model generated 
+them. Users can fit whichever model best describes their data and still use 
+Chen-Watanabe mortality estimation.
+
+```r
+# Fit Gompertz (assume it fits your data better than VB)
+gomp_fit <- fit_bayesian_growth(
+  lt      = "fl",
+  age     = "age",
+  sex     = "sex",
+  data    = growth_data[embryo == FALSE & !is.na(age)],
+  model   = "gompertz",    # Not VB!
+  k_based = FALSE,         # Maturity-based parameterization required
+  birth_fit = birth_fit,
+  L50_fit   = L50_fit,
+  t50_fit   = t50_fit
+)
+
+# Chen-Watanabe mortality from Gompertz fit — this works automatically
+mort <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = gomp_fit,   # Any growth model
+  sex        = 1,
+  iter       = 2000
+)
+
+# The function extracts (Linf, L0, Lmat, tmat) from Gompertz posterior
+# and computes VB-equivalent k internally
+```
+
+See `vignette("chen_watanabe_reparameterization")` for the full mathematical derivation.
+
+### 6. L₀-Parameterized Chen-Watanabe
+
+**The problem:** The traditional Chen-Watanabe formulation uses $t_0$ (theoretical 
+age at length zero) — a mathematical artifact with no biological interpretation 
+that can take implausible values when growth data are sparse.
+
+**Our solution:** vitalBayes implements an **L₀-parameterized** Chen-Watanabe that 
+eliminates $t_0$ entirely:
+
+$$M(t) = \frac{k \cdot L_\infty}{L(t)}$$
+
+where $L(t)$ is predicted length at age. This reveals the biological mechanism: 
+mortality is inversely proportional to body size. The ratio $L_\infty / L(t)$ 
+represents how far an organism is from its maximum size — smaller individuals 
+experience higher mortality.
+
+This reformulation uses observable quantities ($L_0$, birth length) rather than 
+mathematical abstractions, aligning with vitalBayes's philosophy of parameterizing 
+with biology, not mathematics.
+
+### 7. Joint Posterior Sampling for Mortality
+
+**The problem:** Mortality models require growth parameters as inputs. Traditional 
+approaches specify these as independent point estimates with uncertainty — e.g., 
+$L_\infty \sim N(100, 5)$ and $k \sim N(0.1, 0.02)$ — ignoring that these parameters 
+are typically strongly correlated in the posterior.
 
 Independent sampling occasionally generates biologically implausible combinations 
 (high $L_\infty$ with high $k$) that never appeared in the original growth model 
@@ -404,8 +470,9 @@ uncertainty intervals.
 mort_naive <- get_stochastic_mortality(
   method = "CW",
   Linf   = c(100, 5),   # Specified as mean, sd
+  L0     = c(25, 2),
   k      = c(0.1, 0.02),
-  t0     = c(-1, 0.2)
+  tmat   = c(10, 1)
 )
 
 # vitalBayes approach (preserves correlations)
@@ -416,24 +483,24 @@ mort_joint <- get_stochastic_mortality(
 )
 ```
 
-### 6. Multiple Mortality Models
+### 8. Multiple Mortality Models
 
 vitalBayes implements three natural mortality models, each with distinct assumptions:
 
 | Model | Best For | Key Feature |
 |-------|----------|-------------|
-| **Chen-Watanabe** | Species with distinct life phases | Two-phase: declining juvenile M, late-life senescence |
+| **Chen-Watanabe** | Species with distinct life phases | L₀-parameterized, two-phase senescence option |
 | **Peterson-Wroblewski** | Weight-mortality relationships | Allometric: $M \propto W^{-0.25}$ |
 | **Lorenzen** | General applications | Growth-based or weight-based formulations |
 
-The Chen-Watanabe model supports multiple late-life senescence options (Gompertz, 
-logistic) and can be scaled to empirical mortality estimators (Hoenig, Then et al.).
+All models work with any growth model fit (VB, Gompertz, or Logistic) through 
+the VB-equivalent $k$ derivation.
 
 ```r
-# Chen-Watanabe with Gompertz senescence
+# Chen-Watanabe with Gompertz senescence (from any growth model)
 mort_cw <- get_stochastic_mortality(
   method     = "CW",
-  growth_fit = growth_fit,
+  growth_fit = gomp_fit,   # Works with Gompertz, VB, or Logistic
   sex        = 1,
   two_phase  = TRUE,
   late_model = "gompertz"
@@ -443,7 +510,7 @@ mort_cw <- get_stochastic_mortality(
 lw_fun <- function(L) 0.0001 * L^3.1
 mort_pw <- get_stochastic_mortality(
   method     = "PW",
-  growth_fit = growth_fit,
+  growth_fit = gomp_fit,
   sex        = 1,
   lw_fun     = lw_fun
 )
@@ -451,13 +518,13 @@ mort_pw <- get_stochastic_mortality(
 # Lorenzen growth-based (no L-W function needed)
 mort_lor <- get_stochastic_mortality(
   method       = "L",
-  growth_fit   = growth_fit,
+  growth_fit   = gomp_fit,
   sex          = 1,
   weight_based = FALSE
 )
 ```
 
-### 7. CV-Based Prior Elicitation
+### 9. CV-Based Prior Elicitation
 
 **The problem:** Specifying priors on log-transformed parameters is unintuitive. 
 What does σ = 0.5 on log($L_{50}$) mean in practical terms?
@@ -483,7 +550,7 @@ growth_fit <- fit_bayesian_growth(
 )
 ```
 
-### 8. Automatic Multilingual Sex Coding
+### 10. Automatic Multilingual Sex Coding
 
 vitalBayes automatically detects sex coding in multiple languages:
 
@@ -510,6 +577,7 @@ vitalBayes automatically detects sex coding in multiple languages:
 | `vignette("fit_bayesian_growth")` | Growth models with maturity-based parameterization |
 | `vignette("partial_pooling")` | Hierarchical modeling for imbalanced data |
 | `vignette("mortality_estimation")` | Natural mortality models and uncertainty propagation |
+| `vignette("chen_watanabe_reparameterization")` | L₀ parameterization and growth-model-agnostic k derivation |
 | `vignette("survivorship_simulation")` | Cohort survival analysis |
 | `vignette("visualization")` | Plotting functions and color palettes |
 | `vignette("model_diagnostics")` | Convergence, PPC, and LOO-CV |
