@@ -168,9 +168,21 @@ navbar:
 
 home:
   title: "vitalBayes"
-  description: "Bayesian Life History Parameter Estimation for Elasmobranchs"
+  description: "From Birth to Mortality: Bayesian Vital Rates for Elasmobranchs"
+
+  # Sidebar with TOC
   sidebar:
-    structure: [links, license, community, citation, authors, dev, toc]
+    structure: [links, toc, citation, license, authors]
+
+  links:
+    - text: "Report a bug"
+      href: https://github.com/Brian-J-Moe/vitalBayes/issues
+    - text: "Ask a question"
+      href: https://github.com/Brian-J-Moe/vitalBayes/discussions
+
+# Control TOC depth (how many heading levels to show)
+toc:
+  depth: 3
 
 footer:
   structure:
