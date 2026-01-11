@@ -6,8 +6,8 @@
     }
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Orbitron-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Lorenzen Natural Mortality Model — M_lorenzen"><meta name="description" content="Computes size-dependent natural mortality following Lorenzen (1996, 2022).
-Supports both weight-based and von Bertalanffy growth-based formulations."><meta property="og:description" content="Computes size-dependent natural mortality following Lorenzen (1996, 2022).
-Supports both weight-based and von Bertalanffy growth-based formulations."><meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"></head><body>
+Supports both weight-based and growth-based formulations."><meta property="og:description" content="Computes size-dependent natural mortality following Lorenzen (1996, 2022).
+Supports both weight-based and growth-based formulations."><meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -54,7 +54,7 @@ Supports both weight-based and von Bertalanffy growth-based formulations."><meta
 
     <div class="ref-description section level2">
     <p>Computes size-dependent natural mortality following Lorenzen (1996, 2022).
-Supports both weight-based and von Bertalanffy growth-based formulations.</p>
+Supports both weight-based and growth-based formulations.</p>
     </div>
 
     <div class="section level2">
@@ -62,11 +62,12 @@ Supports both weight-based and von Bertalanffy growth-based formulations.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">M_lorenzen</span><span class="op">(</span></span>
 <span>  <span class="va">age</span>,</span>
 <span>  <span class="va">Linf</span>,</span>
+<span>  <span class="va">L0</span>,</span>
 <span>  <span class="va">k</span>,</span>
-<span>  <span class="va">t0</span>,</span>
-<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  lw_fun <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  sample_params <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  growth_model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"vb"</span>, <span class="st">"gompertz"</span>, <span class="st">"logistic"</span><span class="op">)</span>,</span>
+<span>  sample_params <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -82,26 +83,34 @@ Supports both weight-based and von Bertalanffy growth-based formulations.</p>
 <dd><p>Asymptotic length.</p></dd>
 
 
+<dt id="arg-l-">L0<a class="anchor" aria-label="anchor" href="#arg-l-"></a></dt>
+<dd><p>Length at birth.</p></dd>
+
+
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>von Bertalanffy growth coefficient.</p></dd>
-
-
-<dt id="arg-t-">t0<a class="anchor" aria-label="anchor" href="#arg-t-"></a></dt>
-<dd><p>Theoretical age at length zero.</p></dd>
-
-
-<dt id="arg-weight-based">weight_based<a class="anchor" aria-label="anchor" href="#arg-weight-based"></a></dt>
-<dd><p>Logical. If TRUE, uses weight-based formulation requiring
-<code>lw_fun</code>. If FALSE, uses growth-based formulation.</p></dd>
+<dd><p>Growth coefficient. For <code>weight_based = FALSE</code>, should be
+VB-equivalent \(k\) (use <code><a href="compute_k_vb_equivalent.html">compute_k_vb_equivalent</a></code>).</p></dd>
 
 
 <dt id="arg-lw-fun">lw_fun<a class="anchor" aria-label="anchor" href="#arg-lw-fun"></a></dt>
-<dd><p>Function mapping length to weight in grams (required if weight_based = TRUE).</p></dd>
+<dd><p>Function mapping length to weight (required if
+<code>weight_based = TRUE</code>).</p></dd>
+
+
+<dt id="arg-weight-based">weight_based<a class="anchor" aria-label="anchor" href="#arg-weight-based"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, uses weight-based formulation.
+If <code>FALSE</code> (default), uses growth-based formulation.</p></dd>
+
+
+<dt id="arg-growth-model">growth_model<a class="anchor" aria-label="anchor" href="#arg-growth-model"></a></dt>
+<dd><p>Character. Growth model for length prediction (only
+used for weight-based formulation): <code>"vb"</code>, <code>"gompertz"</code>, or
+<code>"logistic"</code>.</p></dd>
 
 
 <dt id="arg-sample-params">sample_params<a class="anchor" aria-label="anchor" href="#arg-sample-params"></a></dt>
-<dd><p>Logical. If TRUE, samples allometric parameters from their
-distributions (for Monte Carlo simulation). If FALSE, uses mean values.</p></dd>
+<dd><p>Logical. If <code>TRUE</code>, samples allometric parameters
+from their distributions. If <code>FALSE</code>, uses mean values.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -110,34 +119,31 @@ distributions (for Monte Carlo simulation). If FALSE, uses mean values.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><strong>Weight-based formulation:</strong>
-$$M(W) = \alpha W^{\beta}$$
+
+<div class="section">
+<h3 id="weight-based-formulation-lorenzen-">Weight-based formulation (Lorenzen 1996)<a class="anchor" aria-label="anchor" href="#weight-based-formulation-lorenzen-"></a></h3>
+<p>$$M(W) = \alpha \cdot W^{\beta}$$
 where \(\alpha \sim N(3.69, 0.502)\) and \(\beta \sim N(-0.305, 0.029)\).</p>
-<p><strong>Growth-based formulation (Lorenzen 2022):</strong>
-$$\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)$$
-with uncertainty incorporated via parameter distributions.</p>
+</div>
+
+<div class="section">
+<h3 id="growth-based-formulation-lorenzen-">Growth-based formulation (Lorenzen 2022)<a class="anchor" aria-label="anchor" href="#growth-based-formulation-lorenzen-"></a></h3>
+<p>$$\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)$$
+This formulation was calibrated using von Bertalanffy parameters, so
+\(k\) should be the VB-equivalent \(k\) when using fits from other
+growth models.</p>
+</div>
+
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Lorenzen, K. (1996). The relationship between body weight and natural mortality
-in juvenile and adult fish: a comparison of natural ecosystems and aquaculture.
-Journal of Fish Biology, 49(4), 627-642.</p>
-<p>Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish populations:
-Biology, models, implications, and a generalized length-inverse model.
-Fisheries Research, 255, 106454.</p>
+    <p>Lorenzen, K. (1996). The relationship between body weight and natural
+mortality in juvenile and adult fish. <em>Journal of Fish Biology</em>,
+49(4), 627-642.</p>
+<p>Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish
+populations. <em>Fisheries Research</em>, 255, 106454.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Growth-based formulation</span></span></span>
-<span class="r-in"><span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">30</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">M</span> <span class="op">&lt;-</span> <span class="fu">M_lorenzen</span><span class="op">(</span><span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">200</span>, k <span class="op">=</span> <span class="fl">0.15</span>, t0 <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, weight_based <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">ages</span>, <span class="va">M</span>, type <span class="op">=</span> <span class="st">"l"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -1,7 +1,4 @@
-# Scale Mortality Schedule to Target
-
-Rescales an age-specific mortality schedule so the mean mortality equals
-a target value.
+# Scale Mortality Schedule to Target Mean
 
 ## Usage
 
@@ -17,39 +14,30 @@ scale_mortality(M, M_target = NULL, tmax = NULL, p = 0.001)
 
 - M_target:
 
-  Target mean mortality. Can be a numeric scalar, a function of tmax
-  (e.g., `function(tmax) ...`), or NULL to derive from survival
-  probability `p`.
+  Target mean mortality. Can be:
+
+  - Numeric scalar (fixed target)
+
+  - Function of tmax: `function(tmax) ...`
+
+  - `NULL` to derive from survival probability `p`
 
 - tmax:
 
-  Maximum age (required if M_target is a function or NULL).
+  Maximum age (required if `M_target` is a function or `NULL`).
 
 - p:
 
-  Probability of surviving to tmax. Used only if M_target is NULL.
-  Default 0.001 (0.1 percent survival to tmax).
+  Probability of surviving to `tmax`. Used only if `M_target = NULL`.
+  Default 0.001 (0.1\\
 
-## Value
-
-Numeric vector of scaled mortality rates.
-
-## Details
-
-The scaling applies: \\M\_{scaled} = M\_{raw} / \bar{M}\_{raw} \times
-M\_{target}\\
-
-If `M_target = NULL`, it is derived as \\-\ln(p) / t\_{max}\\.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-M_raw <- M_chen_watanabe(0:30, Linf = 200, k = 0.15, t0 = -1, tmax = 30)
-M_scaled <- scale_mortality(M_raw, M_target = 0.2)
-
-# Using Hoenig-style target
-hoenig_target <- function(tmax) 4.899 * tmax^(-0.916)
-M_scaled <- scale_mortality(M_raw, M_target = hoenig_target, tmax = 30)
-} # }
-```
+Numeric vector of scaled mortality rates (same length as `M`). Rescales
+an age-specific mortality schedule so its mean equals a target value
+derived from empirical relationships (e.g., Hoenig, Then et al.) or
+survival probability constraints. The scaling applies:
+\$\$M\_{scaled}(t) = M\_{raw}(t) \times
+\frac{M\_{target}}{\bar{M}\_{raw}}\$\$This preserves the *shape* of the
+age-specific mortality curve while adjusting its overall level. Scaling
+is useful because theoretical mortality models often produce absolute
+levels that don't match empirical observations, but the relative age
+pattern may still be informative.

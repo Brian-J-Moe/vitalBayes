@@ -83,14 +83,14 @@
 <img src="logo.png" class="logo" alt=""><h1 id="vitalbayes-">vitalBayes <a class="anchor" aria-label="anchor" href="#vitalbayes-"></a>
 </h1>
 </div>
-</div>
-<div class="section level1">
-<h1 id="from-birth-to-mortality-bayesian-estimation-of-population-vital-rates-for-elasmobranch-fishes">From Birth to Mortality:<br>Bayesian Estimation of Population Vital Rates for Elasmobranch Fishes<a class="anchor" aria-label="anchor" href="#from-birth-to-mortality-bayesian-estimation-of-population-vital-rates-for-elasmobranch-fishes"></a>
-</h1>
+<div class="section level2">
+<h2 id="from-birth-to-mortality-bayesian-vital-rates-for-elasmobranchs">From Birth to Mortality:<br>Bayesian Vital Rates for Elasmobranchs<a class="anchor" aria-label="anchor" href="#from-birth-to-mortality-bayesian-vital-rates-for-elasmobranchs"></a>
+</h2>
 <!-- badges: start -->
 
 <p><code>vitalBayes</code> provides a coherent Bayesian framework for estimating population vital rates in elasmobranchs — from birth and maturity through growth to natural mortality and survival. The package implements hierarchical models via <a href="https://mc-stan.org/" class="external-link">Stan</a> with precompiled models for fast, reliable inference.</p>
 <p>The package addresses critical methodological challenges in elasmobranch research: sparse datasets, imbalanced sex ratios, strong parameter correlations, and the need for biologically coherent estimates that propagate uncertainty across life stages.</p>
+</div>
 <div class="section level2">
 <h2 id="why-vitalbayes">Why vitalBayes?<a class="anchor" aria-label="anchor" href="#why-vitalbayes"></a>
 </h2>
@@ -467,18 +467,61 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="id_5-joint-posterior-sampling-for-mortality">5. Joint Posterior Sampling for Mortality<a class="anchor" aria-label="anchor" href="#id_5-joint-posterior-sampling-for-mortality"></a>
+<h3 id="id_5-growth-model-agnostic-mortality-estimation">5. Growth-Model-Agnostic Mortality Estimation<a class="anchor" aria-label="anchor" href="#id_5-growth-model-agnostic-mortality-estimation"></a>
 </h3>
-<p><strong>The problem:</strong> Mortality models (Chen-Watanabe, Peterson-Wroblewski, Lorenzen) require growth parameters as inputs. Traditional approaches specify these as independent point estimates with uncertainty — e.g., <span class="math inline">\(L_\infty \sim N(100, 5)\)</span> and <span class="math inline">\(k \sim N(0.1, 0.02)\)</span> — ignoring that these parameters are typically strongly correlated in the posterior.</p>
+<p><strong>The problem:</strong> The Chen-Watanabe mortality model was derived under von Bertalanffy growth assumptions, requiring specifically the VB growth coefficient <span class="math inline">\(k\)</span>. But the VB model often performs poorly on elasmobranch data — when adult observations are sparse, it tends to produce biologically implausible <span class="math inline">\(L_\infty\)</span> estimates (sometimes below observed maximum lengths). Gompertz and Logistic models frequently fit better, but traditionally couldn’t be used with Chen-Watanabe.</p>
+<p><strong>Our solution:</strong> vitalBayes computes a <strong>VB-equivalent <span class="math inline">\(k\)</span></strong> from biological milestones that all growth models estimate:</p>
+<p><span class="math display">\[k_{VB}^{equiv} = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
+<p>This is the growth coefficient that would produce a von Bertalanffy curve passing through the same biological milestones — regardless of which growth model generated them. Users can fit whichever model best describes their data and still use Chen-Watanabe mortality estimation.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Fit Gompertz (assume it fits your data better than VB)</span></span>
+<span><span class="va">gomp_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
+<span>  lt      <span class="op">=</span> <span class="st">"fl"</span>,</span>
+<span>  age     <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  sex     <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data    <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  model   <span class="op">=</span> <span class="st">"gompertz"</span>,    <span class="co"># Not VB!</span></span>
+<span>  k_based <span class="op">=</span> <span class="cn">FALSE</span>,         <span class="co"># Maturity-based parameterization required</span></span>
+<span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>,</span>
+<span>  L50_fit   <span class="op">=</span> <span class="va">L50_fit</span>,</span>
+<span>  t50_fit   <span class="op">=</span> <span class="va">t50_fit</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Chen-Watanabe mortality from Gompertz fit — this works automatically</span></span>
+<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>  growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>,   <span class="co"># Any growth model</span></span>
+<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  iter       <span class="op">=</span> <span class="fl">2000</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># The function extracts (Linf, L0, Lmat, tmat) from Gompertz posterior</span></span>
+<span><span class="co"># and computes VB-equivalent k internally</span></span></code></pre></div>
+<p>See <code><a href="articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code> for the full mathematical derivation.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6-l₀-parameterized-chen-watanabe">6. L₀-Parameterized Chen-Watanabe<a class="anchor" aria-label="anchor" href="#id_6-l%E2%82%80-parameterized-chen-watanabe"></a>
+</h3>
+<p><strong>The problem:</strong> The traditional Chen-Watanabe formulation uses <span class="math inline">\(t_0\)</span> (theoretical age at length zero) — a mathematical artifact with no biological interpretation that can take implausible values when growth data are sparse.</p>
+<p><strong>Our solution:</strong> vitalBayes implements an <strong>L₀-parameterized</strong> Chen-Watanabe that eliminates <span class="math inline">\(t_0\)</span> entirely:</p>
+<p><span class="math display">\[M(t) = \frac{k \cdot L_\infty}{L(t)}\]</span></p>
+<p>where <span class="math inline">\(L(t)\)</span> is predicted length at age. This reveals the biological mechanism: mortality is inversely proportional to body size. The ratio <span class="math inline">\(L_\infty / L(t)\)</span> represents how far an organism is from its maximum size — smaller individuals experience higher mortality.</p>
+<p>This reformulation uses observable quantities (<span class="math inline">\(L_0\)</span>, birth length) rather than mathematical abstractions, aligning with vitalBayes’s philosophy of parameterizing with biology, not mathematics.</p>
+</div>
+<div class="section level3">
+<h3 id="id_7-joint-posterior-sampling-for-mortality">7. Joint Posterior Sampling for Mortality<a class="anchor" aria-label="anchor" href="#id_7-joint-posterior-sampling-for-mortality"></a>
+</h3>
+<p><strong>The problem:</strong> Mortality models require growth parameters as inputs. Traditional approaches specify these as independent point estimates with uncertainty — e.g., <span class="math inline">\(L_\infty \sim N(100, 5)\)</span> and <span class="math inline">\(k \sim N(0.1, 0.02)\)</span> — ignoring that these parameters are typically strongly correlated in the posterior.</p>
 <p>Independent sampling occasionally generates biologically implausible combinations (high <span class="math inline">\(L_\infty\)</span> with high <span class="math inline">\(k\)</span>) that never appeared in the original growth model posterior, artificially inflating mortality uncertainty.</p>
 <p><strong>Our solution:</strong> <code><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code> accepts vitalBayes growth fits directly, drawing from the <strong>joint posterior distribution</strong>. Parameter correlations are preserved, yielding mortality schedules with narrower but more honest uncertainty intervals.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Traditional approach (ignores correlations)</span></span>
 <span><span class="va">mort_naive</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="st">"CW"</span>,</span>
 <span>  Linf   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">5</span><span class="op">)</span>,   <span class="co"># Specified as mean, sd</span></span>
+<span>  L0     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  k      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.02</span><span class="op">)</span>,</span>
-<span>  t0     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">0.2</span><span class="op">)</span></span>
+<span>  tmat   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># vitalBayes approach (preserves correlations)</span></span>
@@ -489,7 +532,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="id_6-multiple-mortality-models">6. Multiple Mortality Models<a class="anchor" aria-label="anchor" href="#id_6-multiple-mortality-models"></a>
+<h3 id="id_8-multiple-mortality-models">8. Multiple Mortality Models<a class="anchor" aria-label="anchor" href="#id_8-multiple-mortality-models"></a>
 </h3>
 <p>vitalBayes implements three natural mortality models, each with distinct assumptions:</p>
 <table class="table">
@@ -507,7 +550,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <tr class="odd">
 <td><strong>Chen-Watanabe</strong></td>
 <td>Species with distinct life phases</td>
-<td>Two-phase: declining juvenile M, late-life senescence</td>
+<td>L₀-parameterized, two-phase senescence option</td>
 </tr>
 <tr class="even">
 <td><strong>Peterson-Wroblewski</strong></td>
@@ -522,12 +565,12 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 </tr>
 </tbody>
 </table>
-<p>The Chen-Watanabe model supports multiple late-life senescence options (Gompertz, logistic) and can be scaled to empirical mortality estimators (Hoenig, Then et al.).</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Chen-Watanabe with Gompertz senescence</span></span>
+<p>All models work with any growth model fit (VB, Gompertz, or Logistic) through the VB-equivalent <span class="math inline">\(k\)</span> derivation.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Chen-Watanabe with Gompertz senescence (from any growth model)</span></span>
 <span><span class="va">mort_cw</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,</span>
+<span>  growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>,   <span class="co"># Works with Gompertz, VB, or Logistic</span></span>
 <span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  two_phase  <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  late_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
@@ -537,7 +580,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <span><span class="va">lw_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span><span class="op">)</span> <span class="fl">0.0001</span> <span class="op">*</span> <span class="va">L</span><span class="op">^</span><span class="fl">3.1</span></span>
 <span><span class="va">mort_pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method     <span class="op">=</span> <span class="st">"PW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,</span>
+<span>  growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>,</span>
 <span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  lw_fun     <span class="op">=</span> <span class="va">lw_fun</span></span>
 <span><span class="op">)</span></span>
@@ -545,18 +588,18 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <span><span class="co"># Lorenzen growth-based (no L-W function needed)</span></span>
 <span><span class="va">mort_lor</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method       <span class="op">=</span> <span class="st">"L"</span>,</span>
-<span>  growth_fit   <span class="op">=</span> <span class="va">growth_fit</span>,</span>
+<span>  growth_fit   <span class="op">=</span> <span class="va">gomp_fit</span>,</span>
 <span>  sex          <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="id_7-cv-based-prior-elicitation">7. CV-Based Prior Elicitation<a class="anchor" aria-label="anchor" href="#id_7-cv-based-prior-elicitation"></a>
+<h3 id="id_9-cv-based-prior-elicitation">9. CV-Based Prior Elicitation<a class="anchor" aria-label="anchor" href="#id_9-cv-based-prior-elicitation"></a>
 </h3>
 <p><strong>The problem:</strong> Specifying priors on log-transformed parameters is unintuitive. What does σ = 0.5 on log(<span class="math inline">\(L_{50}\)</span>) mean in practical terms?</p>
 <p><strong>Our solution:</strong> vitalBayes uses <strong>coefficient of variation (CV)</strong> for prior specification. The CV expresses uncertainty as a proportion of the mean — a scale-invariant, intuitive quantity.</p>
 <p><strong>Example:</strong> Setting <code>CV_Linf = 0.2</code> for a species with expected <span class="math inline">\(L_\infty\)</span> ≈ 100 cm means prior SD ≈ 20 cm and 95% prior interval ≈ 60–140 cm.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
 <span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
@@ -570,10 +613,10 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="id_8-automatic-multilingual-sex-coding">8. Automatic Multilingual Sex Coding<a class="anchor" aria-label="anchor" href="#id_8-automatic-multilingual-sex-coding"></a>
+<h3 id="id_10-automatic-multilingual-sex-coding">10. Automatic Multilingual Sex Coding<a class="anchor" aria-label="anchor" href="#id_10-automatic-multilingual-sex-coding"></a>
 </h3>
 <p>vitalBayes automatically detects sex coding in multiple languages:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># All of these work automatically:</span></span>
 <span><span class="co"># English:    "F"/"M", "Female"/"Male"</span></span>
 <span><span class="co"># Spanish:    "H"/"M", "Hembra"/"Macho"</span></span>
@@ -621,14 +664,18 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <td>Natural mortality models and uncertainty propagation</td>
 </tr>
 <tr class="even">
+<td><code><a href="articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code></td>
+<td>L₀ parameterization and growth-model-agnostic k derivation</td>
+</tr>
+<tr class="odd">
 <td><code><a href="articles/survivorship_simulation.html">vignette("survivorship_simulation")</a></code></td>
 <td>Cohort survival analysis</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code><a href="articles/visualization.html">vignette("visualization")</a></code></td>
 <td>Plotting functions and color palettes</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code><a href="articles/model_diagnostics.html">vignette("model_diagnostics")</a></code></td>
 <td>Convergence, PPC, and LOO-CV</td>
 </tr>
@@ -689,7 +736,6 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <p><em>vitalBayes was developed for the elasmobranch research community to support robust, reproducible vital rate analyses — from birth to mortality.</em></p>
 </div>
 </div>
-
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">

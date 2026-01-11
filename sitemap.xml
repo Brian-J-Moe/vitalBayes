@@ -2,6 +2,7 @@
 <url><loc>https://brian-j-moe.github.io/vitalBayes/404.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/LICENSE.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html</loc></url>
+<url><loc>https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_birth.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.html</loc></url>
@@ -17,14 +18,14 @@
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/M_lorenzen.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/M_peterson_wroblewski.html</loc></url>
-<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/approx_sd.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compare_growth_models.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compare_loo.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compare_pooling.html</loc></url>
+<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compute_loo.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/create_loo_table.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/create_parameter_table.html</loc></url>
-<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/extract_lh_params.html</loc></url>
+<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/extract_growth_parameters.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_birth.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.html</loc></url>

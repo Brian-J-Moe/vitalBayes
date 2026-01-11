@@ -1,12 +1,19 @@
 # Peterson-Wroblewski Natural Mortality Model
 
 Computes weight-based natural mortality following Peterson & Wroblewski
-(1984).
+(1984). Mortality scales allometrically with body weight.
 
 ## Usage
 
 ``` r
-M_peterson_wroblewski(age, Linf, k, t0, lw_fun)
+M_peterson_wroblewski(
+  age,
+  Linf,
+  L0,
+  k,
+  lw_fun,
+  growth_model = c("vb", "gompertz", "logistic")
+)
 ```
 
 ## Arguments
@@ -19,17 +26,22 @@ M_peterson_wroblewski(age, Linf, k, t0, lw_fun)
 
   Asymptotic length.
 
+- L0:
+
+  Length at birth.
+
 - k:
 
-  von Bertalanffy growth coefficient.
-
-- t0:
-
-  Theoretical age at length zero.
+  Growth coefficient (model-specific, not necessarily VB).
 
 - lw_fun:
 
-  Function mapping length to weight in grams: `lw_fun(length)`.
+  Function mapping length to weight in grams: `lw_fun(L)`.
+
+- growth_model:
+
+  Character. Growth model for length prediction: `"vb"`, `"gompertz"`,
+  or `"logistic"`. Default `"vb"`.
 
 ## Value
 
@@ -37,22 +49,29 @@ Numeric vector of instantaneous mortality rates.
 
 ## Details
 
-The model expresses mortality as an allometric function of body weight:
-\$\$M(W) = 1.92 W^{-0.25}\$\$ where \\W\\ is body weight in grams.
+The model expresses mortality as a power function of body weight:
+\$\$M(W) = 1.92 \cdot W^{-0.25}\$\$ where \\W\\ is body weight in grams.
+
+This model is growth-model-agnostic: it only requires predicted body
+weight at age, which can be derived from any growth model via a
+length-weight relationship.
 
 ## References
 
 Peterson, I., & Wroblewski, J. S. (1984). Mortality rate of fishes in
-the pelagic ecosystem. Canadian Journal of Fisheries and Aquatic
-Sciences, 41(7), 1117-1120.
+the pelagic ecosystem. *Canadian Journal of Fisheries and Aquatic
+Sciences*, 41(7), 1117-1120.
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-lw <- function(lt) 1e-5 * lt^3  # Weight in grams
-ages <- seq(0.1, 30, length.out = 100)
-M <- M_peterson_wroblewski(ages, Linf = 200, k = 0.15, t0 = -1, lw_fun = lw)
-plot(ages, M, type = "l")
+lw_fun <- function(L) 0.0001 * L^3.1  # Length in cm, weight in g
+ages <- seq(0.5, 30, by = 0.5)
+
+M <- M_peterson_wroblewski(
+  age = ages, Linf = 100, L0 = 25, k = 0.1,
+  lw_fun = lw_fun, growth_model = "gompertz"
+)
 } # }
 ```

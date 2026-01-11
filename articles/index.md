@@ -2,6 +2,8 @@
 
 ### All vignettes
 
+- [Chen-Watanabe Reparameterization: From t₀ to
+  L₀](https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.md):
 - [Estimating Birth Size with
   fit_bayesian_birth()](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_birth.md):
 - [Growth Modeling with
@@ -10,7 +12,7 @@
   fit_bayesian_maturity()](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md):
 - [Model Diagnostics and
   Comparison](https://brian-j-moe.github.io/vitalBayes/articles/model_diagnostics.md):
-- [Age-Specific Natural Mortality with
+- [Natural Mortality Estimation with
   get_stochastic_mortality()](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md):
 - [Partial Pooling for Imbalanced Sex
   Ratios](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md):
