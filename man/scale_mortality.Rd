@@ -9,12 +9,9 @@ scale_mortality(M, M_target = NULL, tmax = NULL, p = 0.001)
 \arguments{
 \item{M}{Numeric vector of instantaneous mortality rates.}
 
-\item{M_target}{Target mean mortality. Can be:
-\itemize{
-\item Numeric scalar (fixed target)
-\item Function of tmax: \code{function(tmax) ...}
-\item \code{NULL} to derive from survival probability \code{p}
-}}
+\item{M_target}{Target mean mortality. Can be a numeric scalar (fixed target),
+a function of tmax (e.g., \code{function(tmax) 4.899 * tmax^(-0.916)}), or
+\code{NULL} to derive from survival probability \code{p}.}
 
 \item{tmax}{Maximum age (required if \code{M_target} is a function or
 \code{NULL}).}
@@ -41,7 +38,7 @@ but the relative age pattern may still be informative.
 }
 \examples{
 \dontrun{
-M_raw <- M_chen_watanabe(0:30, Linf = 100, L0 = 25, k = 0.1,
+M_raw <- M_chen_watanabe_L0(0:30, Linf = 100, L0 = 25, k = 0.1,
                              two_phase = FALSE)
 
 # Scale to fixed target

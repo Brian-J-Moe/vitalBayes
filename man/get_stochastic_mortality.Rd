@@ -110,29 +110,27 @@ derivation of VB-equivalent \eqn{k} from any growth model fit.
 \details{
 A key feature of this function is growth-model-agnostic mortality estimation.
 When a growth fit from \code{\link{fit_bayesian_growth}} is provided, the
-function extracts biological milestones \eqn{(L_\infty, L_0, L_{mat}, t_{mat})}
-and computes the VB-equivalent \eqn{k} needed for Chen-Watanabe and growth-based
+function extracts biological milestones (Linf, L0, Lmat, tmat)
+and computes the VB-equivalent k needed for Chen-Watanabe and growth-based
 Lorenzen models.
 
 This allows users to fit whichever growth model (von Bertalanffy, Gompertz,
 or Logistic) best describes their data, then estimate mortality without
 theoretical compromise.
-}
-\section{Growth Model Flexibility}{
 
 When \code{growth_fit} is provided, parameters are drawn from the joint
 posterior distribution, preserving correlations. This yields mortality
 estimates with appropriate (often narrower) uncertainty bounds compared to
 independent sampling of each parameter.
 }
-
 \section{Mortality Models}{
 
-\describe{
-\item{CW}{Chen-Watanabe (1989) with L0 parameterization and optional
-two-phase senescence.}
-\item{PW}{Peterson-Wroblewski (1984) weight-based allometric model.}
-\item{L}{Lorenzen (1996/2022) in weight-based or growth-based form.}
+Three models are available:
+\itemize{
+\item \strong{CW}: Chen-Watanabe (1989) with L0 parameterization and optional
+two-phase senescence.
+\item \strong{PW}: Peterson-Wroblewski (1984) weight-based allometric model.
+\item \strong{L}: Lorenzen (1996/2022) in weight-based or growth-based form.
 }
 }
 

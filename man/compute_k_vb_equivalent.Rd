@@ -15,7 +15,7 @@ compute_k_vb_equivalent(Linf, L0, Lmat, tmat, warn = TRUE)
 
 \item{tmat}{Numeric vector. Age at maturity posterior draws.}
 
-\item{warn}{Logical. If \code{TRUE} (default) warns when draws produce
+\item{warn}{Logical. If \code{TRUE} (default), warns when draws produce
 invalid \eqn{k} values.}
 }
 \value{
@@ -81,6 +81,6 @@ k_vb <- compute_k_vb_equivalent(
 
 }
 \seealso{
-\code{\link{M_chen_watanabe}} for the L0-parameterized CW model,
+\code{\link{M_chen_watanabe_L0}} for the L0-parameterized CW model,
 \code{\link{extract_growth_parameters}} for posterior extraction.
 }
