@@ -31,90 +31,143 @@ template:
         // ===========================================
         // HOMEPAGE TABLE OF CONTENTS GENERATOR
         // ===========================================
-        if (document.body.classList.contains('template-home')) {
-          var mainContent = document.querySelector('main .contents, main');
-          var headings = mainContent.querySelectorAll('h2, h3');
+        // Check if we're on the homepage
+        var isHome = document.body.classList.contains('template-home') ||
+                     window.location.pathname.endsWith('index.html') ||
+                     window.location.pathname === '/' ||
+                     window.location.pathname.endsWith('/vitalBayes/');
 
-          if (headings.length > 3) {
-            // Create TOC container
-            var tocContainer = document.createElement('div');
-            tocContainer.id = 'home-toc-container';
+        if (isHome) {
+          // Find content area - try multiple selectors
+          var mainContent = document.querySelector('.contents') ||
+                           document.querySelector('main') ||
+                           document.querySelector('.col-md-9');
 
-            // Add header
-            var tocHeader = document.createElement('div');
-            tocHeader.className = 'toc-header';
-            tocHeader.textContent = 'On This Page';
-            tocContainer.appendChild(tocHeader);
+          if (mainContent) {
+            var headings = mainContent.querySelectorAll('h2[id], h3[id], h2, h3');
 
-            // Create nav and ul
-            var nav = document.createElement('nav');
-            var ul = document.createElement('ul');
-            var currentH2Li = null;
-            var currentSubUl = null;
+            // Only create TOC if we have enough headings
+            if (headings.length >= 3) {
+              // Create TOC container
+              var tocContainer = document.createElement('div');
+              tocContainer.id = 'home-toc-container';
 
-            headings.forEach(function(heading, index) {
-              // Create ID if doesn't exist
-              if (!heading.id) {
-                heading.id = 'section-' + index;
-              }
+              // Add header
+              var tocHeader = document.createElement('div');
+              tocHeader.className = 'toc-header';
+              tocHeader.textContent = 'On This Page';
+              tocContainer.appendChild(tocHeader);
 
-              var li = document.createElement('li');
-              var a = document.createElement('a');
-              a.href = '#' + heading.id;
-              a.textContent = heading.textContent.replace(/^[\d.]+\s*/, ''); // Remove numbering
-
-              // Smooth scroll on click
-              a.addEventListener('click', function(e) {
-                e.preventDefault();
-                var target = document.getElementById(heading.id);
-                if (target) {
-                  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  history.pushState(null, null, '#' + heading.id);
-                }
-              });
-
-              li.appendChild(a);
-
-              if (heading.tagName === 'H2') {
-                ul.appendChild(li);
-                currentH2Li = li;
-                currentSubUl = null;
-              } else if (heading.tagName === 'H3' && currentH2Li) {
-                if (!currentSubUl) {
-                  currentSubUl = document.createElement('ul');
-                  currentH2Li.appendChild(currentSubUl);
-                }
-                currentSubUl.appendChild(li);
-              }
-            });
-
-            nav.appendChild(ul);
-            tocContainer.appendChild(nav);
-            document.body.appendChild(tocContainer);
-
-            // Scroll spy - highlight current section as user scrolls
-            var tocLinks = tocContainer.querySelectorAll('a');
-
-            function updateActiveLink() {
-              var scrollPos = window.scrollY + 120;
-              var currentActive = null;
+              // Create nav and ul
+              var nav = document.createElement('nav');
+              var ul = document.createElement('ul');
+              var currentH2Li = null;
+              var currentSubUl = null;
+              var headingIndex = 0;
 
               headings.forEach(function(heading) {
-                if (heading.offsetTop <= scrollPos) {
-                  currentActive = heading.id;
+                // Skip if heading is empty or in the TOC itself
+                if (!heading.textContent.trim() || heading.closest('#home-toc-container')) {
+                  return;
+                }
+
+                // Create ID if doesn't exist
+                if (!heading.id) {
+                  heading.id = 'toc-section-' + headingIndex;
+                }
+                headingIndex++;
+
+                var li = document.createElement('li');
+                var a = document.createElement('a');
+                a.href = '#' + heading.id;
+
+                // Clean up heading text (remove numbering, trim)
+                var text = heading.textContent.replace(/^[\d.]+\s*/, '').trim();
+                // Truncate long headings
+                if (text.length > 40) {
+                  text = text.substring(0, 37) + '...';
+                }
+                a.textContent = text;
+
+                // Smooth scroll on click
+                a.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  var target = document.getElementById(heading.id);
+                  if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    history.pushState(null, null, '#' + heading.id);
+                    // Update active state
+                    updateActiveLink();
+                  }
+                });
+
+                li.appendChild(a);
+
+                // Nest h3 under h2
+                if (heading.tagName === 'H2') {
+                  ul.appendChild(li);
+                  currentH2Li = li;
+                  currentSubUl = null;
+                } else if (heading.tagName === 'H3') {
+                  if (currentH2Li) {
+                    if (!currentSubUl) {
+                      currentSubUl = document.createElement('ul');
+                      currentH2Li.appendChild(currentSubUl);
+                    }
+                    currentSubUl.appendChild(li);
+                  } else {
+                    // No parent H2, add to main list
+                    ul.appendChild(li);
+                  }
                 }
               });
 
-              tocLinks.forEach(function(link) {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + currentActive) {
-                  link.classList.add('active');
-                }
+              nav.appendChild(ul);
+              tocContainer.appendChild(nav);
+              document.body.appendChild(tocContainer);
+
+              // Scroll spy - highlight current section
+              var tocLinks = tocContainer.querySelectorAll('a');
+              var headingsArray = Array.from(headings).filter(function(h) {
+                return h.id && !h.closest('#home-toc-container');
               });
+
+              function updateActiveLink() {
+                var scrollPos = window.scrollY + 150;
+                var currentActive = null;
+
+                headingsArray.forEach(function(heading) {
+                  var rect = heading.getBoundingClientRect();
+                  var absoluteTop = rect.top + window.scrollY;
+                  if (absoluteTop <= scrollPos) {
+                    currentActive = heading.id;
+                  }
+                });
+
+                tocLinks.forEach(function(link) {
+                  link.classList.remove('active');
+                  if (currentActive && link.getAttribute('href') === '#' + currentActive) {
+                    link.classList.add('active');
+                  }
+                });
+              }
+
+              // Throttle scroll event for performance
+              var scrollTimeout;
+              window.addEventListener('scroll', function() {
+                if (scrollTimeout) {
+                  window.cancelAnimationFrame(scrollTimeout);
+                }
+                scrollTimeout = window.requestAnimationFrame(function() {
+                  updateActiveLink();
+                });
+              });
+
+              // Run once on load
+              updateActiveLink();
+
+              console.log('vitalBayes: Homepage TOC created with ' + headingsArray.length + ' headings');
             }
-
-            window.addEventListener('scroll', updateActiveLink);
-            updateActiveLink(); // Run once on load
           }
         }
 
