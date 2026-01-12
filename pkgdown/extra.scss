@@ -2903,3 +2903,133 @@ mjx-msup mjx-c,
 mjx-msubsup mjx-c {
   color: inherit !important;
 }
+
+// =============================================================================
+// HOMEPAGE FLOATING TABLE OF CONTENTS
+// =============================================================================
+// This creates a floating "On This Page" TOC for the README homepage
+// =============================================================================
+
+// The generated TOC container (created by JavaScript in _pkgdown.yml)
+#home-toc-container {
+  @media (min-width: 992px) {
+    position: fixed !important;
+    right: 2rem;
+    top: 100px;
+    width: 220px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding: 1rem;
+    background: rgba(#0D0221, 0.7);
+    border: 1px solid rgba(#5B3A8F, 0.4);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    z-index: 100;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(#5B3A8F, 0.2);
+      border-radius: 2px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(#FF1D8E, 0.5);
+      border-radius: 2px;
+
+      &:hover {
+        background: rgba(#FF1D8E, 0.8);
+      }
+    }
+  }
+
+  @media (max-width: 991px) {
+    display: none !important;
+  }
+
+  .toc-header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #7A6B8A;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(#5B3A8F, 0.4);
+  }
+
+  nav ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    li {
+      margin: 0;
+      padding: 0;
+
+      a {
+        display: block;
+        padding: 0.3rem 0 0.3rem 0.5rem;
+        color: #B8A9C9 !important;
+        text-decoration: none !important;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        transition: all 0.2s ease;
+        border-left: 2px solid transparent;
+        border-bottom: none !important;
+
+        &:hover {
+          color: #FF1D8E !important;
+          padding-left: 0.75rem;
+          border-left-color: #FF1D8E;
+          text-shadow: 0 0 8px rgba(#FF1D8E, 0.4);
+        }
+
+        &.active {
+          color: #00D9FF !important;
+          padding-left: 0.75rem;
+          border-left-color: #00D9FF;
+          text-shadow: 0 0 10px rgba(#00D9FF, 0.5);
+        }
+      }
+
+      ul {
+        padding-left: 0.5rem !important;
+        margin-top: 0.25rem !important;
+
+        li a {
+          font-size: 0.75rem;
+          color: #7A6B8A !important;
+
+          &:hover {
+            color: #FF6AC1 !important;
+            border-left-color: #FF6AC1;
+          }
+
+          &.active {
+            color: #4ECDC4 !important;
+            border-left-color: #4ECDC4;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Scroll margin for homepage headings
+.template-home h2,
+.template-home h3,
+.template-home h4 {
+  scroll-margin-top: 100px;
+}
+
+// Reduce main content width on homepage to make room for TOC
+@media (min-width: 992px) {
+  .template-home .col-md-9,
+  .template-home main > .row > .col-md-9 {
+    max-width: calc(100% - 260px);
+  }
+}
