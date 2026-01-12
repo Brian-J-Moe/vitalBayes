@@ -46,16 +46,14 @@ Computes size-dependent natural mortality following Lorenzen (1996, 2022).
 Supports both weight-based and growth-based formulations.
 }
 \details{
-\strong{Weight-based formulation (Lorenzen 1996):}
+Two formulations are available:
 
+Weight-based (Lorenzen 1996):
 \deqn{M(W) = \alpha \cdot W^{\beta}}
-
 where \eqn{\alpha \sim N(3.69, 0.502)} and \eqn{\beta \sim N(-0.305, 0.029)}.
 
-\strong{Growth-based formulation (Lorenzen 2022):}
-
+Growth-based (Lorenzen 2022):
 \deqn{\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)}
-
 This formulation was calibrated using von Bertalanffy parameters, so
 \eqn{k} should be the VB-equivalent \eqn{k} when using fits from other
 growth models.

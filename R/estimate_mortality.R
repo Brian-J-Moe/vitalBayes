@@ -304,8 +304,6 @@ extract_growth_parameters <- function(
 #' theoretical parameter \eqn{t_0}.
 #'
 #' @details
-#' **Mathematical Foundation:**
-#'
 #' The standard Chen-Watanabe formulation expresses mortality as:
 #' \deqn{M(t) = \frac{k}{1 - e^{-k(t - t_0)}}}
 #'
@@ -324,23 +322,18 @@ extract_growth_parameters <- function(
 #' where \eqn{L(t) = L_\infty - (L_\infty - L_0)e^{-kt}} is the predicted length
 #' at age \eqn{t}.
 #'
-#' **Biological Interpretation:**
-#'
 #' This reformulation reveals that Chen-Watanabe mortality is inversely
 #' proportional to body size - smaller (younger) individuals experience higher
 #' mortality. The ratio \eqn{L_\infty / L(t)} represents how far an individual
 #' is from asymptotic size, with mortality declining as this ratio approaches 1.
 #'
-#' **Two-Phase Extension:**
-#'
 #' The original CW model produces unrealistic mortality trajectories at old ages
-#' (approaching zero asymptotically). The two-phase extension adds a senescence
-#' component where mortality increases after maturity, more realistically
-#' capturing late-life dynamics.
-#'
-#' When \code{two_phase = TRUE}, mortality follows the standard CW model until
-#' age \eqn{t_m} (a fraction of \eqn{t_{mat}}), then transitions to a senescence
-#' model (Gompertz or logistic) that increases mortality toward \eqn{t_{max}}.
+#' (approaching zero asymptotically). When \code{two_phase = TRUE}, the model
+#' adds a senescence component where mortality increases after maturity,
+#' more realistically capturing late-life dynamics. Mortality follows the
+#' standard CW model until age \eqn{t_m} (a fraction of \eqn{t_{mat}}), then
+#' transitions to a senescence model (Gompertz or logistic) that increases
+#' mortality toward \eqn{t_{max}}.
 #'
 #' @param age Numeric vector of ages at which to compute mortality.
 #' @param Linf Asymptotic length.
@@ -590,16 +583,14 @@ M_peterson_wroblewski <- function(
 #' Supports both weight-based and growth-based formulations.
 #'
 #' @details
-#' **Weight-based formulation (Lorenzen 1996):**
+#' Two formulations are available:
 #'
+#' Weight-based (Lorenzen 1996):
 #' \deqn{M(W) = \alpha \cdot W^{\beta}}
-#'
 #' where \eqn{\alpha \sim N(3.69, 0.502)} and \eqn{\beta \sim N(-0.305, 0.029)}.
 #'
-#' **Growth-based formulation (Lorenzen 2022):**
-#'
+#' Growth-based (Lorenzen 2022):
 #' \deqn{\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)}
-#'
 #' This formulation was calibrated using von Bertalanffy parameters, so
 #' \eqn{k} should be the VB-equivalent \eqn{k} when using fits from other
 #' growth models.

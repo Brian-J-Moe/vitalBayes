@@ -62,8 +62,6 @@ model with an \eqn{L_0} parameterization that eliminates dependence on the
 theoretical parameter \eqn{t_0}.
 }
 \details{
-\strong{Mathematical Foundation:}
-
 The standard Chen-Watanabe formulation expresses mortality as:
 \deqn{M(t) = \frac{k}{1 - e^{-k(t - t_0)}}}
 
@@ -82,23 +80,18 @@ becomes:
 where \eqn{L(t) = L_\infty - (L_\infty - L_0)e^{-kt}} is the predicted length
 at age \eqn{t}.
 
-\strong{Biological Interpretation:}
-
 This reformulation reveals that Chen-Watanabe mortality is inversely
 proportional to body size - smaller (younger) individuals experience higher
 mortality. The ratio \eqn{L_\infty / L(t)} represents how far an individual
 is from asymptotic size, with mortality declining as this ratio approaches 1.
 
-\strong{Two-Phase Extension:}
-
 The original CW model produces unrealistic mortality trajectories at old ages
-(approaching zero asymptotically). The two-phase extension adds a senescence
-component where mortality increases after maturity, more realistically
-capturing late-life dynamics.
-
-When \code{two_phase = TRUE}, mortality follows the standard CW model until
-age \eqn{t_m} (a fraction of \eqn{t_{mat}}), then transitions to a senescence
-model (Gompertz or logistic) that increases mortality toward \eqn{t_{max}}.
+(approaching zero asymptotically). When \code{two_phase = TRUE}, the model
+adds a senescence component where mortality increases after maturity,
+more realistically capturing late-life dynamics. Mortality follows the
+standard CW model until age \eqn{t_m} (a fraction of \eqn{t_{mat}}), then
+transitions to a senescence model (Gompertz or logistic) that increases
+mortality toward \eqn{t_{max}}.
 }
 \examples{
 \dontrun{
