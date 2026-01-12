@@ -345,7 +345,7 @@ extract_growth_parameters <- function(
 #' @param tmax Maximum age. If \code{NULL}, estimated from growth parameters
 #'   as age when \eqn{L(t) = } \code{Linf_factor} \eqn{\times L_\infty}.
 #' @param Linf_factor Numeric in (0, 1). Fraction of \eqn{L_\infty} used to
-#'   estimate \eqn{t_{max}}. Default 0.99 (age at 99\% of asymptotic length).
+#'   estimate \eqn{t_{max}}. Default 0.99 (age at 99% of asymptotic length).
 #' @param two_phase Logical. If \code{TRUE}, applies two-phase model with
 #'   late-life senescence. Default \code{TRUE}.
 #' @param tmat Age at maturity. Required if \code{two_phase = TRUE}.

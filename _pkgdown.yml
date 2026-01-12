@@ -30,15 +30,14 @@ template:
       document.addEventListener('DOMContentLoaded', function() {
         // ===========================================
         // HOMEPAGE TABLE OF CONTENTS GENERATOR
+        // Injects TOC into pkgdown's existing sidebar
         // ===========================================
-        // Check if we're on the homepage
         var isHome = document.body.classList.contains('template-home') ||
                      window.location.pathname.endsWith('index.html') ||
                      window.location.pathname === '/' ||
                      window.location.pathname.endsWith('/vitalBayes/');
 
         if (isHome) {
-          // Find content area - try multiple selectors
           var mainContent = document.querySelector('.contents') ||
                            document.querySelector('main') ||
                            document.querySelector('.col-md-9');
@@ -46,11 +45,27 @@ template:
           if (mainContent) {
             var headings = mainContent.querySelectorAll('h2[id], h3[id], h2, h3');
 
-            // Only create TOC if we have enough headings
             if (headings.length >= 3) {
-              // Create TOC container
-              var tocContainer = document.createElement('div');
-              tocContainer.id = 'home-toc-container';
+              // Find or create the sidebar
+              var sidebar = document.querySelector('.col-md-3') ||
+                           document.querySelector('aside') ||
+                           document.querySelector('.sidebar');
+
+              // If no sidebar exists, create one as a fixed element
+              var tocContainer;
+              if (sidebar) {
+                // Inject TOC at the top of existing sidebar
+                tocContainer = document.createElement('div');
+                tocContainer.id = 'home-toc-container';
+                tocContainer.className = 'home-toc-sidebar';
+                sidebar.insertBefore(tocContainer, sidebar.firstChild);
+              } else {
+                // Create floating TOC
+                tocContainer = document.createElement('div');
+                tocContainer.id = 'home-toc-container';
+                tocContainer.className = 'home-toc-fixed';
+                document.body.appendChild(tocContainer);
+              }
 
               // Add header
               var tocHeader = document.createElement('div');
@@ -60,50 +75,46 @@ template:
 
               // Create nav and ul
               var nav = document.createElement('nav');
+              nav.id = 'home-toc-nav';
               var ul = document.createElement('ul');
+              ul.className = 'toc-list';
               var currentH2Li = null;
               var currentSubUl = null;
               var headingIndex = 0;
 
               headings.forEach(function(heading) {
-                // Skip if heading is empty or in the TOC itself
                 if (!heading.textContent.trim() || heading.closest('#home-toc-container')) {
                   return;
                 }
 
-                // Create ID if doesn't exist
                 if (!heading.id) {
                   heading.id = 'toc-section-' + headingIndex;
                 }
                 headingIndex++;
 
                 var li = document.createElement('li');
+                li.className = heading.tagName === 'H2' ? 'toc-h2' : 'toc-h3';
                 var a = document.createElement('a');
                 a.href = '#' + heading.id;
+                a.className = 'toc-link';
 
-                // Clean up heading text (remove numbering, trim)
                 var text = heading.textContent.replace(/^[\d.]+\s*/, '').trim();
-                // Truncate long headings
-                if (text.length > 40) {
-                  text = text.substring(0, 37) + '...';
+                if (text.length > 45) {
+                  text = text.substring(0, 42) + '...';
                 }
                 a.textContent = text;
 
-                // Smooth scroll on click
                 a.addEventListener('click', function(e) {
                   e.preventDefault();
                   var target = document.getElementById(heading.id);
                   if (target) {
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     history.pushState(null, null, '#' + heading.id);
-                    // Update active state
-                    updateActiveLink();
                   }
                 });
 
                 li.appendChild(a);
 
-                // Nest h3 under h2
                 if (heading.tagName === 'H2') {
                   ul.appendChild(li);
                   currentH2Li = li;
@@ -112,11 +123,11 @@ template:
                   if (currentH2Li) {
                     if (!currentSubUl) {
                       currentSubUl = document.createElement('ul');
+                      currentSubUl.className = 'toc-sublist';
                       currentH2Li.appendChild(currentSubUl);
                     }
                     currentSubUl.appendChild(li);
                   } else {
-                    // No parent H2, add to main list
                     ul.appendChild(li);
                   }
                 }
@@ -124,10 +135,9 @@ template:
 
               nav.appendChild(ul);
               tocContainer.appendChild(nav);
-              document.body.appendChild(tocContainer);
 
-              // Scroll spy - highlight current section
-              var tocLinks = tocContainer.querySelectorAll('a');
+              // Scroll spy
+              var tocLinks = tocContainer.querySelectorAll('.toc-link');
               var headingsArray = Array.from(headings).filter(function(h) {
                 return h.id && !h.closest('#home-toc-container');
               });
@@ -146,27 +156,23 @@ template:
 
                 tocLinks.forEach(function(link) {
                   link.classList.remove('active');
+                  var li = link.parentElement;
+                  if (li) li.classList.remove('active');
+
                   if (currentActive && link.getAttribute('href') === '#' + currentActive) {
                     link.classList.add('active');
+                    if (li) li.classList.add('active');
                   }
                 });
               }
 
-              // Throttle scroll event for performance
               var scrollTimeout;
               window.addEventListener('scroll', function() {
-                if (scrollTimeout) {
-                  window.cancelAnimationFrame(scrollTimeout);
-                }
-                scrollTimeout = window.requestAnimationFrame(function() {
-                  updateActiveLink();
-                });
+                if (scrollTimeout) window.cancelAnimationFrame(scrollTimeout);
+                scrollTimeout = window.requestAnimationFrame(updateActiveLink);
               });
 
-              // Run once on load
               updateActiveLink();
-
-              console.log('vitalBayes: Homepage TOC created with ' + headingsArray.length + ' headings');
             }
           }
         }
@@ -176,12 +182,9 @@ template:
         // ===========================================
         var logos = document.querySelectorAll('img[src*="logo"], img.logo, .logo img');
         logos.forEach(function(logo) {
-          // Skip if already wrapped in a link
           if (logo.parentElement.tagName === 'A') {
-            // Ensure the link goes to homepage
             var parentLink = logo.parentElement;
             if (!parentLink.href || parentLink.href === '#' || parentLink.href.endsWith('#')) {
-              // Determine correct path based on current location
               var path = window.location.pathname;
               if (path.includes('/articles/') || path.includes('/reference/')) {
                 parentLink.href = '../index.html';
@@ -192,7 +195,6 @@ template:
             return;
           }
 
-          // Wrap logo in a link
           logo.style.cursor = 'pointer';
           logo.addEventListener('click', function() {
             var path = window.location.pathname;
@@ -212,7 +214,6 @@ template:
           logo.style.backgroundColor = 'transparent';
           logo.style.border = 'none';
           logo.style.boxShadow = 'none';
-          // Also fix parent container
           if (logo.parentElement) {
             logo.parentElement.style.background = 'transparent';
             logo.parentElement.style.backgroundColor = 'transparent';
