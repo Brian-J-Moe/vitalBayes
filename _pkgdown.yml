@@ -29,6 +29,146 @@ template:
       <script>
       document.addEventListener('DOMContentLoaded', function() {
         // ===========================================
+        // HOMEPAGE TABLE OF CONTENTS GENERATOR
+        // Creates a floating TOC for the README homepage
+        // ===========================================
+        var isHome = document.body.classList.contains('template-home');
+
+        if (isHome) {
+          console.log('vitalBayes: Homepage detected, creating TOC...');
+
+          // Find main content - pkgdown uses different selectors
+          var mainContent = document.querySelector('.col-md-9') ||
+                           document.querySelector('.contents') ||
+                           document.querySelector('main .container');
+
+          if (mainContent) {
+            // Get all h2 and h3 headings with IDs
+            var headings = mainContent.querySelectorAll('h2[id], h3[id]');
+            console.log('vitalBayes: Found ' + headings.length + ' headings');
+
+            if (headings.length >= 2) {
+              // Try to find existing sidebar
+              var sidebar = document.querySelector('.col-md-3.sidebar') ||
+                           document.querySelector('aside.col-md-3') ||
+                           document.querySelector('.col-md-3');
+
+              // Create TOC container
+              var tocContainer = document.createElement('div');
+              tocContainer.id = 'home-toc-container';
+
+              // Create header matching article TOC style
+              var tocHeader = document.createElement('div');
+              tocHeader.className = 'home-toc-header';
+              tocHeader.textContent = 'On this page';
+              tocContainer.appendChild(tocHeader);
+
+              // Create navigation
+              var nav = document.createElement('nav');
+              nav.id = 'home-toc-nav';
+              var ul = document.createElement('ul');
+              ul.className = 'home-toc-list';
+
+              var currentH2Li = null;
+              var currentSubUl = null;
+
+              headings.forEach(function(heading) {
+                var text = heading.textContent.trim();
+                if (!text) return;
+
+                // Truncate long text
+                if (text.length > 45) {
+                  text = text.substring(0, 42) + '...';
+                }
+
+                var li = document.createElement('li');
+                li.className = heading.tagName === 'H2' ? 'toc-h2' : 'toc-h3';
+
+                var a = document.createElement('a');
+                a.href = '#' + heading.id;
+                a.className = 'toc-link';
+                a.textContent = text;
+
+                // Smooth scroll
+                a.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  var target = document.getElementById(heading.id);
+                  if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    history.pushState(null, null, '#' + heading.id);
+                  }
+                });
+
+                li.appendChild(a);
+
+                if (heading.tagName === 'H2') {
+                  ul.appendChild(li);
+                  currentH2Li = li;
+                  currentSubUl = null;
+                } else if (heading.tagName === 'H3') {
+                  if (currentH2Li) {
+                    if (!currentSubUl) {
+                      currentSubUl = document.createElement('ul');
+                      currentSubUl.className = 'home-toc-sublist';
+                      currentH2Li.appendChild(currentSubUl);
+                    }
+                    currentSubUl.appendChild(li);
+                  } else {
+                    ul.appendChild(li);
+                  }
+                }
+              });
+
+              nav.appendChild(ul);
+              tocContainer.appendChild(nav);
+
+              // Placement strategy: inject into sidebar or create fixed TOC
+              if (sidebar) {
+                console.log('vitalBayes: Injecting TOC into existing sidebar');
+                sidebar.insertBefore(tocContainer, sidebar.firstChild);
+              } else {
+                console.log('vitalBayes: Creating fixed TOC (no sidebar found)');
+                tocContainer.classList.add('home-toc-fixed');
+                document.body.appendChild(tocContainer);
+              }
+
+              // Scroll spy functionality
+              var tocLinks = tocContainer.querySelectorAll('.toc-link');
+              var headingsArray = Array.from(headings);
+
+              function updateActiveLink() {
+                var scrollPos = window.scrollY + 150;
+                var currentActive = null;
+
+                headingsArray.forEach(function(heading) {
+                  var rect = heading.getBoundingClientRect();
+                  var absoluteTop = rect.top + window.scrollY;
+                  if (absoluteTop <= scrollPos) {
+                    currentActive = heading.id;
+                  }
+                });
+
+                tocLinks.forEach(function(link) {
+                  link.classList.remove('active');
+                  if (currentActive && link.getAttribute('href') === '#' + currentActive) {
+                    link.classList.add('active');
+                  }
+                });
+              }
+
+              var scrollTimeout;
+              window.addEventListener('scroll', function() {
+                if (scrollTimeout) window.cancelAnimationFrame(scrollTimeout);
+                scrollTimeout = window.requestAnimationFrame(updateActiveLink);
+              });
+
+              updateActiveLink();
+              console.log('vitalBayes: Homepage TOC created successfully');
+            }
+          }
+        }
+
+        // ===========================================
         // Make hex logo clickable to redirect to homepage
         // ===========================================
         var logos = document.querySelectorAll('img[src*="logo"], img.logo, .logo img');
@@ -164,6 +304,8 @@ navbar:
 home:
   title: "vitalBayes"
   description: "From Birth to Mortality: Bayesian Vital Rates for Elasmobranchs"
+  sidebar:
+    structure: [links, license, community, citation, authors, dev]
 
 footer:
   structure:

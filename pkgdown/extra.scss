@@ -2904,10 +2904,10 @@ mjx-msubsup mjx-c {
   color: inherit !important;
 }
 
+
 // =============================================================================
 // ARTICLE SIDEBAR TOC - Sticky "On This Page" Navigation
 // =============================================================================
-// Makes the article/vignette TOC stay fixed while scrolling
 
 .template-article aside,
 .template-reference-topic aside {
@@ -2934,4 +2934,169 @@ mjx-msubsup mjx-c {
 .template-article main > .row,
 .template-reference-topic main > .row {
   align-items: flex-start !important;
+}
+
+// =============================================================================
+// HOMEPAGE TABLE OF CONTENTS
+// =============================================================================
+
+// Scroll margins for homepage headings
+.template-home {
+  h2, h3, h4 {
+    scroll-margin-top: 100px;
+  }
+
+  // Make homepage sidebar sticky if it exists
+  .col-md-3,
+  aside {
+    position: sticky !important;
+    top: 90px !important;
+    align-self: flex-start !important;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+
+  main > .row {
+    align-items: flex-start !important;
+  }
+}
+
+// Common TOC container styling
+#home-toc-container {
+  margin-bottom: 1.5rem;
+
+  // Header - "On this page"
+  .home-toc-header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: $bayes-blue !important;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid $vital-pink;
+    display: inline-block;
+  }
+
+  // Navigation list styling
+  .home-toc-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .home-toc-sublist {
+    list-style: none !important;
+    padding: 0 0 0 0.75rem !important;
+    margin: 0.25rem 0 0.5rem 0 !important;
+  }
+
+  // H2 level items
+  .toc-h2 {
+    margin: 0;
+    padding: 0;
+
+    > .toc-link {
+      display: block;
+      padding: 0.4rem 0.75rem;
+      color: $text-secondary !important;
+      text-decoration: none !important;
+      font-size: 0.875rem;
+      font-weight: 400;
+      line-height: 1.4;
+      transition: all 0.15s ease;
+      border-left: 3px solid transparent;
+      border-bottom: none !important;
+      background: transparent !important;
+
+      &:hover {
+        color: $text-primary !important;
+        background: rgba($sunset-purple, 0.15) !important;
+      }
+
+      &.active {
+        color: $vital-pink !important;
+        border-left-color: $vital-pink !important;
+        background: rgba($vital-pink, 0.1) !important;
+        font-weight: 500;
+      }
+    }
+  }
+
+  // H3 level items (subsections)
+  .toc-h3 {
+    margin: 0;
+    padding: 0;
+
+    > .toc-link {
+      display: block;
+      padding: 0.3rem 0.75rem;
+      color: $text-muted !important;
+      text-decoration: none !important;
+      font-size: 0.8125rem;
+      font-weight: 400;
+      line-height: 1.4;
+      transition: all 0.15s ease;
+      border-left: 3px solid transparent;
+      border-bottom: none !important;
+      background: transparent !important;
+
+      &:hover {
+        color: $text-secondary !important;
+        background: rgba($sunset-purple, 0.1) !important;
+      }
+
+      &.active {
+        color: $vital-pink !important;
+        border-left-color: $vital-pink !important;
+        background: rgba($vital-pink, 0.08) !important;
+      }
+    }
+  }
+}
+
+// Fixed TOC (when no sidebar exists)
+#home-toc-container.home-toc-fixed {
+  @media (min-width: 992px) {
+    position: fixed !important;
+    right: 1.5rem;
+    top: 90px;
+    width: 250px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 1rem;
+    background: rgba($deep-space, 0.95);
+    border: 1px solid rgba($sunset-purple, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba($sunset-purple, 0.2);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba($vital-pink, 0.4);
+      border-radius: 2px;
+    }
+  }
+
+  @media (max-width: 991px) {
+    display: none !important;
+  }
+}
+
+// Adjust main content width when fixed TOC is present
+@media (min-width: 992px) {
+  .template-home:has(#home-toc-container.home-toc-fixed) {
+    .col-md-9,
+    .contents {
+      max-width: calc(100% - 280px);
+    }
+  }
 }
