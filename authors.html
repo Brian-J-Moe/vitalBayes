@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var mainContent = document.querySelector('main .contents, main');
     var headings = mainContent.querySelectorAll('h2, h3');
 
-    if (headings.length > 3) {  // Only create TOC if there are enough headings
+    if (headings.length > 3) {
       // Create TOC container
       var tocContainer = document.createElement('div');
       tocContainer.id = 'home-toc-container';
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         a.href = '#' + heading.id;
         a.textContent = heading.textContent.replace(/^[\d.]+\s*/, ''); // Remove numbering
 
-        // Smooth scroll
+        // Smooth scroll on click
         a.addEventListener('click', function(e) {
           e.preventDefault();
           var target = document.getElementById(heading.id);
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
       tocContainer.appendChild(nav);
       document.body.appendChild(tocContainer);
 
-      // Scroll spy - highlight current section
+      // Scroll spy - highlight current section as user scrolls
       var tocLinks = tocContainer.querySelectorAll('a');
 
       function updateActiveLink() {
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       window.addEventListener('scroll', updateActiveLink);
-      updateActiveLink();
+      updateActiveLink(); // Run once on load
     }
   }
 

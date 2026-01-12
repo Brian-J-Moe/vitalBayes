@@ -736,25 +736,11 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 <p><em>vitalBayes was developed for the elasmobranch research community to support robust, reproducible vital rate analyses — from birth to mortality.</em></p>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="table-of-contents">
-<h2 data-toc-skip>Table of contents</h2>
-<ul class="list-unstyled">
-<li><nav id="toc"></nav></li>
-</ul>
-</div>
-
-<div class="links">
+  </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/Brian-J-Moe/vitalBayes/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/Brian-J-Moe/vitalBayes/issues" class="external-link">Report a bug</a></li>
-</ul>
-</div>
-
-<div class="citation">
-<h2 data-toc-skip>Citation</h2>
-<ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing vitalBayes</a></li>
 </ul>
 </div>
 
@@ -766,11 +752,27 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 </ul>
 </div>
 
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing vitalBayes</a></li>
+</ul>
+</div>
+
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>
 <a href="https://github.com/Brian-J-Moe" class="external-link">Brian J Moe</a> <br><small class="roles"> Author, maintainer </small>   </li>
+</ul>
+</div>
+
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link"><img src="https://img.shields.io/badge/R--CMD--check-passing-brightgreen.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
 </ul>
 </div>
 
@@ -800,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var mainContent = document.querySelector('main .contents, main');
     var headings = mainContent.querySelectorAll('h2, h3');
 
-    if (headings.length > 3) {  // Only create TOC if there are enough headings
+    if (headings.length > 3) {
       // Create TOC container
       var tocContainer = document.createElement('div');
       tocContainer.id = 'home-toc-container';
@@ -828,7 +830,7 @@ document.addEventListener('DOMContentLoaded', function() {
         a.href = '#' + heading.id;
         a.textContent = heading.textContent.replace(/^[\d.]+\s*/, ''); // Remove numbering
 
-        // Smooth scroll
+        // Smooth scroll on click
         a.addEventListener('click', function(e) {
           e.preventDefault();
           var target = document.getElementById(heading.id);
@@ -857,7 +859,7 @@ document.addEventListener('DOMContentLoaded', function() {
       tocContainer.appendChild(nav);
       document.body.appendChild(tocContainer);
 
-      // Scroll spy - highlight current section
+      // Scroll spy - highlight current section as user scrolls
       var tocLinks = tocContainer.querySelectorAll('a');
 
       function updateActiveLink() {
@@ -879,7 +881,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       window.addEventListener('scroll', updateActiveLink);
-      updateActiveLink();
+      updateActiveLink(); // Run once on load
     }
   }
 
