@@ -2,7 +2,7 @@
 
 ## All functions
 
-- [`M_chen_watanabe()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe.md)
+- [`M_chen_watanabe_L0()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe_L0.md)
   : Chen-Watanabe Natural Mortality (L₀ Parameterization)
 - [`M_lorenzen()`](https://brian-j-moe.github.io/vitalBayes/reference/M_lorenzen.md)
   : Lorenzen Natural Mortality Model

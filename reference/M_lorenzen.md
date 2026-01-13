@@ -63,17 +63,16 @@ Numeric vector of instantaneous mortality rates.
 
 ## Details
 
-### Weight-based formulation (Lorenzen 1996)
+Two formulations are available:
 
-\$\$M(W) = \alpha \cdot W^{\beta}\$\$ where \\\alpha \sim N(3.69,
-0.502)\\ and \\\beta \sim N(-0.305, 0.029)\\.
+Weight-based (Lorenzen 1996): \$\$M(W) = \alpha \cdot W^{\beta}\$\$
+where \\\alpha \sim N(3.69, 0.502)\\ and \\\beta \sim N(-0.305,
+0.029)\\.
 
-### Growth-based formulation (Lorenzen 2022)
-
-\$\$\ln M = 0.28 - 1.30 \ln(L/L\_\infty) + 1.08 \ln(k)\$\$ This
-formulation was calibrated using von Bertalanffy parameters, so \\k\\
-should be the VB-equivalent \\k\\ when using fits from other growth
-models.
+Growth-based (Lorenzen 2022): \$\$\ln M = 0.28 - 1.30 \ln(L/L\_\infty) +
+1.08 \ln(k)\$\$ This formulation was calibrated using von Bertalanffy
+parameters, so \\k\\ should be the VB-equivalent \\k\\ when using fits
+from other growth models.
 
 ## References
 

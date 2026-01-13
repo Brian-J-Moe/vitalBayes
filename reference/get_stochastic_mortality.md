@@ -1,5 +1,10 @@
 # Stochastic Estimation of Age-Specific Natural Mortality
 
+Monte Carlo simulation of age-specific natural mortality schedules with
+full uncertainty propagation from growth model posteriors. Supports
+Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
+derivation of VB-equivalent \\k\\ from any growth model fit.
+
 ## Usage
 
 ``` r
@@ -133,50 +138,61 @@ get_stochastic_mortality(
 
 ## Value
 
-A list with components:
+A list with components: Schedules (data.table of all mortality schedules
+with columns set_id, age, M, M_scaled), Parameters (data.table of
+sampled life history parameters), Summary (data.table with median and 95
+percent CI by age), and Plot (ggplot2 object).
 
-- Schedules:
+## Details
 
-  `data.table` of all mortality schedules with columns: `set_id`, `age`,
-  `M`, `M_scaled`
-
-- Parameters:
-
-  `data.table` of sampled life history parameters
-
-- Summary:
-
-  `data.table` with median and 95\\ Plot`ggplot2` object
-
-Monte Carlo simulation of age-specific natural mortality schedules with
-full uncertainty propagation from growth model posteriors. Supports
-Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
-derivation of VB-equivalent \\k\\ from any growth model fit. A key
-feature of this function is growth-model-agnostic mortality estimation.
-When a growth fit from
+A key feature of this function is growth-model-agnostic mortality
+estimation. When a growth fit from
 [`fit_bayesian_growth`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)
-is provided, the function extracts biological milestones \\(L\_\infty,
-L_0, L\_{mat}, t\_{mat})\\ and computes the VB-equivalent \\k\\ needed
-for Chen-Watanabe and growth-based Lorenzen models.This allows users to
-fit whichever growth model (von Bertalanffy, Gompertz, or Logistic) best
-describes their data, then estimate mortality without theoretical
-compromise. Growth Model FlexibilityWhen `growth_fit` is provided,
-parameters are drawn from the joint posterior distribution, preserving
-correlations. This yields mortality estimates with appropriate (often
-narrower) uncertainty bounds compared to independent sampling of each
-parameter.
+is provided, the function extracts biological milestones (Linf, L0,
+Lmat, tmat) and computes the VB-equivalent k needed for Chen-Watanabe
+and growth-based Lorenzen models.
 
-Mortality Models
+This allows users to fit whichever growth model (von Bertalanffy,
+Gompertz, or Logistic) best describes their data, then estimate
+mortality without theoretical compromise.
 
-- CW:
+When `growth_fit` is provided, parameters are drawn from the joint
+posterior distribution, preserving correlations. This yields mortality
+estimates with appropriate (often narrower) uncertainty bounds compared
+to independent sampling of each parameter.
 
-  Chen-Watanabe (1989) with L0 parameterization and optional two-phase
-  senescence.
+Three mortality models are available: CW (Chen-Watanabe 1989 with L0
+parameterization and optional two-phase senescence), PW
+(Peterson-Wroblewski 1984 weight-based allometric model), and L
+(Lorenzen 1996/2022 in weight-based or growth-based form).
 
-- PW:
+## Examples
 
-  Peterson-Wroblewski (1984) weight-based allometric model.
+``` r
+if (FALSE) { # \dontrun{
+# From a Gompertz growth fit (maturity-based parameterization)
+mort <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = gomp_fit,  # Any growth model works!
+  sex        = 1,
+  iter       = 2000,
+  scaled     = TRUE,
+  p          = 0.001
+)
 
-- L:
+# View plot
+mort$Plot
 
-  Lorenzen (1996/2022) in weight-based or growth-based form.
+# Check VB-equivalent k distribution
+hist(mort$Parameters$k_vb_equiv)
+
+# Manual specification for sensitivity analysis
+mort <- get_stochastic_mortality(
+  method = "CW",
+  Linf = c(100, 5),
+  L0   = c(25, 2),
+  k    = c(0.1, 0.02),  # VB k or VB-equivalent k
+  tmat = c(10, 1)
+)
+} # }
+```

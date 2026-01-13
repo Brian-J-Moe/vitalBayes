@@ -14,13 +14,9 @@ scale_mortality(M, M_target = NULL, tmax = NULL, p = 0.001)
 
 - M_target:
 
-  Target mean mortality. Can be:
-
-  - Numeric scalar (fixed target)
-
-  - Function of tmax: `function(tmax) ...`
-
-  - `NULL` to derive from survival probability `p`
+  Target mean mortality. Can be a numeric scalar (fixed target), a
+  function of tmax (e.g., `function(tmax) 4.899 * tmax^(-0.916)`), or
+  `NULL` to derive from survival probability `p`.
 
 - tmax:
 

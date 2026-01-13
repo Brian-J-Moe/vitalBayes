@@ -3,7 +3,7 @@
 ## Usage
 
 ``` r
-M_chen_watanabe(
+M_chen_watanabe_L0(
   age,
   Linf,
   L0,
@@ -71,7 +71,7 @@ Computes age-specific natural mortality using the Chen & Watanabe (1989)
 model with an \\L_0\\ parameterization that eliminates dependence on the
 theoretical parameter \\t_0\\. The standard Chen-Watanabe formulation
 expresses mortality as: \$\$M(t) = \frac{k}{1 - e^{-k(t -
-t_0)}}\$\$where \\t_0\\ is the theoretical age at length zero — a
+t_0)}}\$\$where \\t_0\\ is the theoretical age at length zero - a
 parameter with no direct biological interpretation that can take
 implausible values, particularly when growth data are sparse.We
 reparameterize using the relationship between \\t_0\\ and \\L_0\\ (birth
@@ -79,25 +79,20 @@ length) under von Bertalanffy dynamics: \$\$L_0 = L\_\infty(1 -
 e^{kt_0})\$\$After algebraic manipulation (see vignette), the
 \\L_0\\-parameterized form becomes: \$\$M(t) = \frac{k \cdot
 L\_\infty}{L(t)}\$\$where \\L(t) = L\_\infty - (L\_\infty -
-L_0)e^{-kt}\\ is the predicted length at age \\t\\. Mathematical
-FoundationThis reformulation reveals that Chen-Watanabe mortality is
-inversely proportional to body size — smaller (younger) individuals
-experience higher mortality. The ratio \\L\_\infty / L(t)\\ represents
-how far an individual is from asymptotic size, with mortality declining
-as this ratio approaches 1.
-
-Two-Phase ExtensionThe original CW model produces unrealistic mortality
-trajectories at old ages (approaching zero asymptotically). The
-two-phase extension adds a senescence component where mortality
-increases after maturity, more realistically capturing late-life
-dynamics.When `two_phase = TRUE`, mortality follows the standard CW
-model until age \\t_m\\ (a fraction of \\t\_{mat}\\), then transitions
-to a senescence model (Gompertz or logistic) that increases mortality
-toward \\t\_{max}\\.
-
-Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
-coefficient in fish population dynamics. *Nippon Suisan Gakkaishi*,
-55(2), 205-208.
+L_0)e^{-kt}\\ is the predicted length at age \\t\\.This reformulation
+reveals that Chen-Watanabe mortality is inversely proportional to body
+size - smaller (younger) individuals experience higher mortality. The
+ratio \\L\_\infty / L(t)\\ represents how far an individual is from
+asymptotic size, with mortality declining as this ratio approaches 1.The
+original CW model produces unrealistic mortality trajectories at old
+ages (approaching zero asymptotically). When `two_phase = TRUE`, the
+model adds a senescence component where mortality increases after
+maturity, more realistically capturing late-life dynamics. Mortality
+follows the standard CW model until age \\t_m\\ (a fraction of
+\\t\_{mat}\\), then transitions to a senescence model (Gompertz or
+logistic) that increases mortality toward \\t\_{max}\\. Chen, S., &
+Watanabe, S. (1989). Age dependence of natural mortality coefficient in
+fish population dynamics. *Nippon Suisan Gakkaishi*, 55(2), 205-208.
 [`compute_k_vb_equivalent`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)
 for deriving \\k\\ from any growth model,
 [`get_stochastic_mortality`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)

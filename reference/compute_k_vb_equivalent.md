@@ -31,7 +31,7 @@ compute_k_vb_equivalent(Linf, L0, Lmat, tmat, warn = TRUE)
 
 - warn:
 
-  Logical. If `TRUE` (default) warns when draws produce invalid \\k\\
+  Logical. If `TRUE` (default), warns when draws produce invalid \\k\\
   values.
 
 ## Value
@@ -59,23 +59,18 @@ parameterization, this computation exactly reproduces the fitted \\k\\.
 When the input is Gompertz or Logistic, it produces the VB-equivalent
 \\k\\ that encodes the same biological growth information.
 
-## Why This Matters
-
 The von Bertalanffy model tends to produce unstable \\L\_\infty\\
-estimates when data are sparse at older ages — a common situation in
+estimates when data are sparse at older ages - a common situation in
 elasmobranch research. Gompertz and Logistic models often provide more
 reliable fits in these cases. By deriving VB-equivalent \\k\\ from
-biological milestones, users can:
-
-- Select the growth model that best fits their data
-
-- Still use Chen-Watanabe mortality estimation
-
-- Maintain theoretical coherence (CW was derived under VB assumptions)
+biological milestones, users can select the growth model that best fits
+their data while still using Chen-Watanabe mortality estimation and
+maintaining theoretical coherence (since CW was derived under VB
+assumptions).
 
 ## See also
 
-[`M_chen_watanabe`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe.md)
+[`M_chen_watanabe_L0`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe_L0.md)
 for the L0-parameterized CW model,
 [`extract_growth_parameters`](https://brian-j-moe.github.io/vitalBayes/reference/extract_growth_parameters.md)
 for posterior extraction.
