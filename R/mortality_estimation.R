@@ -48,17 +48,13 @@
 #' When the input is Gompertz or Logistic, it produces the VB-equivalent
 #' \eqn{k} that encodes the same biological growth information.
 #'
-#' @section Why This Matters:
 #' The von Bertalanffy model tends to produce unstable \eqn{L_\infty} estimates
-#' when data are sparse at older ages — a common situation in elasmobranch
+#' when data are sparse at older ages - a common situation in elasmobranch
 #' research. Gompertz and Logistic models often provide more reliable fits in
 #' these cases. By deriving VB-equivalent \eqn{k} from biological milestones,
-#' users can:
-#' \itemize{
-#'   \item Select the growth model that best fits their data
-#'   \item Still use Chen-Watanabe mortality estimation
-#'   \item Maintain theoretical coherence (CW was derived under VB assumptions)
-#' }
+#' users can select the growth model that best fits their data while still
+#' using Chen-Watanabe mortality estimation and maintaining theoretical
+#' coherence (since CW was derived under VB assumptions).
 #'
 #' @param Linf Numeric vector. Asymptotic length posterior draws.
 #' @param L0 Numeric vector. Length at birth posterior draws.
@@ -798,14 +794,10 @@ scale_mortality <- function(M, M_target = NULL, tmax = NULL, p = 0.001) {
 #' estimates with appropriate (often narrower) uncertainty bounds compared to
 #' independent sampling of each parameter.
 #'
-#' @section Mortality Models:
-#' Three models are available:
-#' \itemize{
-#'   \item \strong{CW}: Chen-Watanabe (1989) with L0 parameterization and optional
-#'     two-phase senescence.
-#'   \item \strong{PW}: Peterson-Wroblewski (1984) weight-based allometric model.
-#'   \item \strong{L}: Lorenzen (1996/2022) in weight-based or growth-based form.
-#' }
+#' Three mortality models are available: CW (Chen-Watanabe 1989 with L0
+#' parameterization and optional two-phase senescence), PW (Peterson-Wroblewski
+#' 1984 weight-based allometric model), and L (Lorenzen 1996/2022 in weight-based
+#' or growth-based form).
 #'
 #' @param method Character. Mortality model: \code{"CW"}, \code{"PW"}, or
 #'   \code{"L"}.
@@ -844,14 +836,10 @@ scale_mortality <- function(M, M_target = NULL, tmax = NULL, p = 0.001) {
 #' @param print_plot Logical. Print plot on completion? Default \code{TRUE}.
 #' @param show_progress Logical. Show progress messages? Default \code{TRUE}.
 #'
-#' @return A list with components:
-#' \describe{
-#'   \item{Schedules}{\code{data.table} of all mortality schedules with
-#'     columns: \code{set_id}, \code{age}, \code{M}, \code{M_scaled}}
-#'   \item{Parameters}{\code{data.table} of sampled life history parameters}
-#'   \item{Summary}{\code{data.table} with median and 95\% CI by age}
-#'   \item{Plot}{\code{ggplot2} object}
-#' }
+#' @return A list with components: Schedules (data.table of all mortality
+#'   schedules with columns set_id, age, M, M_scaled), Parameters (data.table
+#'   of sampled life history parameters), Summary (data.table with median and
+#'   95 percent CI by age), and Plot (ggplot2 object).
 #'
 #' @examples
 #' \dontrun{
