@@ -6,6 +6,7 @@ template:
   assets: pkgdown/assets
   light-switch: false
   bslib:
+    # Force dark theme
     preset: "shiny"
     bg: "#0D0221"
     fg: "#F0E6FF"
@@ -15,6 +16,7 @@ template:
     info: "#00D9FF"
     warning: "#FF6B35"
     danger: "#FF1D8E"
+    # Typography
     base_font: {google: "Inter"}
     heading_font: {google: "Orbitron"}
     code_font: {google: "JetBrains Mono"}
@@ -23,6 +25,109 @@ template:
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    after_body: |
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // ===========================================
+        // Make hex logo clickable to redirect to homepage
+        // ===========================================
+        var logos = document.querySelectorAll('img[src*="logo"], img.logo, .logo img');
+        logos.forEach(function(logo) {
+          if (logo.parentElement.tagName === 'A') {
+            var parentLink = logo.parentElement;
+            if (!parentLink.href || parentLink.href === '#' || parentLink.href.endsWith('#')) {
+              var path = window.location.pathname;
+              if (path.includes('/articles/') || path.includes('/reference/')) {
+                parentLink.href = '../index.html';
+              } else {
+                parentLink.href = 'index.html';
+              }
+            }
+            return;
+          }
+
+          logo.style.cursor = 'pointer';
+          logo.addEventListener('click', function() {
+            var path = window.location.pathname;
+            if (path.includes('/articles/') || path.includes('/reference/')) {
+              window.location.href = '../index.html';
+            } else {
+              window.location.href = 'index.html';
+            }
+          });
+        });
+
+        // ===========================================
+        // Remove background from logo images
+        // ===========================================
+        logos.forEach(function(logo) {
+          logo.style.background = 'transparent';
+          logo.style.backgroundColor = 'transparent';
+          logo.style.border = 'none';
+          logo.style.boxShadow = 'none';
+          if (logo.parentElement) {
+            logo.parentElement.style.background = 'transparent';
+            logo.parentElement.style.backgroundColor = 'transparent';
+          }
+        });
+
+        // ===========================================
+        // Fix copy button functionality
+        // ===========================================
+        document.querySelectorAll('.btn-copy, .copy-btn, button[data-clipboard-copy], .code-copy-button, [class*="copy"]').forEach(function(btn) {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var codeBlock = this.closest('.sourceCode, .cell, pre, .highlight')?.querySelector('code, pre') ||
+                            this.parentElement?.querySelector('code, pre') ||
+                            this.closest('.sourceCode')?.querySelector('code');
+
+            if (codeBlock) {
+              var text = codeBlock.innerText || codeBlock.textContent;
+
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                  var originalText = btn.innerHTML;
+                  btn.innerHTML = '✓ Copied!';
+                  btn.style.color = '#4ECDC4';
+                  setTimeout(function() {
+                    btn.innerHTML = originalText;
+                    btn.style.color = '';
+                  }, 2000);
+                }).catch(function(err) {
+                  fallbackCopy(text, btn);
+                });
+              } else {
+                fallbackCopy(text, btn);
+              }
+            }
+          });
+        });
+
+        function fallbackCopy(text, btn) {
+          var textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            var originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Copied!';
+            btn.style.color = '#4ECDC4';
+            setTimeout(function() {
+              btn.innerHTML = originalText;
+              btn.style.color = '';
+            }, 2000);
+          } catch (err) {
+            console.error('Copy failed:', err);
+          }
+          document.body.removeChild(textarea);
+        }
+      });
+      </script>
 
 navbar:
   structure:
@@ -37,7 +142,7 @@ navbar:
           href: articles/Understanding_vitalBayes.html
         - text: "Partial Pooling for Imbalanced Sex Ratios"
           href: articles/partial_pooling.html
-        - text: "Chen-Watanabe Reparameterization"
+        - text: "Chen-Watanabe Reparameterization: From t₀ to L₀"
           href: articles/chen_watanabe_reparameterization.html
         - text: "-------"
         - text: "vitalBayes Functions"
@@ -49,9 +154,9 @@ navbar:
           href: articles/fit_bayesian_growth.html
         - text: "Model Diagnostics and Comparison"
           href: articles/model_diagnostics.html
-        - text: "Natural Mortality Estimation"
+        - text: "Natural Mortality Estimation with get_stochastic_mortality()"
           href: articles/mortality_estimation.html
-        - text: "Cohort Survival Simulation"
+        - text: "Cohort Survival Simulation with simulate_survivorship()"
           href: articles/survivorship_simulation.html
         - text: "Visualizing vitalBayes Results"
           href: articles/visualization.html
@@ -59,13 +164,11 @@ navbar:
 home:
   title: "vitalBayes"
   description: "From Birth to Mortality: Bayesian Vital Rates for Elasmobranchs"
-  sidebar:
-    structure: [links, license, citation, authors, dev]
 
 footer:
   structure:
-    left: developed_by
-    right: built_with
+    left:  developed_by
+    right:  built_with
 
 authors:
   Brian J Moe:

@@ -292,7 +292,7 @@ extract_growth_parameters <- function(
 # L0-Parameterized Chen-Watanabe Model
 # -----------------------------------------------------------------------------
 
-#' Chen-Watanabe Natural Mortality (L₀ Parameterization)
+#' Chen-Watanabe Natural Mortality (\eqn{L_0} Parameterization)
 #'
 #' @description
 #' Computes age-specific natural mortality using the Chen & Watanabe (1989)
@@ -339,7 +339,7 @@ extract_growth_parameters <- function(
 #' @param tmax Maximum age. If \code{NULL}, estimated from growth parameters
 #'   as age when \eqn{L(t) = } \code{Linf_factor} \eqn{\times L_\infty}.
 #' @param Linf_factor Numeric in (0, 1). Fraction of \eqn{L_\infty} used to
-#'   estimate \eqn{t_{max}}. Default 0.99 (age at 99\% of asymptotic length).
+#'   estimate \eqn{t_{max}}. Default 0.99 (age at 99% of asymptotic length).
 #' @param two_phase Logical. If \code{TRUE}, applies two-phase model with
 #'   late-life senescence. Default \code{TRUE}.
 #' @param tmat Age at maturity. Required if \code{two_phase = TRUE}.
@@ -717,7 +717,7 @@ M_lorenzen <- function(
 #' @param tmax Maximum age (required if \code{M_target} is a function or
 #'   \code{NULL}).
 #' @param p Probability of surviving to \code{tmax}. Used only if
-#'   \code{M_target = NULL}. Default 0.001 (0.1\% survival).
+#'   \code{M_target = NULL}. Default 0.001 (0.1% survival).
 #'
 #' @return Numeric vector of scaled mortality rates (same length as \code{M}).
 #'
