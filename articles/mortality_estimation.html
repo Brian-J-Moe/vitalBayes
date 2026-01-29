@@ -52,15 +52,15 @@
 <li><h6 class="dropdown-header" data-toc-skip>Understanding vitalBayes</h6></li>
     <li><a class="dropdown-item" href="../articles/Understanding_vitalBayes.html">The Statistics Behind Elasmobranch Life History Modeling</a></li>
     <li><a class="dropdown-item" href="../articles/partial_pooling.html">Partial Pooling for Imbalanced Sex Ratios</a></li>
-    <li><a class="dropdown-item" href="../articles/chen_watanabe_reparameterization.html">Chen-Watanabe Reparameterization</a></li>
+    <li><a class="dropdown-item" href="../articles/chen_watanabe_reparameterization.html">Chen-Watanabe Reparameterization: From t₀ to L₀</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>vitalBayes Functions</h6></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_birth.html">Estimating Birth Size with fit_bayesian_birth()</a></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_maturity.html">Maturity Ogive Estimation with fit_bayesian_maturity()</a></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_growth.html">Growth Modeling with fit_bayesian_growth()</a></li>
     <li><a class="dropdown-item" href="../articles/model_diagnostics.html">Model Diagnostics and Comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/mortality_estimation.html">Natural Mortality Estimation</a></li>
-    <li><a class="dropdown-item" href="../articles/survivorship_simulation.html">Cohort Survival Simulation</a></li>
+    <li><a class="dropdown-item" href="../articles/mortality_estimation.html">Natural Mortality Estimation with get_stochastic_mortality()</a></li>
+    <li><a class="dropdown-item" href="../articles/survivorship_simulation.html">Cohort Survival Simulation with simulate_survivorship()</a></li>
     <li><a class="dropdown-item" href="../articles/visualization.html">Visualizing vitalBayes Results</a></li>
   </ul>
 </li>
@@ -691,7 +691,7 @@ parameters from growth model posterior…”)</p>
 <span>  <span class="va">k_for_mort</span> <span class="op">&lt;-</span> <span class="va">params</span><span class="op">$</span><span class="va">k</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">par_draws</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span><span class="va">par_draws</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
 <span>  set_id     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">params</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  Linf       <span class="op">=</span> <span class="va">params</span><span class="op">$</span><span class="va">Linf</span>,</span>
 <span>  L0         <span class="op">=</span> <span class="va">params</span><span class="op">$</span><span class="va">L0</span>,</span>
@@ -729,7 +729,7 @@ message(“Generating parameters from specified distributions…”)</p>
 <span><span class="va">k_draws</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="va">k_draws</span>, <span class="fl">0.001</span><span class="op">)</span></span>
 <span><span class="va">tmat_draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="va">tmat_draws</span>, <span class="fl">0.1</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">par_draws</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span><span class="va">par_draws</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
 <span>  set_id     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">iter</span><span class="op">)</span>,</span>
 <span>  Linf       <span class="op">=</span> <span class="va">Linf_draws</span>,</span>
 <span>  L0         <span class="op">=</span> <span class="va">L0_draws</span>,</span>
@@ -817,7 +817,7 @@ nrow(par_draws))</p>
 <span>  <span class="va">M_scaled</span> <span class="op">&lt;-</span> <span class="va">M_raw</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">schedules_list</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span><span class="va">schedules_list</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
 <span>  set_id   <span class="op">=</span> <span class="va">p_i</span><span class="op">$</span><span class="va">set_id</span>,</span>
 <span>  age      <span class="op">=</span> <span class="va">ages</span>,</span>
 <span>  M_raw    <span class="op">=</span> <span class="va">M_raw</span>,</span>
@@ -889,7 +889,107 @@ summary_dt, Plot = mort_plot ) }</p>
 
 
 
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // ===========================================
+  // Make hex logo clickable to redirect to homepage
+  // ===========================================
+  var logos = document.querySelectorAll('img[src*="logo"], img.logo, .logo img');
+  logos.forEach(function(logo) {
+    if (logo.parentElement.tagName === 'A') {
+      var parentLink = logo.parentElement;
+      if (!parentLink.href || parentLink.href === '#' || parentLink.href.endsWith('#')) {
+        var path = window.location.pathname;
+        if (path.includes('/articles/') || path.includes('/reference/')) {
+          parentLink.href = '../index.html';
+        } else {
+          parentLink.href = 'index.html';
+        }
+      }
+      return;
+    }
 
+    logo.style.cursor = 'pointer';
+    logo.addEventListener('click', function() {
+      var path = window.location.pathname;
+      if (path.includes('/articles/') || path.includes('/reference/')) {
+        window.location.href = '../index.html';
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+  });
 
-  </body>
+  // ===========================================
+  // Remove background from logo images
+  // ===========================================
+  logos.forEach(function(logo) {
+    logo.style.background = 'transparent';
+    logo.style.backgroundColor = 'transparent';
+    logo.style.border = 'none';
+    logo.style.boxShadow = 'none';
+    if (logo.parentElement) {
+      logo.parentElement.style.background = 'transparent';
+      logo.parentElement.style.backgroundColor = 'transparent';
+    }
+  });
+
+  // ===========================================
+  // Fix copy button functionality
+  // ===========================================
+  document.querySelectorAll('.btn-copy, .copy-btn, button[data-clipboard-copy], .code-copy-button, [class*="copy"]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var codeBlock = this.closest('.sourceCode, .cell, pre, .highlight')?.querySelector('code, pre') ||
+                      this.parentElement?.querySelector('code, pre') ||
+                      this.closest('.sourceCode')?.querySelector('code');
+
+      if (codeBlock) {
+        var text = codeBlock.innerText || codeBlock.textContent;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() {
+            var originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Copied!';
+            btn.style.color = '#4ECDC4';
+            setTimeout(function() {
+              btn.innerHTML = originalText;
+              btn.style.color = '';
+            }, 2000);
+          }).catch(function(err) {
+            fallbackCopy(text, btn);
+          });
+        } else {
+          fallbackCopy(text, btn);
+        }
+      }
+    });
+  });
+
+  function fallbackCopy(text, btn) {
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      var originalText = btn.innerHTML;
+      btn.innerHTML = '✓ Copied!';
+      btn.style.color = '#4ECDC4';
+      setTimeout(function() {
+        btn.innerHTML = originalText;
+        btn.style.color = '';
+      }, 2000);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+    document.body.removeChild(textarea);
+  }
+});
+</script>
+</body>
 </html>

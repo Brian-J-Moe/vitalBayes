@@ -5,7 +5,11 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Orbitron-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Scale Mortality Schedule to Target Mean — scale_mortality"><meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Orbitron-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Scale Mortality Schedule to Target Mean — scale_mortality"><meta name="description" content="Rescales an age-specific mortality schedule so its mean equals a target
+value derived from empirical relationships (e.g., Hoenig, Then et al.) or
+survival probability constraints."><meta property="og:description" content="Rescales an age-specific mortality schedule so its mean equals a target
+value derived from empirical relationships (e.g., Hoenig, Then et al.) or
+survival probability constraints."><meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -26,15 +30,15 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><h6 class="dropdown-header" data-toc-skip>Understanding vitalBayes</h6></li>
     <li><a class="dropdown-item" href="../articles/Understanding_vitalBayes.html">The Statistics Behind Elasmobranch Life History Modeling</a></li>
     <li><a class="dropdown-item" href="../articles/partial_pooling.html">Partial Pooling for Imbalanced Sex Ratios</a></li>
-    <li><a class="dropdown-item" href="../articles/chen_watanabe_reparameterization.html">Chen-Watanabe Reparameterization</a></li>
+    <li><a class="dropdown-item" href="../articles/chen_watanabe_reparameterization.html">Chen-Watanabe Reparameterization: From t₀ to L₀</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>vitalBayes Functions</h6></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_birth.html">Estimating Birth Size with fit_bayesian_birth()</a></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_maturity.html">Maturity Ogive Estimation with fit_bayesian_maturity()</a></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_growth.html">Growth Modeling with fit_bayesian_growth()</a></li>
     <li><a class="dropdown-item" href="../articles/model_diagnostics.html">Model Diagnostics and Comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/mortality_estimation.html">Natural Mortality Estimation</a></li>
-    <li><a class="dropdown-item" href="../articles/survivorship_simulation.html">Cohort Survival Simulation</a></li>
+    <li><a class="dropdown-item" href="../articles/mortality_estimation.html">Natural Mortality Estimation with get_stochastic_mortality()</a></li>
+    <li><a class="dropdown-item" href="../articles/survivorship_simulation.html">Cohort Survival Simulation with simulate_survivorship()</a></li>
     <li><a class="dropdown-item" href="../articles/visualization.html">Visualizing vitalBayes Results</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -52,6 +56,9 @@
     </div>
 
     <div class="ref-description section level2">
+    <p>Rescales an age-specific mortality schedule so its mean equals a target
+value derived from empirical relationships (e.g., Hoenig, Then et al.) or
+survival probability constraints.</p>
     </div>
 
     <div class="section level2">
@@ -80,23 +87,42 @@ a function of tmax (e.g., <code>function(tmax) 4.899 * tmax^(-0.916)</code>), or
 
 <dt id="arg-p">p<a class="anchor" aria-label="anchor" href="#arg-p"></a></dt>
 <dd><p>Probability of surviving to <code>tmax</code>. Used only if
-<code>M_target = NULL</code>. Default 0.001 (0.1\<!-- % survival).} --></p></dd>
+<code>M_target = NULL</code>. Default 0.001 (0.1% survival).</p></dd>
 
-</dl><p>Numeric vector of scaled mortality rates (same length as <code>M</code>).
-
-
-Rescales an age-specific mortality schedule so its mean equals a target
-value derived from empirical relationships (e.g., Hoenig, Then et al.) or
-survival probability constraints.
-
-
-The scaling applies:
-$$M_{scaled}(t) = M_{raw}(t) \times \frac{M_{target}}{\bar{M}_{raw}}$$This preserves the <em>shape</em> of the age-specific mortality curve while
+</dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>Numeric vector of scaled mortality rates (same length as <code>M</code>).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The scaling applies:
+$$M_{scaled}(t) = M_{raw}(t) \times \frac{M_{target}}{\bar{M}_{raw}}$$</p>
+<p>This preserves the <em>shape</em> of the age-specific mortality curve while
 adjusting its overall level. Scaling is useful because theoretical mortality
 models often produce absolute levels that don't match empirical observations,
 but the relative age pattern may still be informative.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="va">M_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="M_chen_watanabe_L0.html">M_chen_watanabe_L0</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">30</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.1</span>,</span></span>
+<span class="r-in"><span>                             two_phase <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Scale to fixed target</span></span></span>
+<span class="r-in"><span><span class="va">M_scaled</span> <span class="op">&lt;-</span> <span class="fu">scale_mortality</span><span class="op">(</span><span class="va">M_raw</span>, M_target <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Scale using Then et al. (2015) relationship</span></span></span>
+<span class="r-in"><span><span class="va">then_2015</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tmax</span><span class="op">)</span> <span class="fl">4.899</span> <span class="op">*</span> <span class="va">tmax</span><span class="op">^</span><span class="op">(</span><span class="op">-</span><span class="fl">0.916</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">M_scaled</span> <span class="op">&lt;-</span> <span class="fu">scale_mortality</span><span class="op">(</span><span class="va">M_raw</span>, M_target <span class="op">=</span> <span class="va">then_2015</span>, tmax <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Scale to survival probability</span></span></span>
+<span class="r-in"><span><span class="va">M_scaled</span> <span class="op">&lt;-</span> <span class="fu">scale_mortality</span><span class="op">(</span><span class="va">M_raw</span>, M_target <span class="op">=</span> <span class="cn">NULL</span>, tmax <span class="op">=</span> <span class="fl">30</span>, p <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -113,7 +139,106 @@ but the relative age pattern may still be informative.</p>
 
 
 
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // ===========================================
+  // Make hex logo clickable to redirect to homepage
+  // ===========================================
+  var logos = document.querySelectorAll('img[src*="logo"], img.logo, .logo img');
+  logos.forEach(function(logo) {
+    if (logo.parentElement.tagName === 'A') {
+      var parentLink = logo.parentElement;
+      if (!parentLink.href || parentLink.href === '#' || parentLink.href.endsWith('#')) {
+        var path = window.location.pathname;
+        if (path.includes('/articles/') || path.includes('/reference/')) {
+          parentLink.href = '../index.html';
+        } else {
+          parentLink.href = 'index.html';
+        }
+      }
+      return;
+    }
 
+    logo.style.cursor = 'pointer';
+    logo.addEventListener('click', function() {
+      var path = window.location.pathname;
+      if (path.includes('/articles/') || path.includes('/reference/')) {
+        window.location.href = '../index.html';
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+  });
 
-  </body></html>
+  // ===========================================
+  // Remove background from logo images
+  // ===========================================
+  logos.forEach(function(logo) {
+    logo.style.background = 'transparent';
+    logo.style.backgroundColor = 'transparent';
+    logo.style.border = 'none';
+    logo.style.boxShadow = 'none';
+    if (logo.parentElement) {
+      logo.parentElement.style.background = 'transparent';
+      logo.parentElement.style.backgroundColor = 'transparent';
+    }
+  });
+
+  // ===========================================
+  // Fix copy button functionality
+  // ===========================================
+  document.querySelectorAll('.btn-copy, .copy-btn, button[data-clipboard-copy], .code-copy-button, [class*="copy"]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var codeBlock = this.closest('.sourceCode, .cell, pre, .highlight')?.querySelector('code, pre') ||
+                      this.parentElement?.querySelector('code, pre') ||
+                      this.closest('.sourceCode')?.querySelector('code');
+
+      if (codeBlock) {
+        var text = codeBlock.innerText || codeBlock.textContent;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() {
+            var originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Copied!';
+            btn.style.color = '#4ECDC4';
+            setTimeout(function() {
+              btn.innerHTML = originalText;
+              btn.style.color = '';
+            }, 2000);
+          }).catch(function(err) {
+            fallbackCopy(text, btn);
+          });
+        } else {
+          fallbackCopy(text, btn);
+        }
+      }
+    });
+  });
+
+  function fallbackCopy(text, btn) {
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      var originalText = btn.innerHTML;
+      btn.innerHTML = '✓ Copied!';
+      btn.style.color = '#4ECDC4';
+      setTimeout(function() {
+        btn.innerHTML = originalText;
+        btn.style.color = '';
+      }, 2000);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+    document.body.removeChild(textarea);
+  }
+});
+</script></body></html>
 

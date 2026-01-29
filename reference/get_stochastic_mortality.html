@@ -32,15 +32,15 @@ derivation of VB-equivalent \(k\) from any growth model fit."><meta property="og
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><h6 class="dropdown-header" data-toc-skip>Understanding vitalBayes</h6></li>
     <li><a class="dropdown-item" href="../articles/Understanding_vitalBayes.html">The Statistics Behind Elasmobranch Life History Modeling</a></li>
     <li><a class="dropdown-item" href="../articles/partial_pooling.html">Partial Pooling for Imbalanced Sex Ratios</a></li>
-    <li><a class="dropdown-item" href="../articles/chen_watanabe_reparameterization.html">Chen-Watanabe Reparameterization</a></li>
+    <li><a class="dropdown-item" href="../articles/chen_watanabe_reparameterization.html">Chen-Watanabe Reparameterization: From t₀ to L₀</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>vitalBayes Functions</h6></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_birth.html">Estimating Birth Size with fit_bayesian_birth()</a></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_maturity.html">Maturity Ogive Estimation with fit_bayesian_maturity()</a></li>
     <li><a class="dropdown-item" href="../articles/fit_bayesian_growth.html">Growth Modeling with fit_bayesian_growth()</a></li>
     <li><a class="dropdown-item" href="../articles/model_diagnostics.html">Model Diagnostics and Comparison</a></li>
-    <li><a class="dropdown-item" href="../articles/mortality_estimation.html">Natural Mortality Estimation</a></li>
-    <li><a class="dropdown-item" href="../articles/survivorship_simulation.html">Cohort Survival Simulation</a></li>
+    <li><a class="dropdown-item" href="../articles/mortality_estimation.html">Natural Mortality Estimation with get_stochastic_mortality()</a></li>
+    <li><a class="dropdown-item" href="../articles/survivorship_simulation.html">Cohort Survival Simulation with simulate_survivorship()</a></li>
     <li><a class="dropdown-item" href="../articles/visualization.html">Visualizing vitalBayes Results</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -273,7 +273,106 @@ or growth-based form).</p>
 
 
 
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // ===========================================
+  // Make hex logo clickable to redirect to homepage
+  // ===========================================
+  var logos = document.querySelectorAll('img[src*="logo"], img.logo, .logo img');
+  logos.forEach(function(logo) {
+    if (logo.parentElement.tagName === 'A') {
+      var parentLink = logo.parentElement;
+      if (!parentLink.href || parentLink.href === '#' || parentLink.href.endsWith('#')) {
+        var path = window.location.pathname;
+        if (path.includes('/articles/') || path.includes('/reference/')) {
+          parentLink.href = '../index.html';
+        } else {
+          parentLink.href = 'index.html';
+        }
+      }
+      return;
+    }
 
+    logo.style.cursor = 'pointer';
+    logo.addEventListener('click', function() {
+      var path = window.location.pathname;
+      if (path.includes('/articles/') || path.includes('/reference/')) {
+        window.location.href = '../index.html';
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+  });
 
-  </body></html>
+  // ===========================================
+  // Remove background from logo images
+  // ===========================================
+  logos.forEach(function(logo) {
+    logo.style.background = 'transparent';
+    logo.style.backgroundColor = 'transparent';
+    logo.style.border = 'none';
+    logo.style.boxShadow = 'none';
+    if (logo.parentElement) {
+      logo.parentElement.style.background = 'transparent';
+      logo.parentElement.style.backgroundColor = 'transparent';
+    }
+  });
+
+  // ===========================================
+  // Fix copy button functionality
+  // ===========================================
+  document.querySelectorAll('.btn-copy, .copy-btn, button[data-clipboard-copy], .code-copy-button, [class*="copy"]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var codeBlock = this.closest('.sourceCode, .cell, pre, .highlight')?.querySelector('code, pre') ||
+                      this.parentElement?.querySelector('code, pre') ||
+                      this.closest('.sourceCode')?.querySelector('code');
+
+      if (codeBlock) {
+        var text = codeBlock.innerText || codeBlock.textContent;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() {
+            var originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Copied!';
+            btn.style.color = '#4ECDC4';
+            setTimeout(function() {
+              btn.innerHTML = originalText;
+              btn.style.color = '';
+            }, 2000);
+          }).catch(function(err) {
+            fallbackCopy(text, btn);
+          });
+        } else {
+          fallbackCopy(text, btn);
+        }
+      }
+    });
+  });
+
+  function fallbackCopy(text, btn) {
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      var originalText = btn.innerHTML;
+      btn.innerHTML = '✓ Copied!';
+      btn.style.color = '#4ECDC4';
+      setTimeout(function() {
+        btn.innerHTML = originalText;
+        btn.style.color = '';
+      }, 2000);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+    document.body.removeChild(textarea);
+  }
+});
+</script></body></html>
 
