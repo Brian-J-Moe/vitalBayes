@@ -2985,3 +2985,145 @@ mjx-msubsup mjx-c {
     top: auto !important;
   }
 }
+
+// =============================================================================
+// FIX SIDEBAR LAYOUT - Keep sidebar on the right side at ALL viewport sizes
+// =============================================================================
+
+// Target the actual pkgdown structure more broadly
+// The key is to prevent flex-wrap at larger screens
+
+// Main layout row - anywhere on the site
+main > .row,
+.contents > .row,
+main .row.g-5,
+.container > .row,
+.container-fluid > .row {
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+// At medium screens and up, never wrap
+@media (min-width: 768px) {
+  main > .row,
+  .contents > .row,
+  main .row.g-5,
+  .container > .row,
+  .container-fluid > .row {
+    flex-wrap: nowrap !important;
+  }
+
+  // Main content area - let it grow but not push sidebar
+  .col-md-9,
+  main > .row > .col-md-9,
+  main > .row > div:first-child {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;  // Critical: allows shrinking below content width
+    max-width: calc(100% - 280px) !important;
+  }
+
+  // Sidebar - fixed width, sticky
+  .col-md-3,
+  main > .row > .col-md-3,
+  main > .row > aside,
+  main > .row > div:last-child:not(:first-child) {
+    flex: 0 0 260px !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 300px !important;
+    position: sticky !important;
+    top: 90px !important;
+    align-self: flex-start !important;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+}
+
+// Large screens - ensure container doesn't constrain layout
+@media (min-width: 1200px) {
+  main > .row,
+  .contents > .row {
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+  }
+
+  // Prevent Bootstrap container max-width from causing issues
+  main.container,
+  .container {
+    max-width: 1400px !important;
+  }
+}
+
+// Extra large screens (maximized windows)
+@media (min-width: 1400px) {
+  main > .row,
+  .contents > .row,
+  main .row.g-5 {
+    flex-wrap: nowrap !important;
+  }
+
+  main.container,
+  .container {
+    max-width: 1600px !important;
+  }
+
+  .col-md-9,
+  main > .row > .col-md-9 {
+    flex: 1 1 0% !important;
+    max-width: calc(100% - 300px) !important;
+  }
+
+  .col-md-3,
+  main > .row > .col-md-3,
+  main > .row > aside {
+    flex: 0 0 280px !important;
+    width: 280px !important;
+  }
+}
+
+// Ultra-wide screens (2K, 4K displays)
+@media (min-width: 1920px) {
+  main.container,
+  .container {
+    max-width: 1800px !important;
+  }
+}
+
+// Mobile - stack vertically
+@media (max-width: 767px) {
+  main > .row,
+  .contents > .row {
+    flex-wrap: wrap !important;
+    flex-direction: column !important;
+  }
+
+  .col-md-9,
+  .col-md-3 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .col-md-3 {
+    position: relative !important;
+    top: auto !important;
+    margin-top: 2rem;
+  }
+}
+
+// Scrollbar styling for sidebar
+.col-md-3,
+aside {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba($sunset-purple, 0.2);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba($vital-pink, 0.4);
+    border-radius: 2px;
+  }
+}

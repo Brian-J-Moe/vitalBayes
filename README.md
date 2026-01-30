@@ -61,7 +61,7 @@ All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the g
 ## Installation
 
 vitalBayes requires a working C++ toolchain for Stan. See the 
-[RStan Getting Started Guide](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) 
+[Getting started with CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) 
 for setup instructions.
 
 ```r
