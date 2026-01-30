@@ -70,7 +70,7 @@ birth_fit <- fit_bayesian_birth(
  free_swimming_lts = growth_data[embryo == FALSE, fl]
 )
 
-# Basic plot
+# Basic birth ogive plot
 plot_birth_ogive(
  fit = birth_fit,
  embryo_lengths = growth_data[embryo == TRUE, fl],
@@ -109,7 +109,7 @@ L50_fit <- fit_bayesian_maturity(
  use_pooling = TRUE
 )
 
-# Basic usage
+# Basic maturity ogive plot
 plot_maturity_ogive(
  fit = L50_fit,
  type = "length",
@@ -120,7 +120,7 @@ plot_maturity_ogive(
 )
 ```
 
-### Key Arguments
+### Maturity Ogive Arguments
 
 ``` r
 plot_maturity_ogive(
@@ -205,7 +205,7 @@ growth_fit <- fit_bayesian_growth(
  L50_fit = L50_fit
 )
 
-# Basic plot
+# Basic growth curve plot
 plot_growth_curve(
  fit = growth_fit,
  data = gdata,
@@ -215,7 +215,7 @@ plot_growth_curve(
 )
 ```
 
-### Key Arguments
+### Growth Curve Arguments
 
 ``` r
 plot_growth_curve(

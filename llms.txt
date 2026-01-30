@@ -38,10 +38,10 @@ vitalBayes addresses these challenges through:
 
 ## Installation
 
-vitalBayes requires a working C++ toolchain for Stan. See the [RStan
-Getting Started
-Guide](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for
-setup instructions.
+vitalBayes requires a working C++ toolchain for Stan. See the [Getting
+started with
+CmdStanR](https://mc-stan.org/cmdstanr/articles/cmdstanr.html) for setup
+instructions.
 
 ``` r
 # Install dependencies
