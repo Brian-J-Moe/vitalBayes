@@ -8,52 +8,38 @@ M_peterson_wroblewski(
   age,
   Linf,
   L0,
-  k,
+  Lmat,
+  tmat,
   lw_fun,
   growth_model = c("vb", "gompertz", "logistic")
 )
 }
 \arguments{
-\item{age}{Numeric vector of ages at which to compute mortality.}
+\item{age}{Numeric vector of ages.}
 
 \item{Linf}{Asymptotic length.}
 
 \item{L0}{Length at birth.}
 
-\item{k}{Growth coefficient (model-specific, not necessarily VB).}
+\item{Lmat}{Length at maturity.}
 
-\item{lw_fun}{Function mapping length to weight in grams: \code{lw_fun(L)}.}
+\item{tmat}{Age at maturity.}
 
-\item{growth_model}{Character. Growth model for length prediction:
-\code{"vb"}, \code{"gompertz"}, or \code{"logistic"}. Default \code{"vb"}.}
+\item{lw_fun}{Length-weight function: \code{lw_fun(L)} returns weight in grams.}
+
+\item{growth_model}{Character. Growth model for L(t).}
 }
 \value{
 Numeric vector of instantaneous mortality rates.
 }
 \description{
-Computes weight-based natural mortality following Peterson & Wroblewski
-(1984). Mortality scales allometrically with body weight.
+Computes weight-based natural mortality following Peterson & Wroblewski (1984).
 }
 \details{
-The model expresses mortality as a power function of body weight:
 \deqn{M(W) = 1.92 \cdot W^{-0.25}}
-where \eqn{W} is body weight in grams.
 
-This model is growth-model-agnostic: it only requires predicted body weight
-at age, which can be derived from any growth model via a length-weight
-relationship.
-}
-\examples{
-\dontrun{
-lw_fun <- function(L) 0.0001 * L^3.1  # Length in cm, weight in g
-ages <- seq(0.5, 30, by = 0.5)
-
-M <- M_peterson_wroblewski(
-  age = ages, Linf = 100, L0 = 25, k = 0.1,
-  lw_fun = lw_fun, growth_model = "gompertz"
-)
-}
-
+\strong{Warning}: This model was calibrated on teleost fishes and may
+produce biologically implausible mortality rates for elasmobranchs.
 }
 \references{
 Peterson, I., & Wroblewski, J. S. (1984). Mortality rate of fishes in the

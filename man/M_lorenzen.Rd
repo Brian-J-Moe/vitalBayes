@@ -8,55 +8,50 @@ M_lorenzen(
   age,
   Linf,
   L0,
-  k,
+  Lmat,
+  tmat,
   lw_fun = NULL,
   weight_based = FALSE,
   growth_model = c("vb", "gompertz", "logistic"),
-  sample_params = FALSE
+  sample_params = TRUE
 )
 }
 \arguments{
-\item{age}{Numeric vector of ages at which to compute mortality.}
+\item{age}{Numeric vector of ages.}
 
 \item{Linf}{Asymptotic length.}
 
 \item{L0}{Length at birth.}
 
-\item{k}{Growth coefficient. For \code{weight_based = FALSE}, should be
-VB-equivalent \eqn{k} (use \code{\link{compute_k_vb_equivalent}}).}
+\item{Lmat}{Length at maturity.}
 
-\item{lw_fun}{Function mapping length to weight (required if
-\code{weight_based = TRUE}).}
+\item{tmat}{Age at maturity.}
 
-\item{weight_based}{Logical. If \code{TRUE}, uses weight-based formulation.
-If \code{FALSE} (default), uses growth-based formulation.}
+\item{lw_fun}{Length-weight function (required if weight_based = TRUE).}
 
-\item{growth_model}{Character. Growth model for length prediction (only
-used for weight-based formulation): \code{"vb"}, \code{"gompertz"}, or
-\code{"logistic"}.}
+\item{weight_based}{Use weight-based formulation?}
 
-\item{sample_params}{Logical. If \code{TRUE}, samples allometric parameters
-from their distributions. If \code{FALSE}, uses mean values.}
+\item{growth_model}{Growth model for L(t).}
+
+\item{sample_params}{Sample parameters from their distributions?}
 }
 \value{
 Numeric vector of instantaneous mortality rates.
 }
 \description{
 Computes size-dependent natural mortality following Lorenzen (1996, 2022).
-Supports both weight-based and growth-based formulations.
 }
 \details{
 Two formulations are available:
 
-Weight-based (Lorenzen 1996):
+\strong{Weight-based} (Lorenzen 1996):
 \deqn{M(W) = \alpha \cdot W^{\beta}}
-where \eqn{\alpha \sim N(3.69, 0.502)} and \eqn{\beta \sim N(-0.305, 0.029)}.
 
-Growth-based (Lorenzen 2022):
+\strong{Growth-based} (Lorenzen 2022):
 \deqn{\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)}
-This formulation was calibrated using von Bertalanffy parameters, so
-\eqn{k} should be the VB-equivalent \eqn{k} when using fits from other
-growth models.
+
+For the growth-based formulation, M_inf (VB-derived) is used as k for
+consistency with the Chen-Watanabe framework.
 }
 \references{
 Lorenzen, K. (1996). The relationship between body weight and natural
