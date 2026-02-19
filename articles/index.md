@@ -12,8 +12,8 @@
   fit_bayesian_maturity()](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md):
 - [Model Diagnostics and
   Comparison](https://brian-j-moe.github.io/vitalBayes/articles/model_diagnostics.md):
-- [UNKNOWN
-  TITLE](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md):
+- [Age-Specific Natural Mortality with
+  get_stochastic_mortality()](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md):
 - [Partial Pooling for Imbalanced Sex
   Ratios](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md):
 - [Cohort Survival Simulation with
