@@ -35,7 +35,7 @@ transformed data {
 }
 
 parameters {
-  real<lower=0> delta_Linf;               // Length difference above Linf
+  real<lower=0> delta_Linf;               // Length difference above Lmax
   real log_L0;                            // Log length at birth
   real log_k;                             // Log growth rate
   real<lower=0> sigma;                    // Observation error (log scale)

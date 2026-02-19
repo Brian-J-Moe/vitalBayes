@@ -39,7 +39,7 @@ transformed data {
 }
 
 parameters {
-  real<lower=0> delta_Linf;               // Length difference above Linf
+  real<lower=0> delta_Linf;               // Length difference above Lmax
   real log_L0;                            // Log length at birth
   real log_Lmat;                          // Log length at maturity
   real log_tmat;                          // Log age at maturity
@@ -110,7 +110,7 @@ transformed parameters {
 }
 
 model {
-  // Priors on log scale
+  // Priors
   delta_Linf ~ gamma(alpha_delta, beta_delta);
   log_L0 ~ normal(prior_L0_mu, prior_L0_sigma);
   log_Lmat ~ normal(prior_Lmat_mu, prior_Lmat_sigma);

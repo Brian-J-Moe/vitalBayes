@@ -47,7 +47,8 @@
 #' The \code{pool_maturity} argument controls this behavior:
 #' \itemize{
 #'   \item \code{pool_maturity = FALSE} (default when vitalBayes maturity fits provided):
-#'     Only \eqn{L_\infty} and \eqn{L_0} are pooled hierarchically. Maturity
+#'     \eqn{L_\infty} uses soft pairwise shrinkage on the log scale and
+#'     \eqn{L_0} is pooled hierarchically. Maturity
 #'     parameters (\eqn{L_{mat}}, \eqn{t_{mat}}) use direct sex-specific priors
 #'     from the upstream fits, preserving biological signal without risk of
 #'     double-pooling.
@@ -67,9 +68,14 @@
 #'
 #' Priors are constructed using coefficient of variation (CV) arguments:
 #'
-#' **Linf:** Prior mean defaults to \code{1.05 * Lmax}, where Lmax is the maximum
-#' observed length (including incomplete cases without age data). The prior SD
-#' is \code{mean * CV_Linf}. Users can override Lmax via the \code{Lmax} argument.
+#' **Linf:** Uses a delta-gamma parameterization to avoid boundary pile-up
+#' near Lmax. Internally, \eqn{\delta = L_\infty - L_{max}} is estimated with
+#' \eqn{\delta \sim \text{Gamma}(\alpha, \beta)}, where
+#' \eqn{\alpha = 1/\text{CV}^2} and \eqn{\beta = 1/(\mu_\delta \cdot \text{CV}^2)}.
+#' The prior mean for \eqn{\delta} defaults to \code{Lmax * (Linf_multiplier - 1)}.
+#' For two-sex models with pooling, between-sex shrinkage is applied via a soft
+#' penalty on \eqn{\log(L_\infty)}, preserving the proportional interpretation
+#' of \code{prior_tau}.
 #'
 #' **k:** Prior mean is estimated from the data by solving the growth equation
 #' for k at each observation and averaging. Prior SD is \code{mean * CV_k}.
@@ -113,7 +119,9 @@
 #'   or length-2 vector for sex-specific values c(female, male).
 #' @param Linf_multiplier Numeric. Multiplier for Lmax to get Linf prior mean.
 #'   Default 1.05 (i.e., 5% larger than observed max).
-#' @param CV_Linf Coefficient of variation for Linf prior. Default 0.2.
+#' @param CV_Linf Coefficient of variation for Linf delta-gamma prior. Controls
+#'   the shape of the Gamma distribution on \eqn{\delta = L_\infty - L_{max}}.
+#'   Default 0.2.
 #' @param CV_k Coefficient of variation for k prior. Default 0.5.
 #' @param CV_L0 Coefficient of variation for L0 prior (if not from birth fit). Default 0.3.
 #' @param CV_Lmat Coefficient of variation for Lmat prior (if not from maturity fit). Default 0.2.
@@ -495,18 +503,20 @@ fit_bayesian_growth <- function(
   # Build Priors
   # =========================================================================
 
-  # --- Linf priors ---
+  # --- Linf priors (delta-gamma parameterization) ---
+  # Linf = Lmax + delta, where delta ~ Gamma(alpha, beta)
+  # This avoids boundary pile-up when the posterior favors Linf near Lmax
   mean_Linf_nat <- Lmax_vec * Linf_multiplier
-  sd_Linf_nat <- mean_Linf_nat * CV_Linf
+  mu_delta    <- Lmax_vec * (Linf_multiplier - 1)
+  alpha_delta <- rep(1 / CV_Linf^2, n_sex)
+  beta_delta  <- 1 / (mu_delta * CV_Linf^2)
+
   message("Linf prior: mean = ", paste(round(mean_Linf_nat, 1), collapse = ", "),
-          " cm (", Linf_multiplier, " x Lmax, CV = ", CV_Linf, ")")
-
-  Linf_priors <- lapply(1:n_sex, function(s) {
-    .natural_to_log_prior(mean_Linf_nat[s], sd_Linf_nat[s])
-  })
-
-  # Linf lower bounds = observed Lmax
-  Linf_lower <- Lmax_vec
+          " cm (", Linf_multiplier, " x Lmax, CV = ", CV_Linf, ")",
+          "\n  -> delta-gamma: E[delta] = ",
+          paste(round(mu_delta, 2), collapse = ", "),
+          " cm, alpha = ", round(alpha_delta[1], 2),
+          ", beta = ", paste(round(beta_delta, 4), collapse = ", "))
 
   # --- L0 priors ---
   if (!is.null(birth_stanfit)) {
@@ -629,9 +639,9 @@ fit_bayesian_growth <- function(
         robust      = as.integer(robust),
         use_pooling = as.integer(use_pooling),
 
-        prior_Linf_mu    = sapply(Linf_priors, `[[`, "log_mean"),
-        prior_Linf_sigma = sapply(Linf_priors, `[[`, "log_sd"),
-        Linf_lower       = Linf_lower,
+        Lmax        = Lmax_vec,
+        alpha_delta = alpha_delta,
+        beta_delta  = beta_delta,
 
         prior_L0_mu    = sapply(L0_priors, `[[`, "log_mean"),
         prior_L0_sigma = sapply(L0_priors, `[[`, "log_sd"),
@@ -658,9 +668,9 @@ fit_bayesian_growth <- function(
         which_model = which_model,
         robust      = as.integer(robust),
 
-        prior_Linf_mu    = Linf_priors[[1]]$log_mean,
-        prior_Linf_sigma = Linf_priors[[1]]$log_sd,
-        Linf_lower       = Linf_lower[1],
+        Lmax        = Lmax_vec[1],
+        alpha_delta = alpha_delta[1],
+        beta_delta  = beta_delta[1],
 
         prior_L0_mu    = L0_priors[[1]]$log_mean,
         prior_L0_sigma = L0_priors[[1]]$log_sd,
@@ -690,9 +700,9 @@ fit_bayesian_growth <- function(
         use_pooling = as.integer(use_pooling),
         pool_maturity = as.integer(pool_maturity),
 
-        prior_Linf_mu    = sapply(Linf_priors, `[[`, "log_mean"),
-        prior_Linf_sigma = sapply(Linf_priors, `[[`, "log_sd"),
-        Linf_lower       = Linf_lower,
+        Lmax        = Lmax_vec,
+        alpha_delta = alpha_delta,
+        beta_delta  = beta_delta,
 
         prior_L0_mu    = sapply(L0_priors, `[[`, "log_mean"),
         prior_L0_sigma = sapply(L0_priors, `[[`, "log_sd"),
@@ -723,9 +733,9 @@ fit_bayesian_growth <- function(
         which_model = which_model,
         robust      = as.integer(robust),
 
-        prior_Linf_mu    = Linf_priors[[1]]$log_mean,
-        prior_Linf_sigma = Linf_priors[[1]]$log_sd,
-        Linf_lower       = Linf_lower[1],
+        Lmax        = Lmax_vec[1],
+        alpha_delta = alpha_delta[1],
+        beta_delta  = beta_delta[1],
 
         prior_L0_mu    = L0_priors[[1]]$log_mean,
         prior_L0_sigma = L0_priors[[1]]$log_sd,
@@ -773,27 +783,26 @@ fit_bayesian_growth <- function(
         ord <- .safe_L0_Linf(
           L0         = mean_L0_nat,
           Linf       = mean_Linf_nat,
-          Linf_lower = Linf_lower,
+          Linf_lower = Lmax_vec,
           margin     = 0.5,
           eps        = 1e-6
         )
 
         tau0 <- 0.1
 
-        mu_Linf <- mean(log(ord$Linf))
         mu_L0   <- mean(log(ord$L0))
         mu_k    <- mean(log(k0))
 
         list(
-          mu_Linf  = mu_Linf,
+          delta_Linf = pmax(ord$Linf - Lmax_vec, 0.1),
+          tau_Linf = tau0,
+
           mu_L0    = mu_L0,
           mu_k     = mu_k,
 
-          tau_Linf = tau0,
           tau_L0   = tau0,
           tau_k    = tau0,
 
-          raw_Linf = if (use_pooling) .safe_raw_from_target(log(ord$Linf), mu_Linf, tau0) else log(ord$Linf),
           raw_L0   = if (use_pooling) .safe_raw_from_target(log(ord$L0),   mu_L0,   tau0) else log(ord$L0),
           raw_k    = if (use_pooling) .safe_raw_from_target(log(k0),        mu_k,    tau0) else log(k0),
 
@@ -813,13 +822,13 @@ fit_bayesian_growth <- function(
         ord <- .safe_L0_Linf(
           L0         = mean_L0_nat[1],
           Linf       = mean_Linf_nat[1],
-          Linf_lower = Linf_lower[1],
+          Linf_lower = Lmax_vec[1],
           margin     = 0.5,
           eps        = 1e-6
         )
 
         list(
-          log_Linf = log(ord$Linf),
+          delta_Linf = max(ord$Linf - Lmax_vec[1], 0.1),
           log_L0   = log(ord$L0),
           log_k    = log(k0),
           sigma    = 0.15,
@@ -837,11 +846,10 @@ fit_bayesian_growth <- function(
           L0         = mean_L0_nat,
           Lmat       = mean_Lmat_nat,
           Linf       = mean_Linf_nat,
-          Linf_lower = Linf_lower,
+          Linf_lower = Lmax_vec,
           eps        = 0.5
         )
 
-        mu_Linf <- mean(log(ord$Linf))
         mu_L0   <- mean(log(ord$L0))
         mu_Lmat <- mean(log(ord$Lmat))
         mu_tmat <- mean(log(pmax(mean_tmat_nat, 1e-3)))
@@ -858,17 +866,17 @@ fit_bayesian_growth <- function(
         }
 
         list(
-          mu_Linf  = mu_Linf,
+          delta_Linf = pmax(ord$Linf - Lmax_vec, 0.1),
+          tau_Linf = tau0,
+
           mu_L0    = mu_L0,
           mu_Lmat  = mu_Lmat,
           mu_tmat  = mu_tmat,
 
-          tau_Linf = tau0,
           tau_L0   = tau0,
           tau_Lmat = tau0,
           tau_tmat = tau0,
 
-          raw_Linf = if (use_pooling) .safe_raw_from_target(log(ord$Linf),  mu_Linf, tau0) else log(ord$Linf),
           raw_L0   = if (use_pooling) .safe_raw_from_target(log(ord$L0),    mu_L0,   tau0) else log(ord$L0),
           raw_Lmat = raw_Lmat_init,
           raw_tmat = raw_tmat_init,
@@ -879,7 +887,7 @@ fit_bayesian_growth <- function(
 
       } else {
         list(
-          log_Linf = log(mean_Linf_nat[1]),
+          delta_Linf = max(mean_Linf_nat[1] - Lmax_vec[1], 0.1),
           log_L0   = log(mean_L0_nat[1]),
           log_Lmat = log(mean_Lmat_nat[1]),
           log_tmat = log(mean_tmat_nat[1]),
