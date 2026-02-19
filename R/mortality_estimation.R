@@ -2,358 +2,321 @@
 # vitalBayes Mortality Estimation Functions
 # =============================================================================
 #
-# This module implements natural mortality estimation with key innovations:
+# This module implements natural mortality estimation using biological
+# milestones (Linf, L0, Lmat, tmat) with model-dependent G(t).
 #
-#   1. L0-PARAMETERIZED CHEN-WATANABE: Eliminates dependence on t0, using
-#      observable birth size instead. This aligns with the vitalBayes philosophy
-#      of parameterizing models with biologically meaningful quantities.
+# Core mortality formula:
+#   M(t) = M_inf / G(t)
 #
-#   2. GROWTH-MODEL-AGNOSTIC k DERIVATION: Computes VB-equivalent k from
-#      (Linf, L0, Lmat, tmat) — parameters estimated by ALL growth models.
-#      Users can fit whichever growth model best describes their data (VB,
-#      Gompertz, or Logistic) and still use Chen-Watanabe mortality estimation.
+# where:
+#   M_inf = (1/tmat) * ln[(Linf - L0)/(Linf - Lmat)]  (VB-derived, unified anchor)
+#   G(t) = L(t)/Linf  (computed using native growth model trajectory)
 #
-#   3. JOINT POSTERIOR SAMPLING: Preserves correlations between growth
-#      parameters when propagating uncertainty to mortality estimates.
+# Supported mortality models:
+#   - CW: Chen-Watanabe (1989) with optional two-phase senescence
+#   - PW: Peterson-Wroblewski (1984) weight-based
+#   - L:  Lorenzen (1996/2022) weight- or growth-based
 #
 # =============================================================================
 
 
-# -----------------------------------------------------------------------------
-# Core Helper: Compute VB-Equivalent k from Maturity Parameters
-# -----------------------------------------------------------------------------
+# =============================================================================
+# SECTION 1: CORE HELPER FUNCTIONS
+# =============================================================================
 
-#' Compute Von Bertalanffy-Equivalent Growth Coefficient
+
+#' Compute Native Growth Coefficient for a Specific Model
 #'
 #' @description
-#' Derives the von Bertalanffy growth coefficient \eqn{k} from biological
-#' milestones \eqn{(L_\infty, L_0, L_{mat}, t_{mat})}. This enables Chen-Watanabe
-#' mortality estimation using posteriors from \emph{any} growth model (von
-#' Bertalanffy, Gompertz, or Logistic).
+#' Derives the growth coefficient \eqn{k} for a specified growth model from
+#' biological milestones \eqn{(L_\infty, L_0, L_{mat}, t_{mat})}.
 #'
 #' @details
-#' The key insight is that while the three growth models use different functional
-#' forms and produce different numerical \eqn{k} values, they all estimate the
-#' same underlying biological quantities: asymptotic length, birth size, and
-#' maturity milestones. The VB-equivalent \eqn{k} is computed as:
+#' The native k formulas for each model are:
 #'
-#' \deqn{k_{VB}^{equiv} = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
+#' \strong{Von Bertalanffy:}
+#' \deqn{k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
 #'
-#' This is the growth coefficient that would produce a von Bertalanffy curve
-#' passing through the biological milestones \eqn{(0, L_0)} and
-#' \eqn{(t_{mat}, L_{mat})} with asymptote \eqn{L_\infty}.
+#' \strong{Gompertz:}
+#' \deqn{k = -\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_{mat})}{\ln(L_\infty / L_0)}\right)}
 #'
-#' When the input growth fit is von Bertalanffy with maturity-based
-#' parameterization, this computation exactly reproduces the fitted \eqn{k}.
-#' When the input is Gompertz or Logistic, it produces the VB-equivalent
-#' \eqn{k} that encodes the same biological growth information.
+#' \strong{Logistic:}
+#' \deqn{k = -\frac{1}{t_{mat}} \ln\left(\frac{L_\infty/L_{mat} - 1}{L_\infty/L_0 - 1}\right)}
 #'
-#' The von Bertalanffy model tends to produce unstable \eqn{L_\infty} estimates
-#' when data are sparse at older ages - a common situation in elasmobranch
-#' research. Gompertz and Logistic models often provide more reliable fits in
-#' these cases. By deriving VB-equivalent \eqn{k} from biological milestones,
-#' users can select the growth model that best fits their data while still
-#' using Chen-Watanabe mortality estimation and maintaining theoretical
-#' coherence (since CW was derived under VB assumptions).
+#' @param Linf Numeric vector. Asymptotic length.
+#' @param L0 Numeric vector. Length at birth.
+#' @param Lmat Numeric vector. Length at maturity.
+#' @param tmat Numeric vector. Age at maturity.
+#' @param growth_model Character. Growth model: \code{"vb"}, \code{"gompertz"},
+#'   or \code{"logistic"}.
+#' @param warn Logical. Warn on invalid values?
 #'
-#' @param Linf Numeric vector. Asymptotic length posterior draws.
-#' @param L0 Numeric vector. Length at birth posterior draws.
-#' @param Lmat Numeric vector. Length at maturity posterior draws.
-#' @param tmat Numeric vector. Age at maturity posterior draws.
-#' @param warn Logical. If \code{TRUE} (default), warns when draws produce
-#'   invalid \eqn{k} values.
-#'
-#' @return Numeric vector of VB-equivalent \eqn{k} values. Invalid values
-#'   (from non-positive arguments to log) are returned as \code{NA}.
+#' @return Numeric vector of native k values. Invalid values returned as NA.
 #'
 #' @examples
-#' \dontrun{
-#' # Extract from any growth model posterior
-#' draws <- extract_growth_parameters(growth_fit, sex = 1)
-#' k_vb <- compute_k_vb_equivalent(
-#'   Linf = draws$Linf,
-#'   L0   = draws$L0,
-#'   Lmat = draws$Lmat,
-#'   tmat = draws$tmat
-#' )
-#'
-#' # Direct specification for sensitivity analysis
-#' k_vb <- compute_k_vb_equivalent(
-#'   Linf = rnorm(1000, 100, 5),
-#'   L0   = rnorm(1000, 25, 2),
-#'   Lmat = rnorm(1000, 70, 3),
-#'   tmat = rnorm(1000, 10, 1)
-#' )
-#' }
-#'
-#' @seealso \code{\link{M_chen_watanabe_L0}} for the L0-parameterized CW model,
-#'   \code{\link{extract_growth_parameters}} for posterior extraction.
+#' k_vb <- compute_k_native(Linf = 126, L0 = 35, Lmat = 83, tmat = 47,
+#'                          growth_model = "vb")
+#' k_gomp <- compute_k_native(Linf = 108, L0 = 35, Lmat = 83, tmat = 47,
+#'                            growth_model = "gompertz")
 #'
 #' @export
-compute_k_vb_equivalent <- function(Linf, L0, Lmat, tmat, warn = TRUE) {
+compute_k_native <- function(Linf, L0, Lmat, tmat,
+                             growth_model = c("vb", "gompertz", "logistic"),
+                             warn = TRUE) {
 
+  growth_model <- match.arg(growth_model)
 
-  # Validate inputs
+  n <- max(length(Linf), length(L0), length(Lmat), length(tmat))
+  Linf <- rep_len(Linf, n)
+  L0   <- rep_len(L0, n)
+  Lmat <- rep_len(Lmat, n)
+  tmat <- rep_len(tmat, n)
 
-  n <- length(Linf)
-  if (!all(c(length(L0), length(Lmat), length(tmat)) == n)) {
-    stop("All input vectors must have the same length.", call. = FALSE)
+  k <- switch(
+    growth_model,
+    "vb" = {
+      numerator   <- Linf - L0
+      denominator <- Linf - Lmat
+      invalid <- numerator <= 0 | denominator <= 0 | tmat <= 0
+      k_out <- (1 / tmat) * log(numerator / denominator)
+      k_out[invalid] <- NA_real_
+      k_out
+    },
+    "gompertz" = {
+      ratio_mat <- Linf / Lmat
+      ratio_0   <- Linf / L0
+      invalid <- ratio_mat <= 1 | ratio_0 <= 1 | tmat <= 0
+      k_out <- -(1 / tmat) * log(log(ratio_mat) / log(ratio_0))
+      k_out[invalid] <- NA_real_
+      k_out
+    },
+    "logistic" = {
+      term_mat <- Linf / Lmat - 1
+      term_0   <- Linf / L0 - 1
+      invalid <- term_mat <= 0 | term_0 <= 0 | tmat <= 0
+      k_out <- -(1 / tmat) * log(term_mat / term_0)
+      k_out[invalid] <- NA_real_
+      k_out
+    }
+  )
+
+  if (warn && any(is.na(k))) {
+    n_invalid <- sum(is.na(k))
+    warning(sprintf("%d of %d values produced invalid k.", n_invalid, n), call. = FALSE)
   }
-
-  # Compute VB-equivalent k: k = (1/tmat) * ln((Linf - L0) / (Linf - Lmat))
-  numerator   <- Linf - L0
-  denominator <- Linf - Lmat
-
-  # Identify invalid values (would produce NaN or Inf)
-  invalid <- numerator <= 0 | denominator <= 0 | tmat <= 0 |
-    is.na(numerator) | is.na(denominator) | is.na(tmat)
-
-  if (warn && any(invalid, na.rm = TRUE)) {
-    n_invalid <- sum(invalid, na.rm = TRUE)
-    warning(
-      sprintf(
-        "%d of %d draws (%.1f%%) produced invalid k values. Common causes:\n
-        - Lmat >= Linf (maturity size exceeds asymptotic size)\n
-        - L0 >= Linf (birth size exceeds asymptotic size)\n
-        - tmat <= 0 (non-positive maturity age)\n
-        These draws will be excluded from mortality calculations.",
-        n_invalid, n, 100 * n_invalid / n
-      ),
-      call. = FALSE
-    )
-  }
-
-  k <- (1 / tmat) * log(numerator / denominator)
-  k[invalid] <- NA_real_
 
   k
 }
 
 
-# -----------------------------------------------------------------------------
-# Core Helper: Extract Growth Parameters from Any Model Fit
-# -----------------------------------------------------------------------------
-
-#' Extract Life History Parameters from Growth Model Posterior
+#' Compute Asymptotic Mortality Rate (M_inf)
 #'
 #' @description
-#' Extracts posterior draws of \eqn{(L_\infty, L_0, L_{mat}, t_{mat})} from a
-#' vitalBayes growth model fit. Works identically for von Bertalanffy, Gompertz,
-#' and Logistic models fitted via \code{\link{fit_bayesian_growth}}.
+#' Computes the asymptotic mortality rate \eqn{M_\infty} from biological
+#' milestones using the VB formula. This serves as the unified mortality
+#' scaling factor in the Chen-Watanabe framework.
 #'
 #' @details
-#' This function provides a unified interface for extracting the biological
-#' parameters common to all growth models. These parameters — asymptotic length,
-#' birth size, and maturity milestones — represent real biological quantities
-#' that exist independently of the mathematical model used to describe growth.
+#' \deqn{M_\infty = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
 #'
-#' For maturity-based growth fits (\code{k_based = FALSE}), \eqn{L_{mat}} and
-#' \eqn{t_{mat}} are directly estimated parameters. For k-based fits, these
-#' must be supplied separately via \code{maturity_fit}.
+#' This formula is used regardless of growth model, providing a consistent
+#' mortality anchor that prevents the ~10-fold survival differences arising
+#' from model-native k formulas.
 #'
-#' @param growth_fit A \code{CmdStanMCMC} object from
-#'   \code{\link{fit_bayesian_growth}}.
-#' @param maturity_fit Optional \code{CmdStanMCMC} object from
-#'   \code{\link{fit_bayesian_maturity}} providing age-at-maturity. Required
-#'   for k-based growth fits if \code{tmat} is needed.
-#' @param sex Integer. Sex code (1 = female, 2 = male) for hierarchical models.
-#'   If \code{NULL}, extracts from single-sex model or uses column 1.
-#' @param n_draws Integer. Number of posterior draws to return. If \code{NULL},
-#'   returns all available draws. If specified, draws are subsampled randomly.
-#' @param seed Integer. Random seed for reproducible subsampling.
+#' @param Linf Numeric vector. Asymptotic length.
+#' @param L0 Numeric vector. Length at birth.
+#' @param Lmat Numeric vector. Length at maturity.
+#' @param tmat Numeric vector. Age at maturity.
+#' @param warn Logical. Warn on invalid values?
 #'
-#' @return A \code{data.table} with columns:
-#' \describe{
-#'   \item{draw}{Integer draw index}
-#'   \item{Linf}{Asymptotic length}
-#'   \item{L0}{Length at birth}
-#'   \item{Lmat}{Length at maturity (if available)}
-#'   \item{tmat}{Age at maturity (if available)}
-#'   \item{k}{Growth coefficient (original model's k, not VB-equivalent)}
-#'   \item{k_vb_equiv}{VB-equivalent k (if Lmat and tmat available)}
-#' }
+#' @return Numeric vector of asymptotic mortality rates.
 #'
 #' @examples
-#' \dontrun{
-#' # From a Gompertz fit with maturity-based parameterization
-#' params <- extract_growth_parameters(gomp_fit, sex = 1, n_draws = 2000)
+#' Minf <- compute_Minf(Linf = 126, L0 = 35, Lmat = 83, tmat = 47)
 #'
-#' # Check VB-equivalent k distribution
-#' hist(params$k_vb_equiv, main = "VB-Equivalent k from Gompertz Fit")
-#'
-#' # Compare to original Gompertz k
-#' plot(params$k, params$k_vb_equiv,
-#'      xlab = "Gompertz k", ylab = "VB-equivalent k")
-#' }
-#'
-#' @import data.table
 #' @export
-extract_growth_parameters <- function(
-    growth_fit,
-    maturity_fit = NULL,
-    sex = NULL,
-    n_draws = NULL,
-    seed = 1234
-) {
+compute_Minf <- function(Linf, L0, Lmat, tmat, warn = TRUE) {
 
-  # Extract available parameters
-  available_params <- growth_fit$metadata()$stan_variables
+  n <- max(length(Linf), length(L0), length(Lmat), length(tmat))
+  Linf <- rep_len(Linf, n)
+  L0   <- rep_len(L0, n)
+  Lmat <- rep_len(Lmat, n)
+  tmat <- rep_len(tmat, n)
 
-  # Determine if hierarchical (2-sex) model
-  Linf_draws <- growth_fit$draws("Linf", format = "matrix")
-  is_hierarchical <- ncol(Linf_draws) > 1
+  numerator   <- Linf - L0
+  denominator <- Linf - Lmat
 
-  # Set sex index
-  if (is.null(sex)) {
-    s <- 1L
-    if (is_hierarchical) {
-      message("Hierarchical model detected but sex not specified. Using sex = 1 (female).")
-    }
-  } else {
-    s <- as.integer(sex)
-    if (s < 1 || s > 2) stop("sex must be 1 (female) or 2 (male).", call. = FALSE)
+  invalid <- numerator <= 0 | denominator <= 0 | tmat <= 0 |
+    is.na(numerator) | is.na(denominator) | is.na(tmat)
+
+  if (warn && any(invalid, na.rm = TRUE)) {
+    n_invalid <- sum(invalid, na.rm = TRUE)
+    warning(sprintf("%d of %d draws produced invalid M_inf.", n_invalid, n), call. = FALSE)
   }
 
-  # Extract core parameters
-  if (is_hierarchical) {
-    Linf <- Linf_draws[, s]
-    L0   <- growth_fit$draws("L0", format = "matrix")[, s]
-    k    <- growth_fit$draws("k", format = "matrix")[, s]
-  } else {
-    Linf <- as.vector(Linf_draws)
-    L0   <- as.vector(growth_fit$draws("L0", format = "matrix"))
-    k    <- as.vector(growth_fit$draws("k", format = "matrix"))
-  }
+  Minf <- (1 / tmat) * log(numerator / denominator)
+  Minf[invalid] <- NA_real_
 
-  n_total <- length(Linf)
-
-  # Extract maturity parameters if available (maturity-based models)
-  has_Lmat <- "Lmat" %in% available_params
-  has_tmat <- "tmat" %in% available_params
-
-  if (has_Lmat) {
-    Lmat_draws <- growth_fit$draws("Lmat", format = "matrix")
-    Lmat <- if (is_hierarchical) Lmat_draws[, s] else as.vector(Lmat_draws)
-  } else {
-    Lmat <- rep(NA_real_, n_total)
-  }
-
-  if (has_tmat) {
-    tmat_draws <- growth_fit$draws("tmat", format = "matrix")
-    tmat <- if (is_hierarchical) tmat_draws[, s] else as.vector(tmat_draws)
-  } else if (!is.null(maturity_fit)) {
-    # Extract from separate maturity fit
-    t50_draws <- maturity_fit$draws("t50", format = "matrix")
-    mat_hierarchical <- ncol(t50_draws) > 1
-    tmat_raw <- if (mat_hierarchical) t50_draws[, s] else as.vector(t50_draws)
-
-    # Match lengths if different number of draws
-    if (length(tmat_raw) != n_total) {
-      set.seed(seed)
-      tmat <- sample(tmat_raw, n_total, replace = TRUE)
-    } else {
-      tmat <- tmat_raw
-    }
-  } else {
-    tmat <- rep(NA_real_, n_total)
-  }
-
-  # Compute VB-equivalent k if maturity parameters available
-  if (has_Lmat && (has_tmat || !is.null(maturity_fit))) {
-    k_vb_equiv <- compute_k_vb_equivalent(Linf, L0, Lmat, tmat, warn = FALSE)
-  } else {
-    k_vb_equiv <- rep(NA_real_, n_total)
-  }
-
-  # Build output data.table
-  result <- data.table::data.table(
-    draw      = seq_len(n_total),
-    Linf      = Linf,
-    L0        = L0,
-    Lmat      = Lmat,
-    tmat      = tmat,
-    k         = k,
-    k_vb_equiv = k_vb_equiv
-  )
-
-  # Subsample if requested
-  if (!is.null(n_draws) && n_draws < n_total) {
-    set.seed(seed)
-    idx <- sample(n_total, n_draws, replace = FALSE)
-    result <- result[idx]
-    result[, draw := seq_len(.N)]
-  }
-
-  result
+  Minf
 }
 
 
-# -----------------------------------------------------------------------------
-# L0-Parameterized Chen-Watanabe Model
-# -----------------------------------------------------------------------------
-
-#' Chen-Watanabe Natural Mortality (\eqn{L_0} Parameterization)
+#' Compute Relative Size G(t) = L(t)/Linf
 #'
 #' @description
-#' Computes age-specific natural mortality using the Chen & Watanabe (1989)
-#' model with an \eqn{L_0} parameterization that eliminates dependence on the
-#' theoretical parameter \eqn{t_0}.
+#' Computes the relative size at specified ages using a given growth model.
+#' This is the denominator in the mortality formula M(t) = M_inf / G(t).
+#'
+#' @param age Numeric vector. Ages at which to compute G(t).
+#' @param Linf Numeric. Asymptotic length.
+#' @param L0 Numeric. Length at birth.
+#' @param k Numeric. Native growth coefficient.
+#' @param growth_model Character. Growth model.
+#'
+#' @return Numeric vector of G(t) values bounded in (0, 1].
+#'
+#' @examples
+#' ages <- seq(0, 100, by = 1)
+#' G_vb <- compute_G(ages, Linf = 126, L0 = 35, k = 0.016, growth_model = "vb")
+#'
+#' @export
+compute_G <- function(age, Linf, L0, k,
+                      growth_model = c("vb", "gompertz", "logistic")) {
+
+  growth_model <- match.arg(growth_model)
+
+  G <- switch(
+    growth_model,
+    "vb" = 1 - ((Linf - L0) / Linf) * exp(-k * age),
+    "gompertz" = {
+      r0 <- log(Linf / L0)
+      exp(-r0 * exp(-k * age))
+    },
+    "logistic" = {
+      c <- Linf / L0 - 1
+      1 / (1 + c * exp(-k * age))
+    }
+  )
+
+  pmax(G, 1e-6)
+}
+
+
+#' Compute Length at Age L(t)
+#'
+#' @description
+#' Computes predicted length at age using a specified growth model.
+#'
+#' @param age Numeric vector. Ages.
+#' @param Linf Numeric. Asymptotic length.
+#' @param L0 Numeric. Length at birth.
+#' @param k Numeric. Native growth coefficient.
+#' @param growth_model Character. Growth model.
+#'
+#' @return Numeric vector of predicted lengths.
+#'
+#' @examples
+#' L_vb <- compute_L(0:50, Linf = 126, L0 = 35, k = 0.016, growth_model = "vb")
+#'
+#' @export
+compute_L <- function(age, Linf, L0, k,
+                      growth_model = c("vb", "gompertz", "logistic")) {
+
+  growth_model <- match.arg(growth_model)
+
+  switch(
+    growth_model,
+    "vb" = Linf - (Linf - L0) * exp(-k * age),
+    "gompertz" = {
+      r0 <- log(Linf / L0)
+      Linf * exp(-r0 * exp(-k * age))
+    },
+    "logistic" = {
+      c <- Linf / L0 - 1
+      Linf / (1 + c * exp(-k * age))
+    }
+  )
+}
+
+
+#' Compute Maximum Age from Growth Parameters
+#'
+#' @description
+#' Estimates tmax as age when L(t) reaches a specified fraction of Linf.
+#'
+#' @param Linf Numeric. Asymptotic length.
+#' @param L0 Numeric. Length at birth.
+#' @param k Numeric. Native growth coefficient.
+#' @param growth_model Character. Growth model.
+#' @param Linf_factor Numeric in (0,1). Fraction of Linf (default 0.99).
+#'
+#' @return Numeric tmax value.
+#'
+#' @examples
+#' tmax <- compute_tmax(Linf = 126, L0 = 35, k = 0.016,
+#'                      growth_model = "vb", Linf_factor = 0.99)
+#'
+#' @export
+compute_tmax <- function(Linf, L0, k,
+                         growth_model = c("vb", "gompertz", "logistic"),
+                         Linf_factor = 0.99) {
+
+  growth_model <- match.arg(growth_model)
+
+  if (Linf_factor <= 0 || Linf_factor >= 1) {
+    stop("Linf_factor must be in (0, 1).", call. = FALSE)
+  }
+
+  switch(
+    growth_model,
+    "vb" = -log(Linf * (1 - Linf_factor) / (Linf - L0)) / k,
+    "gompertz" = {
+      r0 <- log(Linf / L0)
+      -log(-log(Linf_factor) / r0) / k
+    },
+    "logistic" = {
+      c <- Linf / L0 - 1
+      -log((1 / Linf_factor - 1) / c) / k
+    }
+  )
+}
+
+
+# =============================================================================
+# SECTION 2: MORTALITY MODELS
+# =============================================================================
+
+
+#' Chen-Watanabe Natural Mortality (Model-Dependent)
+#'
+#' @description
+#' Computes age-specific natural mortality using a generalized Chen-Watanabe
+#' framework where G(t) is derived from the native growth model trajectory.
 #'
 #' @details
-#' The standard Chen-Watanabe formulation expresses mortality as:
-#' \deqn{M(t) = \frac{k}{1 - e^{-k(t - t_0)}}}
+#' The mortality model is:
+#' \deqn{M(t) = \frac{M_\infty}{G(t)}}
 #'
-#' where \eqn{t_0} is the theoretical age at length zero - a parameter with no
-#' direct biological interpretation that can take implausible values,
-#' particularly when growth data are sparse.
+#' where M_inf is VB-derived and G(t) uses the native growth model trajectory.
+#' This formulation provides a unified mortality anchor while capturing
+#' model-specific growth dynamics.
 #'
-#' We reparameterize using the relationship between \eqn{t_0} and \eqn{L_0}
-#' (birth length) under von Bertalanffy dynamics:
-#' \deqn{L_0 = L_\infty(1 - e^{kt_0})}
-#'
-#' After algebraic manipulation (see vignette), the \eqn{L_0}-parameterized form
-#' becomes:
-#' \deqn{M(t) = \frac{k \cdot L_\infty}{L(t)}}
-#'
-#' where \eqn{L(t) = L_\infty - (L_\infty - L_0)e^{-kt}} is the predicted length
-#' at age \eqn{t}.
-#'
-#' This reformulation reveals that Chen-Watanabe mortality is inversely
-#' proportional to body size - smaller (younger) individuals experience higher
-#' mortality. The ratio \eqn{L_\infty / L(t)} represents how far an individual
-#' is from asymptotic size, with mortality declining as this ratio approaches 1.
-#'
-#' The original CW model produces unrealistic mortality trajectories at old ages
-#' (approaching zero asymptotically). When \code{two_phase = TRUE}, the model
-#' adds a senescence component where mortality increases after maturity,
-#' more realistically capturing late-life dynamics. Mortality follows the
-#' standard CW model until age \eqn{t_m} (a fraction of \eqn{t_{mat}}), then
-#' transitions to a senescence model (Gompertz or logistic) that increases
-#' mortality toward \eqn{t_{max}}.
-#'
-#' @param age Numeric vector of ages at which to compute mortality.
+#' @param age Numeric vector of ages.
 #' @param Linf Asymptotic length.
 #' @param L0 Length at birth.
-#' @param k VB-equivalent growth coefficient. Can be computed from any growth
-#'   model using \code{\link{compute_k_vb_equivalent}}.
-#' @param tmax Maximum age. If \code{NULL}, estimated from growth parameters
-#'   as age when \eqn{L(t) = } \code{Linf_factor} \eqn{\times L_\infty}.
-#' @param Linf_factor Numeric in (0, 1). Fraction of \eqn{L_\infty} used to
-#'   estimate \eqn{t_{max}}. Default 0.99 (age at 99% of asymptotic length).
-#' @param two_phase Logical. If \code{TRUE}, applies two-phase model with
-#'   late-life senescence. Default \code{TRUE}.
-#' @param tmat Age at maturity. Required if \code{two_phase = TRUE}.
-#' @param late_model Character. Senescence model: \code{"gompertz"} (default)
-#'   or \code{"logistic"}.
-#' @param tm_factor Numeric. Fraction of \eqn{t_{mat}} at which transition to
-#'   senescence begins. Default 2/3.
-#' @param M_mult Numeric. Multiplier for senescence mortality plateau relative
-#'   to mortality at \eqn{t_m}. Default 2.
-#' @param smooth_factor Numeric. Controls smoothness of transition between
-#'   phases. Default 1/3.
+#' @param Lmat Length at maturity.
+#' @param tmat Age at maturity.
+#' @param growth_model Character. Growth model for G(t): \code{"vb"},
+#'   \code{"gompertz"}, or \code{"logistic"}.
+#' @param tmax Maximum age (computed if NULL).
+#' @param Linf_factor Fraction of Linf for tmax estimation.
+#' @param two_phase Use two-phase senescence model?
+#' @param late_model Senescence model: \code{"gompertz"} or \code{"logistic"}.
+#' @param tm_factor Transition age as fraction of tmat.
+#' @param M_mult Mortality multiplier for senescence.
+#' @param smooth_factor Transition smoothness.
 #'
-#' @return Numeric vector of instantaneous mortality rates (same length as
-#'   \code{age}).
+#' @return Numeric vector of instantaneous mortality rates.
 #'
 #' @references
 #' Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
@@ -361,158 +324,92 @@ extract_growth_parameters <- function(
 #' 55(2), 205-208.
 #'
 #' @examples
-#' \dontrun{
-#' ages <- seq(0.1, 30, by = 0.5)
-#'
-#' # Single-phase CW
-#' M_single <- M_chen_watanabe_L0(
-#'   age = ages, Linf = 100, L0 = 25, k = 0.1,
-#'   two_phase = FALSE
-#' )
-#'
-#' # Two-phase with Gompertz senescence
-#' M_two <- M_chen_watanabe_L0(
-#'   age = ages, Linf = 100, L0 = 25, k = 0.1,
-#'   two_phase = TRUE, tmat = 10, late_model = "gompertz"
-#' )
-#'
-#' plot(ages, M_single, type = "l", ylim = c(0, 1))
-#' lines(ages, M_two, col = "red")
-#' }
-#'
-#' @seealso \code{\link{compute_k_vb_equivalent}} for deriving \eqn{k} from any
-#'   growth model, \code{\link{get_stochastic_mortality}} for Monte Carlo
-#'   mortality estimation with uncertainty.
+#' ages <- seq(0.1, 150, by = 1)
+#' M_vb <- M_chen_watanabe(ages, Linf = 126, L0 = 35, Lmat = 83, tmat = 47,
+#'                         growth_model = "vb")
 #'
 #' @export
-M_chen_watanabe_L0 <- function(
+M_chen_watanabe <- function(
     age,
     Linf,
     L0,
-    k,
+    Lmat,
+    tmat,
+    growth_model = c("vb", "gompertz", "logistic"),
     tmax = NULL,
     Linf_factor = 0.99,
-    two_phase = TRUE,
-    tmat = NULL,
+    two_phase = FALSE,
     late_model = c("gompertz", "logistic"),
     tm_factor = 2/3,
     M_mult = 2,
     smooth_factor = 1/3
 ) {
 
-  late_model <- match.arg(late_model)
+  growth_model <- match.arg(growth_model)
+  late_model   <- match.arg(late_model)
 
-  # Validate inputs
-  if (L0 >= Linf) {
-    stop("L0 must be less than Linf.", call. = FALSE)
-  }
-  if (k <= 0) {
-    stop("k must be positive.", call. = FALSE)
-  }
-  if (two_phase && is.null(tmat)) {
-    stop("tmat required for two-phase model.", call. = FALSE)
-  }
+  if (L0 >= Linf) stop("L0 must be less than Linf.", call. = FALSE)
+  if (Lmat >= Linf) stop("Lmat must be less than Linf.", call. = FALSE)
+  if (L0 >= Lmat) stop("L0 must be less than Lmat.", call. = FALSE)
+  if (tmat <= 0) stop("tmat must be positive.", call. = FALSE)
 
-  # Estimate tmax if not provided
+  Minf <- compute_Minf(Linf, L0, Lmat, tmat, warn = FALSE)
+  k_native <- compute_k_native(Linf, L0, Lmat, tmat, growth_model, warn = FALSE)
+
+  if (is.na(Minf) || Minf <= 0) stop("Invalid M_inf.", call. = FALSE)
+  if (is.na(k_native) || k_native <= 0) stop("Invalid native k.", call. = FALSE)
+
   if (is.null(tmax)) {
-    # Age when L(t) = Linf_factor * Linf
-    # L(t) = Linf - (Linf - L0) * exp(-k*t)
-    # Linf_factor * Linf = Linf - (Linf - L0) * exp(-k*t)
-    # exp(-k*t) = (Linf - Linf_factor * Linf) / (Linf - L0)
-    # exp(-k*t) = Linf * (1 - Linf_factor) / (Linf - L0)
-    tmax <- -log(Linf * (1 - Linf_factor) / (Linf - L0)) / k
+    tmax <- compute_tmax(Linf, L0, k_native, growth_model, Linf_factor)
   }
 
-  # Predicted length at each age (VB equation)
-  L_t <- Linf - (Linf - L0) * exp(-k * age)
+  G_t <- compute_G(age, Linf, L0, k_native, growth_model)
+  M_cw <- Minf / G_t
 
-  # Ensure L_t is positive (numerical safety for very young ages)
-  L_t <- pmax(L_t, L0 * 0.01)
+  if (!two_phase) return(M_cw)
 
-  # Core CW mortality: M(t) = k * Linf / L(t)
-  M_cw <- k * Linf / L_t
-
-  if (!two_phase) {
-    return(M_cw)
-  }
-
-  # ----- Two-Phase Extension -----
-
-  # Transition age (fraction of maturity age)
+  # Two-phase extension
   tm <- tm_factor * tmat
+  G_at_tm <- compute_G(tm, Linf, L0, k_native, growth_model)
+  M_early_at_tm <- Minf / G_at_tm
 
-  # Early-phase mortality (ages < tm): use CW
-  M_early_at_tm <- k * Linf / (Linf - (Linf - L0) * exp(-k * tm))
-
-  # Late-phase mortality setup
   if (late_model == "gompertz") {
-    # Gompertz senescence: M(t) = M_s * exp(r * (t - tmax))
-    # At t = tm, we want continuity: M(tm) = M_early_at_tm
-    # At t = tmax, we want M(tmax) = M_mult * M_early_at_tm
     M_s <- M_mult * M_early_at_tm
-    # Solve for r from M(tm) = M_s * exp(r * (tm - tmax)) = M_early_at_tm
     r <- log(M_early_at_tm / M_s) / (tm - tmax)
-
     M_late <- function(t) M_s * exp(r * (t - tmax))
-
   } else {
-    # Logistic senescence: M(t) = K / (1 + exp(-r * (t - tmax)))
-    # At t = tmax, M = K/2
-    # We want M(tmax) ~ M_mult * M_early_at_tm, so K = 2 * M_mult * M_early_at_tm
     K <- 2 * M_mult * M_early_at_tm
-    # Solve for r from continuity at tm
-    # M(tm) = K / (1 + exp(-r * (tm - tmax))) = M_early_at_tm
-    # 1 + exp(-r * (tm - tmax)) = K / M_early_at_tm
-    # exp(-r * (tm - tmax)) = K / M_early_at_tm - 1
     r <- -log(K / M_early_at_tm - 1) / (tm - tmax)
-
     M_late <- function(t) K / (1 + exp(-r * (t - tmax)))
   }
 
-  # Smooth transition between phases
   smooth_width <- smooth_factor * abs(tmax - tm)
-  # Logistic weight: 0 at tm, 1 well past tm
   weight <- 1 / (1 + exp(-2 * (age - tm) / smooth_width))
 
-  # Blend early and late phases
   M <- (1 - weight) * M_cw + weight * M_late(age)
-
-  # For ages well below tm, use pure CW
   M[age < tm * 0.5] <- M_cw[age < tm * 0.5]
-
-  # Cap any negative values (numerical artifacts)
-  M <- pmax(M, 0)
-
-  M
+  pmax(M, 0)
 }
 
-
-# -----------------------------------------------------------------------------
-# Peterson-Wroblewski Model (unchanged, but documented for completeness)
-# -----------------------------------------------------------------------------
 
 #' Peterson-Wroblewski Natural Mortality Model
 #'
 #' @description
-#' Computes weight-based natural mortality following Peterson & Wroblewski
-#' (1984). Mortality scales allometrically with body weight.
+#' Computes weight-based natural mortality following Peterson & Wroblewski (1984).
 #'
 #' @details
-#' The model expresses mortality as a power function of body weight:
 #' \deqn{M(W) = 1.92 \cdot W^{-0.25}}
-#' where \eqn{W} is body weight in grams.
 #'
-#' This model is growth-model-agnostic: it only requires predicted body weight
-#' at age, which can be derived from any growth model via a length-weight
-#' relationship.
+#' \strong{Warning}: This model was calibrated on teleost fishes and may
+#' produce biologically implausible mortality rates for elasmobranchs.
 #'
-#' @param age Numeric vector of ages at which to compute mortality.
+#' @param age Numeric vector of ages.
 #' @param Linf Asymptotic length.
 #' @param L0 Length at birth.
-#' @param k Growth coefficient (model-specific, not necessarily VB).
-#' @param lw_fun Function mapping length to weight in grams: \code{lw_fun(L)}.
-#' @param growth_model Character. Growth model for length prediction:
-#'   \code{"vb"}, \code{"gompertz"}, or \code{"logistic"}. Default \code{"vb"}.
+#' @param Lmat Length at maturity.
+#' @param tmat Age at maturity.
+#' @param lw_fun Length-weight function: \code{lw_fun(L)} returns weight in grams.
+#' @param growth_model Character. Growth model for L(t).
 #'
 #' @return Numeric vector of instantaneous mortality rates.
 #'
@@ -521,23 +418,13 @@ M_chen_watanabe_L0 <- function(
 #' pelagic ecosystem. \emph{Canadian Journal of Fisheries and Aquatic Sciences},
 #' 41(7), 1117-1120.
 #'
-#' @examples
-#' \dontrun{
-#' lw_fun <- function(L) 0.0001 * L^3.1  # Length in cm, weight in g
-#' ages <- seq(0.5, 30, by = 0.5)
-#'
-#' M <- M_peterson_wroblewski(
-#'   age = ages, Linf = 100, L0 = 25, k = 0.1,
-#'   lw_fun = lw_fun, growth_model = "gompertz"
-#' )
-#' }
-#'
 #' @export
 M_peterson_wroblewski <- function(
     age,
     Linf,
     L0,
-    k,
+    Lmat,
+    tmat,
     lw_fun,
     growth_model = c("vb", "gompertz", "logistic")
 ) {
@@ -548,63 +435,41 @@ M_peterson_wroblewski <- function(
     stop("PW model requires a length-weight function 'lw_fun(L)'.", call. = FALSE)
   }
 
-  # Predict length at age based on growth model
-  L_t <- switch(
-    growth_model,
-    "vb" = Linf - (Linf - L0) * exp(-k * age),
-    "gompertz" = {
-      r0 <- log(Linf / L0)
-      Linf * exp(-r0 * exp(-k * age))
-    },
-    "logistic" = {
-      A <- Linf / L0 - 1
-      Linf / (1 + A * exp(-k * age))
-    }
-  )
-
-  # Convert to weight and compute mortality
+  k_native <- compute_k_native(Linf, L0, Lmat, tmat, growth_model, warn = FALSE)
+  L_t <- compute_L(age, Linf, L0, k_native, growth_model)
   W_t <- lw_fun(L_t)
+  W_t <- pmax(W_t, 1)
+
   1.92 * W_t^(-0.25)
 }
 
-
-# -----------------------------------------------------------------------------
-# Lorenzen Model
-# -----------------------------------------------------------------------------
 
 #' Lorenzen Natural Mortality Model
 #'
 #' @description
 #' Computes size-dependent natural mortality following Lorenzen (1996, 2022).
-#' Supports both weight-based and growth-based formulations.
 #'
 #' @details
 #' Two formulations are available:
 #'
-#' Weight-based (Lorenzen 1996):
+#' \strong{Weight-based} (Lorenzen 1996):
 #' \deqn{M(W) = \alpha \cdot W^{\beta}}
-#' where \eqn{\alpha \sim N(3.69, 0.502)} and \eqn{\beta \sim N(-0.305, 0.029)}.
 #'
-#' Growth-based (Lorenzen 2022):
+#' \strong{Growth-based} (Lorenzen 2022):
 #' \deqn{\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)}
-#' This formulation was calibrated using von Bertalanffy parameters, so
-#' \eqn{k} should be the VB-equivalent \eqn{k} when using fits from other
-#' growth models.
 #'
-#' @param age Numeric vector of ages at which to compute mortality.
+#' For the growth-based formulation, M_inf (VB-derived) is used as k for
+#' consistency with the Chen-Watanabe framework.
+#'
+#' @param age Numeric vector of ages.
 #' @param Linf Asymptotic length.
 #' @param L0 Length at birth.
-#' @param k Growth coefficient. For \code{weight_based = FALSE}, should be
-#'   VB-equivalent \eqn{k} (use \code{\link{compute_k_vb_equivalent}}).
-#' @param lw_fun Function mapping length to weight (required if
-#'   \code{weight_based = TRUE}).
-#' @param weight_based Logical. If \code{TRUE}, uses weight-based formulation.
-#'   If \code{FALSE} (default), uses growth-based formulation.
-#' @param growth_model Character. Growth model for length prediction (only
-#'   used for weight-based formulation): \code{"vb"}, \code{"gompertz"}, or
-#'   \code{"logistic"}.
-#' @param sample_params Logical. If \code{TRUE}, samples allometric parameters
-#'   from their distributions. If \code{FALSE}, uses mean values.
+#' @param Lmat Length at maturity.
+#' @param tmat Age at maturity.
+#' @param lw_fun Length-weight function (required if weight_based = TRUE).
+#' @param weight_based Use weight-based formulation?
+#' @param growth_model Growth model for L(t).
+#' @param sample_params Sample parameters from their distributions?
 #'
 #' @return Numeric vector of instantaneous mortality rates.
 #'
@@ -621,38 +486,28 @@ M_lorenzen <- function(
     age,
     Linf,
     L0,
-    k,
+    Lmat,
+    tmat,
     lw_fun = NULL,
     weight_based = FALSE,
     growth_model = c("vb", "gompertz", "logistic"),
-    sample_params = FALSE
+    sample_params = TRUE
 ) {
 
   growth_model <- match.arg(growth_model)
 
+  k_native <- compute_k_native(Linf, L0, Lmat, tmat, growth_model, warn = FALSE)
+  Minf <- compute_Minf(Linf, L0, Lmat, tmat, warn = FALSE)
+
   if (weight_based) {
-    # Weight-based formulation
     if (is.null(lw_fun) || !is.function(lw_fun)) {
       stop("Weight-based Lorenzen requires 'lw_fun'.", call. = FALSE)
     }
 
-    # Predict length at age
-    L_t <- switch(
-      growth_model,
-      "vb" = Linf - (Linf - L0) * exp(-k * age),
-      "gompertz" = {
-        r0 <- log(Linf / L0)
-        Linf * exp(-r0 * exp(-k * age))
-      },
-      "logistic" = {
-        A <- Linf / L0 - 1
-        Linf / (1 + A * exp(-k * age))
-      }
-    )
-
+    L_t <- compute_L(age, Linf, L0, k_native, growth_model)
     W_t <- lw_fun(L_t)
+    W_t <- pmax(W_t, 1)
 
-    # Allometric parameters
     if (sample_params) {
       alpha <- stats::rnorm(1, 3.69, 0.502)
       beta  <- stats::rnorm(1, -0.305, 0.029)
@@ -660,18 +515,12 @@ M_lorenzen <- function(
       alpha <- 3.69
       beta  <- -0.305
     }
-
     M <- alpha * W_t^beta
 
   } else {
-    # Growth-based formulation (Lorenzen 2022)
-    # Note: k should be VB-equivalent k for theoretical consistency
-
-    # Predict length at age (always VB for this formulation)
-    L_t <- Linf - (Linf - L0) * exp(-k * age)
+    L_t <- compute_L(age, Linf, L0, k_native, growth_model)
     L_ratio <- L_t / Linf
 
-    # ln(M) = 0.28 - 1.30*ln(L/Linf) + 1.08*ln(k)
     if (sample_params) {
       intercept <- stats::rnorm(1, 0.28, 0.105)
       coef_L    <- stats::rnorm(1, -1.30, 0.059)
@@ -682,7 +531,7 @@ M_lorenzen <- function(
       coef_k    <- 1.08
     }
 
-    log_M <- intercept + coef_L * log(L_ratio) + coef_k * log(k)
+    log_M <- intercept + coef_L * log(L_ratio) + coef_k * log(Minf)
     M <- exp(log_M)
   }
 
@@ -690,75 +539,33 @@ M_lorenzen <- function(
 }
 
 
-# -----------------------------------------------------------------------------
-# Mortality Scaling Helper
-# -----------------------------------------------------------------------------
-
 #' Scale Mortality Schedule to Target Mean
 #'
 #' @description
 #' Rescales an age-specific mortality schedule so its mean equals a target
-#' value derived from empirical relationships (e.g., Hoenig, Then et al.) or
-#' survival probability constraints.
+#' value derived from empirical relationships or survival probability.
 #'
-#' @details
-#' The scaling applies:
-#' \deqn{M_{scaled}(t) = M_{raw}(t) \times \frac{M_{target}}{\bar{M}_{raw}}}
+#' @param M Numeric vector of mortality rates.
+#' @param M_target Target mean mortality. Can be scalar, function of tmax, or NULL.
+#' @param tmax Maximum age (required if M_target is function or NULL).
+#' @param p Survival probability (used if M_target NULL).
 #'
-#' This preserves the \emph{shape} of the age-specific mortality curve while
-#' adjusting its overall level. Scaling is useful because theoretical mortality
-#' models often produce absolute levels that don't match empirical observations,
-#' but the relative age pattern may still be informative.
-#'
-#' @param M Numeric vector of instantaneous mortality rates.
-#' @param M_target Target mean mortality. Can be a numeric scalar (fixed target),
-#'   a function of tmax (e.g., \code{function(tmax) 4.899 * tmax^(-0.916)}), or
-#'   \code{NULL} to derive from survival probability \code{p}.
-#' @param tmax Maximum age (required if \code{M_target} is a function or
-#'   \code{NULL}).
-#' @param p Probability of surviving to \code{tmax}. Used only if
-#'   \code{M_target = NULL}. Default 0.001 (0.1% survival).
-#'
-#' @return Numeric vector of scaled mortality rates (same length as \code{M}).
-#'
-#' @examples
-#' \dontrun{
-#' M_raw <- M_chen_watanabe_L0(0:30, Linf = 100, L0 = 25, k = 0.1,
-#'                              two_phase = FALSE)
-#'
-#' # Scale to fixed target
-#' M_scaled <- scale_mortality(M_raw, M_target = 0.2)
-#'
-#' # Scale using Then et al. (2015) relationship
-#' then_2015 <- function(tmax) 4.899 * tmax^(-0.916)
-#' M_scaled <- scale_mortality(M_raw, M_target = then_2015, tmax = 30)
-#'
-#' # Scale to survival probability
-#' M_scaled <- scale_mortality(M_raw, M_target = NULL, tmax = 30, p = 0.01)
-#' }
+#' @return Scaled mortality vector.
 #'
 #' @export
 scale_mortality <- function(M, M_target = NULL, tmax = NULL, p = 0.001) {
 
-  # Derive target if not specified
   if (is.null(M_target)) {
-    if (is.null(tmax)) {
-      stop("tmax required when M_target is NULL.", call. = FALSE)
-    }
-    # M such that exp(-M * tmax) = p  =>  M = -log(p) / tmax
+    if (is.null(tmax)) stop("tmax required when M_target is NULL.", call. = FALSE)
     M_target <- -log(p) / tmax
-
   } else if (is.function(M_target)) {
-    if (is.null(tmax)) {
-      stop("tmax required when M_target is a function.", call. = FALSE)
-    }
+    if (is.null(tmax)) stop("tmax required when M_target is a function.", call. = FALSE)
     M_target <- M_target(tmax)
   }
 
-  # Scale
   M_mean <- mean(M, na.rm = TRUE)
   if (M_mean <= 0) {
-    warning("Mean mortality is non-positive; scaling not applied.", call. = FALSE)
+    warning("Mean mortality <= 0; scaling not applied.", call. = FALSE)
     return(M)
   }
 
@@ -766,242 +573,170 @@ scale_mortality <- function(M, M_target = NULL, tmax = NULL, p = 0.001) {
 }
 
 
-# -----------------------------------------------------------------------------
-# Main Stochastic Mortality Function
-# -----------------------------------------------------------------------------
+# =============================================================================
+# SECTION 3: STOCHASTIC MORTALITY ESTIMATION
+# =============================================================================
+
 
 #' Stochastic Estimation of Age-Specific Natural Mortality
 #'
 #' @description
 #' Monte Carlo simulation of age-specific natural mortality schedules with
-#' full uncertainty propagation from growth model posteriors. Supports
-#' Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
-#' derivation of VB-equivalent \eqn{k} from any growth model fit.
+#' uncertainty propagation from growth and maturity parameters.
 #'
 #' @details
-#' A key feature of this function is growth-model-agnostic mortality estimation.
-#' When a growth fit from \code{\link{fit_bayesian_growth}} is provided, the
-#' function extracts biological milestones (Linf, L0, Lmat, tmat)
-#' and computes the VB-equivalent k needed for Chen-Watanabe and growth-based
-#' Lorenzen models.
+#' This function samples life history parameters from specified distributions
+#' and computes mortality schedules using the chosen method. The output format
+#' is compatible with \code{\link{simulate_survivorship}}.
 #'
-#' This allows users to fit whichever growth model (von Bertalanffy, Gompertz,
-#' or Logistic) best describes their data, then estimate mortality without
-#' theoretical compromise.
+#' Three mortality models are available:
+#' \itemize{
+#'   \item \strong{CW}: Chen-Watanabe (1989) with model-dependent G(t)
+#'   \item \strong{PW}: Peterson-Wroblewski (1984) weight-based
+#'   \item \strong{L}: Lorenzen (1996/2022) weight- or growth-based
+#' }
 #'
-#' When \code{growth_fit} is provided, parameters are drawn from the joint
-#' posterior distribution, preserving correlations. This yields mortality
-#' estimates with appropriate (often narrower) uncertainty bounds compared to
-#' independent sampling of each parameter.
-#'
-#' Three mortality models are available: CW (Chen-Watanabe 1989 with L0
-#' parameterization and optional two-phase senescence), PW (Peterson-Wroblewski
-#' 1984 weight-based allometric model), and L (Lorenzen 1996/2022 in weight-based
-#' or growth-based form).
-#'
-#' @param method Character. Mortality model: \code{"CW"}, \code{"PW"}, or
-#'   \code{"L"}.
-#' @param growth_fit Optional \code{CmdStanMCMC} object from
-#'   \code{\link{fit_bayesian_growth}}. If provided, parameters are extracted
-#'   from the joint posterior.
-#' @param maturity_fit Optional \code{CmdStanMCMC} object from
-#'   \code{\link{fit_bayesian_maturity}} providing age-at-maturity for
-#'   k-based growth fits or two-phase CW.
-#' @param sex Integer. Sex code (1 = female, 2 = male) for hierarchical models.
-#' @param Linf,L0,k,tmat Alternative to \code{growth_fit}: specify parameters
-#'   directly as \code{c(mean, sd)} vectors for independent normal sampling.
-#' @param Linf_factor Numeric in (0, 1). Fraction of \eqn{L_\infty} for
-#'   \eqn{t_{max}} estimation. Default 0.99.
-#' @param age_seq Function or numeric vector defining ages for mortality
-#'   calculation. Default \code{function(tmax) seq(0, ceiling(tmax), length.out = 500)}.
+#' @param method Character. Mortality model: \code{"CW"}, \code{"PW"}, or \code{"L"}.
+#' @param Linf,L0,Lmat,tmat Numeric vectors of length 2: \code{c(mean, sd)}.
+#' @param growth_model Character. Growth model for G(t) and L(t): \code{"vb"},
+#'   \code{"gompertz"}, or \code{"logistic"}.
+#' @param Linf_factor Fraction of Linf used to estimate tmax. Default 0.99.
+#' @param age_seq Function or numeric vector for age grid. Default creates
+#'   500 points from 0.1 to tmax.
 #' @param iter Number of Monte Carlo iterations. Default 2000.
-#' @param scaled Logical. If \code{TRUE} (default), scales mortality to
-#'   \code{M_target} or survival probability \code{p}.
-#' @param M_target Target mean mortality. Can be numeric scalar, function of
-#'   tmax, or \code{NULL} for survival-probability-based scaling.
-#' @param p Survival probability to \eqn{t_{max}} for scaling. Default 0.001.
-#' @param two_phase Logical. For CW model, use two-phase senescence?
-#'   Default \code{TRUE}.
-#' @param late_model Character. Senescence model: \code{"gompertz"} or
-#'   \code{"logistic"}. Default \code{"gompertz"}.
-#' @param tm_factor,M_mult,smooth_factor Two-phase model parameters.
-#' @param lw_fun Length-weight function for PW and weight-based Lorenzen.
-#' @param weight_based Logical. For Lorenzen, use weight-based formulation?
-#'   Default \code{FALSE}.
-#' @param growth_model Character. Growth model type when using manual
-#'   parameters: \code{"vb"}, \code{"gompertz"}, or \code{"logistic"}.
-#' @param seed Random seed for reproducibility. Default 1234.
-#' @param palette Color palette for plot: \code{"synthwave"}, \code{"viridis"},
-#'   \code{"okabe"}, \code{"plasma"}, or \code{"inferno"}.
-#' @param print_plot Logical. Print plot on completion? Default \code{TRUE}.
-#' @param show_progress Logical. Show progress messages? Default \code{TRUE}.
+#' @param scaled Scale mortality to M_target? Default TRUE.
+#' @param M_target Target mean mortality. Can be scalar, function of tmax, or NULL.
+#' @param p Survival probability for scaling if M_target NULL. Default 0.001.
+#' @param two_phase Use CW two-phase senescence? Default FALSE.
+#' @param late_model Senescence model: \code{"gompertz"} or \code{"logistic"}.
+#' @param tm_factor Transition age factor. Default 2/3.
+#' @param M_mult Mortality multiplier for senescence. Default 2.
+#' @param smooth_factor Transition smoothness. Default 1/3.
+#' @param weight_based For Lorenzen: use weight-based formulation? Default FALSE.
+#' @param lw_fun Length-weight function (required for PW and weight-based Lorenzen).
+#' @param seed Random seed. Default 1234.
+#' @param palette Color palette: \code{"synthwave"}, \code{"viridis"}, \code{"okabe"},
+#'   \code{"plasma"}, or \code{"inferno"}.
+#' @param print_plot Print plot? Default TRUE.
+#' @param show_progress Show progress messages? Default TRUE.
 #'
-#' @return A list with components: Schedules (data.table of all mortality
-#'   schedules with columns set_id, age, M, M_scaled), Parameters (data.table
-#'   of sampled life history parameters), Summary (data.table with median and
-#'   95 percent CI by age), and Plot (ggplot2 object).
+#' @return A list with:
+#' \describe{
+#'   \item{Schedules}{data.table with columns: set_id, age, M}
+#'   \item{Parameters}{data.table with columns: set_id, Linf, L0, Lmat, tmat, Minf, k_native, tmax}
+#'   \item{Summary}{data.table with age-wise median and 95% CI}
+#'   \item{Plot}{ggplot2 object}
+#' }
 #'
 #' @examples
 #' \dontrun{
-#' # From a Gompertz growth fit (maturity-based parameterization)
-#' mort <- get_stochastic_mortality(
-#'   method     = "CW",
-#'   growth_fit = gomp_fit,  # Any growth model works!
-#'   sex        = 1,
-#'   iter       = 2000,
-#'   scaled     = TRUE,
-#'   p          = 0.001
-#' )
-#'
-#' # View plot
-#' mort$Plot
-#'
-#' # Check VB-equivalent k distribution
-#' hist(mort$Parameters$k_vb_equiv)
-#'
-#' # Manual specification for sensitivity analysis
 #' mort <- get_stochastic_mortality(
 #'   method = "CW",
-#'   Linf = c(100, 5),
-#'   L0   = c(25, 2),
-#'   k    = c(0.1, 0.02),  # VB k or VB-equivalent k
-#'   tmat = c(10, 1)
+#'   Linf = c(108, 10),
+#'   L0 = c(35, 2),
+#'   Lmat = c(83, 5),
+#'   tmat = c(47, 3),
+#'   growth_model = "gompertz",
+#'   iter = 2000
 #' )
+#' mort$Plot
 #' }
 #'
 #' @import data.table
 #' @importFrom stats rnorm quantile median
-#' @importFrom ggplot2 ggplot aes geom_ribbon geom_line labs theme_bw
+#' @importFrom ggplot2 ggplot aes geom_ribbon geom_line labs theme_bw theme
+#' @importFrom ggplot2 element_text scale_x_continuous scale_y_continuous expansion
 #' @export
 get_stochastic_mortality <- function(
     method = c("CW", "PW", "L"),
-    growth_fit = NULL,
-    maturity_fit = NULL,
-    sex = NULL,
-    Linf = NULL,
-    L0 = NULL,
-    k = NULL,
-    tmat = NULL,
+    Linf,
+    L0,
+    Lmat,
+    tmat,
+    growth_model = c("vb", "gompertz", "logistic"),
     Linf_factor = 0.99,
     age_seq = function(tmax) seq(0.1, ceiling(tmax), length.out = 500),
     iter = 2000,
     scaled = TRUE,
     M_target = NULL,
     p = 0.001,
-    two_phase = TRUE,
+    # CW two-phase parameters
+    two_phase = FALSE,
     late_model = c("gompertz", "logistic"),
     tm_factor = 2/3,
     M_mult = 2,
     smooth_factor = 1/3,
-    lw_fun = NULL,
+    # Lorenzen parameters
     weight_based = FALSE,
-    growth_model = c("vb", "gompertz", "logistic"),
+    lw_fun = NULL,
     seed = 1234,
+    # Plot aesthetics
     palette = c("synthwave", "viridis", "okabe", "plasma", "inferno"),
     print_plot = TRUE,
     show_progress = TRUE
 ) {
 
   method <- match.arg(method)
-  late_model <- match.arg(late_model)
   growth_model <- match.arg(growth_model)
+  late_model <- match.arg(late_model)
   palette <- match.arg(palette)
 
-  set.seed(seed)
-  use_posterior <- !is.null(growth_fit)
-
-  # -------------------------------------------------------------------------
-  # Parameter Extraction / Generation
-  # -------------------------------------------------------------------------
-
-  if (use_posterior) {
-    if (show_progress) message("Extracting parameters from growth model posterior...")
-
-    # Extract from posterior (works for any growth model)
-    params <- extract_growth_parameters(
-      growth_fit   = growth_fit,
-      maturity_fit = maturity_fit,
-      sex          = sex,
-      n_draws      = iter,
-      seed         = seed
-    )
-
-    # For CW and growth-based Lorenzen, we need VB-equivalent k
-    if (method == "CW" || (method == "L" && !weight_based)) {
-      if (all(is.na(params$k_vb_equiv))) {
-        stop(
-          "Chen-Watanabe and growth-based Lorenzen require maturity parameters ",
-          "(Lmat, tmat) for VB-equivalent k derivation.\n",
-          "Use maturity-based growth fit (k_based = FALSE) or provide maturity_fit.",
-          call. = FALSE
-        )
-      }
-      k_for_mort <- params$k_vb_equiv
-    } else {
-      # PW and weight-based Lorenzen can use the native k
-      k_for_mort <- params$k
-    }
-
-    par_draws <- data.table::data.table(
-      set_id     = seq_len(nrow(params)),
-      Linf       = params$Linf,
-      L0         = params$L0,
-      Lmat       = params$Lmat,
-      tmat       = params$tmat,
-      k_original = params$k,
-      k_vb_equiv = params$k_vb_equiv,
-      k_for_mort = k_for_mort
-    )
-
-  } else {
-    # Manual parameter specification
-    if (show_progress) message("Generating parameters from specified distributions...")
-
-    if (is.null(Linf) || is.null(L0) || is.null(k)) {
-      stop("Must provide growth_fit OR all of: Linf, L0, k", call. = FALSE)
-    }
-    if ((method == "CW" && two_phase) || (method == "L" && !weight_based)) {
-      if (is.null(tmat)) {
-        stop("tmat required for CW two-phase or growth-based Lorenzen.", call. = FALSE)
-      }
-    }
-
-    # Sample from specified distributions
-    Linf_draws <- stats::rnorm(iter, Linf[1], Linf[2])
-    L0_draws   <- stats::rnorm(iter, L0[1], L0[2])
-    k_draws    <- stats::rnorm(iter, k[1], k[2])
-
-    if (!is.null(tmat)) {
-      tmat_draws <- stats::rnorm(iter, tmat[1], tmat[2])
-    } else {
-      tmat_draws <- rep(NA_real_, iter)
-    }
-
-    # Ensure biological constraints
-    Linf_draws <- pmax(Linf_draws, L0_draws + 1)
-    L0_draws   <- pmax(L0_draws, 0.1)
-    k_draws    <- pmax(k_draws, 0.001)
-    tmat_draws <- pmax(tmat_draws, 0.1)
-
-    par_draws <- data.table::data.table(
-      set_id     = seq_len(iter),
-      Linf       = Linf_draws,
-      L0         = L0_draws,
-      Lmat       = rep(NA_real_, iter),  # Not available for manual input
-      tmat       = tmat_draws,
-      k_original = k_draws,
-      k_vb_equiv = k_draws,  # Assume user provides VB-equivalent k
-      k_for_mort = k_draws
-    )
+  # Validate inputs
+  if (length(Linf) != 2L || length(L0) != 2L || length(Lmat) != 2L || length(tmat) != 2L) {
+    stop("Life-history parameters must each be c(mean, sd).", call. = FALSE)
   }
 
-  # Estimate tmax for each parameter set
-  par_draws[, tmax := -log(Linf * (1 - Linf_factor) / (Linf - L0)) / k_for_mort]
+  set.seed(seed)
+
+  # -------------------------------------------------------------------------
+  # Parameter Sampling
+  # -------------------------------------------------------------------------
+
+  if (show_progress) message("Sampling life-history parameters...")
+
+  Linf_draws <- stats::rnorm(iter, Linf[1], Linf[2])
+  L0_draws   <- stats::rnorm(iter, L0[1], L0[2])
+  Lmat_draws <- stats::rnorm(iter, Lmat[1], Lmat[2])
+  tmat_draws <- stats::rnorm(iter, tmat[1], tmat[2])
+
+  # Ensure biological constraints
+  Linf_draws <- pmax(Linf_draws, Lmat_draws + 1)
+  Lmat_draws <- pmax(Lmat_draws, L0_draws + 1)
+  L0_draws   <- pmax(L0_draws, 0.1)
+  tmat_draws <- pmax(tmat_draws, 0.1)
+
+  # Compute M_inf for each draw (VB-derived)
+  Minf_draws <- compute_Minf(Linf_draws, L0_draws, Lmat_draws, tmat_draws, warn = FALSE)
+
+  # Compute native k for each draw
+  k_native_draws <- compute_k_native(Linf_draws, L0_draws, Lmat_draws, tmat_draws,
+                                     growth_model = growth_model, warn = FALSE)
+
+  # Compute tmax for each draw
+  tmax_draws <- mapply(
+    compute_tmax,
+    Linf = Linf_draws,
+    L0 = L0_draws,
+    k = k_native_draws,
+    MoreArgs = list(growth_model = growth_model, Linf_factor = Linf_factor)
+  )
+
+  par_draws <- data.table::data.table(
+    set_id   = seq_len(iter),
+    Linf     = Linf_draws,
+    L0       = L0_draws,
+    Lmat     = Lmat_draws,
+    tmat     = tmat_draws,
+    Minf     = Minf_draws,
+    k_native = k_native_draws,
+    tmax     = tmax_draws
+  )
 
   # Remove invalid draws
-  valid_mask <- !is.na(par_draws$k_for_mort) &
-    par_draws$k_for_mort > 0 &
-    par_draws$Linf > par_draws$L0 &
+  valid_mask <- !is.na(par_draws$Minf) &
+    par_draws$Minf > 0 &
+    !is.na(par_draws$k_native) &
+    par_draws$k_native > 0 &
     par_draws$tmax > 0 &
     is.finite(par_draws$tmax)
 
@@ -1009,7 +744,7 @@ get_stochastic_mortality <- function(
   if (n_invalid > 0) {
     if (show_progress) {
       message(sprintf("Removing %d invalid parameter sets (%.1f%%)",
-                      n_invalid, 100 * n_invalid / nrow(par_draws)))
+                      n_invalid, 100 * n_invalid / iter))
     }
     par_draws <- par_draws[valid_mask]
   }
@@ -1031,12 +766,15 @@ get_stochastic_mortality <- function(
   } else {
     ages <- age_seq
   }
-  ages <- ages[ages > 0]  # Ensure positive ages
+  ages <- ages[ages > 0]
 
-  # Initialize storage
-  schedules_list <- vector("list", nrow(par_draws))
+  n_sets <- nrow(par_draws)
+  step <- max(1L, as.integer(n_sets * 0.1))
+  notify <- unique(c(seq(step, n_sets, by = step), n_sets))
 
-  for (i in seq_len(nrow(par_draws))) {
+  schedules_list <- vector("list", n_sets)
+
+  for (i in seq_len(n_sets)) {
 
     p_i <- par_draws[i]
 
@@ -1044,60 +782,94 @@ get_stochastic_mortality <- function(
     M_raw <- switch(
       method,
 
-      "CW" = M_chen_watanabe_L0(
-        age          = ages,
-        Linf         = p_i$Linf,
-        L0           = p_i$L0,
-        k            = p_i$k_for_mort,
-        tmax         = p_i$tmax,
-        Linf_factor  = Linf_factor,
-        two_phase    = two_phase,
-        tmat         = p_i$tmat,
-        late_model   = late_model,
-        tm_factor    = tm_factor,
-        M_mult       = M_mult,
-        smooth_factor = smooth_factor
-      ),
+      "CW" = {
+        G_t <- compute_G(ages, p_i$Linf, p_i$L0, p_i$k_native, growth_model)
+        M_cw <- p_i$Minf / G_t
+
+        if (two_phase && !is.na(p_i$tmat)) {
+          tm <- tm_factor * p_i$tmat
+          G_at_tm <- compute_G(tm, p_i$Linf, p_i$L0, p_i$k_native, growth_model)
+          M_early_at_tm <- p_i$Minf / G_at_tm
+
+          if (late_model == "gompertz") {
+            M_s <- M_mult * M_early_at_tm
+            r <- log(M_early_at_tm / M_s) / (tm - p_i$tmax)
+            M_late <- M_s * exp(r * (ages - p_i$tmax))
+          } else {
+            K <- 2 * M_mult * M_early_at_tm
+            r <- -log(K / M_early_at_tm - 1) / (tm - p_i$tmax)
+            M_late <- K / (1 + exp(-r * (ages - p_i$tmax)))
+          }
+
+          smooth_width <- smooth_factor * abs(p_i$tmax - tm)
+          weight <- 1 / (1 + exp(-2 * (ages - tm) / smooth_width))
+
+          M_cw <- (1 - weight) * M_cw + weight * M_late
+          early_idx <- ages < tm * 0.5
+          G_early <- compute_G(ages[early_idx], p_i$Linf, p_i$L0, p_i$k_native, growth_model)
+          M_cw[early_idx] <- p_i$Minf / G_early
+          M_cw <- pmax(M_cw, 0)
+        }
+        M_cw
+      },
 
       "PW" = {
         if (is.null(lw_fun)) {
           stop("Peterson-Wroblewski requires 'lw_fun'.", call. = FALSE)
         }
-        M_peterson_wroblewski(
-          age          = ages,
-          Linf         = p_i$Linf,
-          L0           = p_i$L0,
-          k            = p_i$k_original,  # PW uses native k
-          lw_fun       = lw_fun,
-          growth_model = if (use_posterior) "vb" else growth_model
-        )
+        L_t <- compute_L(ages, p_i$Linf, p_i$L0, p_i$k_native, growth_model)
+        W_t <- lw_fun(L_t)
+        W_t <- pmax(W_t, 1)
+        1.92 * W_t^(-0.25)
       },
 
-      "L" = M_lorenzen(
-        age          = ages,
-        Linf         = p_i$Linf,
-        L0           = p_i$L0,
-        k            = if (weight_based) p_i$k_original else p_i$k_for_mort,
-        lw_fun       = lw_fun,
-        weight_based = weight_based,
-        growth_model = if (use_posterior) "vb" else growth_model,
-        sample_params = TRUE
-      )
+      "L" = {
+        if (weight_based) {
+          if (is.null(lw_fun)) {
+            stop("Weight-based Lorenzen requires 'lw_fun'.", call. = FALSE)
+          }
+          L_t <- compute_L(ages, p_i$Linf, p_i$L0, p_i$k_native, growth_model)
+          W_t <- lw_fun(L_t)
+          W_t <- pmax(W_t, 1)
+          alpha <- stats::rnorm(1, 3.69, 0.502)
+          beta  <- stats::rnorm(1, -0.305, 0.029)
+          alpha * W_t^beta
+        } else {
+          L_t <- compute_L(ages, p_i$Linf, p_i$L0, p_i$k_native, growth_model)
+          L_ratio <- L_t / p_i$Linf
+          intercept <- stats::rnorm(1, 0.28, 0.105)
+          coef_L    <- stats::rnorm(1, -1.30, 0.059)
+          coef_k    <- stats::rnorm(1, 1.08, 0.082)
+          log_M <- intercept + coef_L * log(L_ratio) + coef_k * log(p_i$Minf)
+          exp(log_M)
+        }
+      }
     )
 
     # Scale if requested
     if (scaled) {
-      M_scaled <- scale_mortality(M_raw, M_target = M_target, tmax = p_i$tmax, p = p)
+      if (is.null(M_target)) {
+        M_target_i <- -log(p) / p_i$tmax
+      } else if (is.function(M_target)) {
+        M_target_i <- M_target(p_i$tmax)
+      } else {
+        M_target_i <- M_target
+      }
+      M_final <- M_raw / mean(M_raw, na.rm = TRUE) * M_target_i
     } else {
-      M_scaled <- M_raw
+      M_final <- M_raw
     }
 
+    # Store with column name "M" for compatibility with simulate_survivorship
     schedules_list[[i]] <- data.table::data.table(
-      set_id   = p_i$set_id,
-      age      = ages,
-      M_raw    = M_raw,
-      M_scaled = M_scaled
+      set_id = p_i$set_id,
+      age    = ages,
+      M      = M_final
     )
+
+    if (show_progress && i %in% notify) {
+      message(sprintf("  Progress: %d/%d (%.0f%%)", i, n_sets, 100 * i / n_sets))
+    }
   }
 
   # Combine all schedules
@@ -1109,17 +881,15 @@ get_stochastic_mortality <- function(
 
   if (show_progress) message("Computing summary statistics...")
 
-  # Round ages for grouping
-  schedules[, age_round := round(age, 1)]
+  schedules[, age_round := round(age, 2)]
 
   summary_dt <- schedules[, .(
-    M_median = stats::median(M_scaled, na.rm = TRUE),
-    M_mean   = mean(M_scaled, na.rm = TRUE),
-    M_lower  = stats::quantile(M_scaled, 0.025, na.rm = TRUE),
-    M_upper  = stats::quantile(M_scaled, 0.975, na.rm = TRUE)
+    M_median = stats::median(M, na.rm = TRUE),
+    M_mean   = mean(M, na.rm = TRUE),
+    M_lower  = stats::quantile(M, 0.025, na.rm = TRUE),
+    M_upper  = stats::quantile(M, 0.975, na.rm = TRUE)
   ), by = age_round]
 
-  # Parameter summary
   tmax_summary <- par_draws[, .(
     mean  = mean(tmax),
     lower = stats::quantile(tmax, 0.025),
@@ -1132,24 +902,22 @@ get_stochastic_mortality <- function(
 
   if (show_progress) message("Generating plot...")
 
-  # Color palette
   pal <- switch(
     palette,
     "synthwave" = c("#FF6B9D", "#C490D1", "#9B6DFF", "#00D4AA"),
-    "viridis"   = viridis::viridis(4),
+    "viridis"   = c("#440154", "#31688E", "#35B779", "#FDE725"),
     "okabe"     = c("#E69F00", "#56B4E9", "#009E73", "#F0E442"),
-    "plasma"    = viridis::plasma(4),
-    "inferno"   = viridis::inferno(4)
+    "plasma"    = c("#0D0887", "#7E03A8", "#CC4678", "#F89441"),
+    "inferno"   = c("#000004", "#57106E", "#BC3754", "#F98E09")
   )
 
   fill_color <- pal[1]
   line_color <- pal[3]
 
   caption <- sprintf(
-    "Estimated tmax: %.1f years (95%% CI: %.1f - %.1f) | Method: %s%s",
+    "Estimated tmax: %.1f yrs (95%% CI: %.1f - %.1f) | Method: %s | Growth: %s",
     tmax_summary$mean, tmax_summary$lower, tmax_summary$upper,
-    method,
-    if (method == "CW" && two_phase) paste0(" (two-phase, ", late_model, ")") else ""
+    method, growth_model
   )
 
   mort_plot <- ggplot2::ggplot(summary_dt, ggplot2::aes(x = age_round)) +
@@ -1162,11 +930,11 @@ get_stochastic_mortality <- function(
       color = line_color, linewidth = 1.2
     ) +
     ggplot2::labs(
-      x        = "Age (years)",
-      y        = "Instantaneous Mortality (M)",
-      title    = "Age-Specific Natural Mortality",
+      x       = "Age (years)",
+      y       = "Instantaneous Mortality (M)",
+      title   = "Age-Specific Natural Mortality",
       subtitle = "Median with 95% credible interval",
-      caption  = caption
+      caption = caption
     ) +
     ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(0.01, 0.01))) +
     ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.01, 0.05))) +
@@ -1180,11 +948,14 @@ get_stochastic_mortality <- function(
 
   if (print_plot) print(mort_plot)
 
+  if (show_progress) message("Done.")
+
   # -------------------------------------------------------------------------
   # Return
   # -------------------------------------------------------------------------
 
-  if (show_progress) message("Done.")
+  # Remove temporary age_round column from schedules
+  schedules[, age_round := NULL]
 
   list(
     Schedules  = schedules,
@@ -1192,4 +963,32 @@ get_stochastic_mortality <- function(
     Summary    = summary_dt,
     Plot       = mort_plot
   )
+}
+
+
+# =============================================================================
+# SECTION 4: HELPER FUNCTIONS
+# =============================================================================
+
+
+#' Approximate Standard Deviation from Confidence Interval
+#'
+#' @description
+#' Estimates standard deviation from reported confidence interval bounds
+#' assuming a normal distribution.
+#'
+#' @param lower Lower bound of confidence interval.
+#' @param upper Upper bound of confidence interval.
+#' @param level Confidence level (default 0.95).
+#'
+#' @return Estimated standard deviation.
+#'
+#' @examples
+#' # If 95% CI is (10, 20), approximate SD
+#' approx_sd(10, 20, 0.95)
+#'
+#' @export
+approx_sd <- function(lower, upper, level = 0.95) {
+  z <- stats::qnorm(1 - (1 - level) / 2)
+  (upper - lower) / (2 * z)
 }

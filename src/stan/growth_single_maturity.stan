@@ -8,27 +8,27 @@ data {
   vector<lower=0>[N] length;         // Observed lengths
   vector<lower=0>[N] age;            // Observed ages
   array[N] int<lower=1> row_id;      // Original row indices for tracking
-  
+
   int<lower=1, upper=3> which_model; // 1=VBGM, 2=Gompertz, 3=Logistic
   int<lower=0, upper=1> robust;      // 0=lognormal, 1=Student-t errors
-  
-  // Priors for Linf (log scale)
-  real prior_Linf_mu;
-  real<lower=0> prior_Linf_sigma;
-  real<lower=0> Linf_lower;          // Hard lower bound (observed max)
-  
+
+  // Priors for Linf
+  real Lmax;
+  real<lower=0> alpha_delta;
+  real<lower=0> beta_delta;
+
   // Priors for L0 (log scale)
   real prior_L0_mu;
   real<lower=0> prior_L0_sigma;
-  
+
   // Priors for Lmat (log scale)
   real prior_Lmat_mu;
   real<lower=0> prior_Lmat_sigma;
-  
+
   // Priors for tmat (log scale)
   real prior_tmat_mu;
   real<lower=0> prior_tmat_sigma;
-  
+
   // Priors for sigma (observation error)
   real loc_sig;
   real<lower=0> scale_sig;
@@ -39,7 +39,7 @@ transformed data {
 }
 
 parameters {
-  real<lower=log(Linf_lower)> log_Linf;  // Log asymptotic length
+  real<lower=0> delta_Linf;               // Length difference above Linf
   real log_L0;                            // Log length at birth
   real log_Lmat;                          // Log length at maturity
   real log_tmat;                          // Log age at maturity
@@ -48,28 +48,28 @@ parameters {
 }
 
 transformed parameters {
-  real<lower=Linf_lower> Linf = exp(log_Linf);
+  real Linf = Lmax + delta_Linf;
   real<lower=0> L0 = exp(log_L0);
   real<lower=0> Lmat = exp(log_Lmat);
   real<lower=0> tmat = exp(log_tmat);
-  
+
   // Constrain L0 < Lmat < Linf for biological plausibility
   real L0_constrained = fmin(L0, Lmat * 0.95);
   real Lmat_constrained = fmin(fmax(Lmat, L0_constrained * 1.05), Linf * 0.99);
-  
+
   // Derive k from maturity parameters with safeguards
   real<lower=0> k;
-  
+
   // Degrees of freedom for robust model
   real nu = robust ? nu_raw[1] : 100.0;
-  
+
   // Predicted mean lengths
   vector<lower=0>[N] mu;
-  
+
   // Ensure safe denominators and ratios for log()
   real Linf_minus_L0 = fmax(Linf - L0_constrained, 1e-6);
   real Linf_minus_Lmat = fmax(Linf - Lmat_constrained, 1e-6);
-  
+
   // Compute k based on growth model
   if (which_model == 1) {
     // von Bertalanffy: k = (1/tmat) * ln((Linf - L0)/(Linf - Lmat))
@@ -89,11 +89,11 @@ transformed parameters {
     real ratio = fmax(num / den, 1.001);
     k = (1.0 / tmat) * log(ratio);
   }
-  
+
   // Compute predicted lengths
   for (i in 1:N) {
     real a = age[i];
-    
+
     if (which_model == 1) {
       // von Bertalanffy
       mu[i] = Linf - (Linf - L0_constrained) * exp(-k * a);
@@ -111,16 +111,16 @@ transformed parameters {
 
 model {
   // Priors on log scale
-  log_Linf ~ normal(prior_Linf_mu, prior_Linf_sigma);
+  delta_Linf ~ gamma(alpha_delta, beta_delta);
   log_L0 ~ normal(prior_L0_mu, prior_L0_sigma);
   log_Lmat ~ normal(prior_Lmat_mu, prior_Lmat_sigma);
   log_tmat ~ normal(prior_tmat_mu, prior_tmat_sigma);
   sigma ~ cauchy(loc_sig, scale_sig);
-  
+
   if (robust) {
     nu_raw[1] ~ gamma(2, 0.1);
   }
-  
+
   // Likelihood
   if (robust) {
     for (i in 1:N) {
@@ -134,20 +134,20 @@ model {
 generated quantities {
   // Log-likelihood for LOO
   vector[N] log_lik;
-  
+
   // Posterior predictive
   vector[N] y_pred;
   vector[N] y_rep;
   vector[N] residual;
   vector[N] std_residual;
-  
+
   // Summary statistics
   real mean_residual;
   real sd_residual;
   real rmse;
   real mae;
   int<lower=0, upper=N> n_in_CI;
-  
+
   for (i in 1:N) {
     // Log-likelihood
     if (robust) {
@@ -155,28 +155,28 @@ generated quantities {
     } else {
       log_lik[i] = normal_lpdf(log_length[i] | log(mu[i]), sigma);
     }
-    
+
     // Posterior predictive
     y_pred[i] = mu[i];
-    
+
     if (robust) {
       real log_rep = student_t_rng(nu, log(mu[i]), sigma);
       y_rep[i] = exp(log_rep);
     } else {
       y_rep[i] = lognormal_rng(log(mu[i]), sigma);
     }
-    
+
     // Residuals
     residual[i] = length[i] - mu[i];
     std_residual[i] = (log_length[i] - log(mu[i])) / sigma;
   }
-  
+
   // Summary statistics
   mean_residual = mean(residual);
   sd_residual = sd(residual);
   rmse = sqrt(mean(square(residual)));
   mae = mean(abs(residual));
-  
+
   // Count observations within 95% CI
   {
     int count = 0;

@@ -8,23 +8,23 @@ data {
   vector<lower=0>[N] length;         // Observed lengths
   vector<lower=0>[N] age;            // Observed ages
   array[N] int<lower=1> row_id;      // Original row indices for tracking
-  
+
   int<lower=1, upper=3> which_model; // 1=VBGM, 2=Gompertz, 3=Logistic
   int<lower=0, upper=1> robust;      // 0=lognormal, 1=Student-t errors
-  
-  // Priors for Linf (log scale)
-  real prior_Linf_mu;
-  real<lower=0> prior_Linf_sigma;
-  real<lower=0> Linf_lower;          // Hard lower bound (observed max)
-  
+
+  // Priors for Linf
+  real Lmax;
+  real<lower=0> alpha_delta;
+  real<lower=0> beta_delta;
+
   // Priors for L0 (log scale)
   real prior_L0_mu;
   real<lower=0> prior_L0_sigma;
-  
+
   // Priors for k (log scale)
   real prior_k_mu;
   real<lower=0> prior_k_sigma;
-  
+
   // Priors for sigma (observation error)
   real loc_sig;
   real<lower=0> scale_sig;
@@ -35,7 +35,7 @@ transformed data {
 }
 
 parameters {
-  real<lower=log(Linf_lower)> log_Linf;  // Log asymptotic length
+  real<lower=0> delta_Linf;               // Length difference above Linf
   real log_L0;                            // Log length at birth
   real log_k;                             // Log growth rate
   real<lower=0> sigma;                    // Observation error (log scale)
@@ -43,22 +43,22 @@ parameters {
 }
 
 transformed parameters {
-  real<lower=Linf_lower> Linf = exp(log_Linf);
+  real Linf = Lmax + delta_Linf;
   real<lower=0> L0 = exp(log_L0);
   real<lower=0> k = exp(log_k);
-  
+
   // Constrain L0 < Linf
   real<lower=0> L0_constrained = fmin(L0, Linf * 0.99);
-  
+
   // Degrees of freedom for robust model
   real nu = robust ? nu_raw[1] : 100.0;
-  
+
   // Predicted mean lengths
   vector<lower=0>[N] mu;
-  
+
   for (i in 1:N) {
     real a = age[i];
-    
+
     if (which_model == 1) {
       // von Bertalanffy
       mu[i] = Linf - (Linf - L0_constrained) * exp(-k * a);
@@ -76,15 +76,15 @@ transformed parameters {
 
 model {
   // Priors
-  log_Linf ~ normal(prior_Linf_mu, prior_Linf_sigma);
+  delta_Linf ~ gamma(alpha_delta, beta_delta);
   log_L0 ~ normal(prior_L0_mu, prior_L0_sigma);
   log_k ~ normal(prior_k_mu, prior_k_sigma);
   sigma ~ cauchy(loc_sig, scale_sig);
-  
+
   if (robust) {
     nu_raw[1] ~ gamma(2, 0.1);  // Prior for df, peaked around 20
   }
-  
+
   // Likelihood
   if (robust) {
     // Student-t on log scale
@@ -100,22 +100,22 @@ model {
 generated quantities {
   // Log-likelihood for LOO
   vector[N] log_lik;
-  
+
   // Posterior predictive
   vector[N] y_pred;
   vector[N] y_rep;
   vector[N] residual;
   vector[N] std_residual;
-  
+
   // Summary statistics
   real mean_residual;
   real sd_residual;
   real rmse;
   real mae;
   int<lower=0, upper=N> n_in_CI;
-  
+
   // Derived quantity: k already available as parameter
-  
+
   for (i in 1:N) {
     // Log-likelihood
     if (robust) {
@@ -123,10 +123,10 @@ generated quantities {
     } else {
       log_lik[i] = normal_lpdf(log_length[i] | log(mu[i]), sigma);
     }
-    
+
     // Posterior predictive (mean prediction)
     y_pred[i] = mu[i];
-    
+
     // Posterior predictive replications
     if (robust) {
       real log_rep = student_t_rng(nu, log(mu[i]), sigma);
@@ -134,18 +134,18 @@ generated quantities {
     } else {
       y_rep[i] = lognormal_rng(log(mu[i]), sigma);
     }
-    
+
     // Residuals
     residual[i] = length[i] - mu[i];
     std_residual[i] = (log_length[i] - log(mu[i])) / sigma;
   }
-  
+
   // Summary statistics
   mean_residual = mean(residual);
   sd_residual = sd(residual);
   rmse = sqrt(mean(square(residual)));
   mae = mean(abs(residual));
-  
+
   // Count observations within 95% CI
   {
     int count = 0;
