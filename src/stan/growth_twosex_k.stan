@@ -1,7 +1,10 @@
 // growth_twosex_k.stan
 // Two-sex growth model with traditional k parameterization
-// Supports optional partial pooling via hyperparameters (use_pooling flag)
-// Non-centered parameterization for numerical stability
+// Linf uses delta-gamma parameterization: Linf = Lmax + delta, delta ~ Gamma
+//   This eliminates boundary pile-up when the posterior favors Linf near Lmax
+// Pooling on Linf uses soft pairwise shrinkage on the reconstructed log scale,
+//   preserving proportional interpretation of tau_Linf across species sizes
+// Non-centered parameterization for L0 and k (when pooled)
 // Supports von Bertalanffy (1), Gompertz (2), and Logistic (3) growth curves
 
 data {
@@ -10,29 +13,32 @@ data {
   vector<lower=0>[N] age;            // Observed ages
   array[N] int<lower=1, upper=2> sex;// Sex indicator (1=female, 2=male)
   array[N] int<lower=1> row_id;      // Original row indices
-  
+
   int<lower=1, upper=3> which_model; // 1=VBGM, 2=Gompertz, 3=Logistic
   int<lower=0, upper=1> robust;      // 0=lognormal, 1=Student-t errors
   int<lower=0, upper=1> use_pooling; // 0=independent, 1=partial pooling
-  
-  // Priors for Linf (log scale) - vectors of length 2 for [female, male]
-  vector[2] prior_Linf_mu;
-  vector<lower=0>[2] prior_Linf_sigma;
-  vector<lower=0>[2] Linf_lower;
-  
+
+  // Linf: delta-gamma parameterization
+  // delta_Linf = Linf - Lmax ~ Gamma(alpha_delta, beta_delta)
+  // alpha_delta = 1/CV_Linf^2, beta_delta = 1/(mu_delta * CV_Linf^2)
+  // where mu_delta = Lmax * (Linf_multiplier - 1)
+  vector<lower=0>[2] Lmax;           // Observed max length per sex
+  vector<lower=0>[2] alpha_delta;    // Gamma shape per sex
+  vector<lower=0>[2] beta_delta;     // Gamma rate per sex
+
   // Priors for L0 (log scale)
   vector[2] prior_L0_mu;
   vector<lower=0>[2] prior_L0_sigma;
-  
+
   // Priors for k (log scale)
   vector[2] prior_k_mu;
   vector<lower=0>[2] prior_k_sigma;
-  
+
   // Hyperprior scales for partial pooling (half-normal scale)
-  real<lower=0> prior_tau_Linf;
+  real<lower=0> prior_tau_Linf;      // On log(Linf) scale — proportional interpretation
   real<lower=0> prior_tau_L0;
   real<lower=0> prior_tau_k;
-  
+
   // Priors for sigma
   real loc_sig;
   real<lower=0> scale_sig;
@@ -40,7 +46,7 @@ data {
 
 transformed data {
   vector[N] log_length = log(length);
-  
+
   // Count observations per sex
   int n_female = 0;
   int n_male = 0;
@@ -51,75 +57,72 @@ transformed data {
 }
 
 parameters {
-  // Population means (for pooling)
-  real mu_Linf;
+  // Linf: delta parameterization (no hierarchical mean needed)
+  vector<lower=0>[2] delta_Linf;     // Excess above Lmax per sex
+  real<lower=0> tau_Linf;            // Between-sex SD on log(Linf) for soft pooling
+
+  // L0: standard non-centered parameterization
   real mu_L0;
-  real mu_k;
-  
-  // Between-sex standard deviations (for pooling)
-  real<lower=0> tau_Linf;
   real<lower=0> tau_L0;
-  real<lower=0> tau_k;
-  
-  // Raw deviates (always present)
-  vector[2] raw_Linf;
   vector[2] raw_L0;
+
+  // k: standard non-centered parameterization
+  real mu_k;
+  real<lower=0> tau_k;
   vector[2] raw_k;
-  
+
   // Sex-specific observation error
   vector<lower=0>[2] sigma;
-  
+
   // Degrees of freedom (if robust)
   array[robust] real<lower=2> nu_raw;
 }
 
 transformed parameters {
-  // Construct log-scale parameters
-  vector[2] log_Linf;
+  // --- Linf: reconstruct from delta ---
+  vector<lower=0>[2] Linf;
+  for (s in 1:2)
+    Linf[s] = Lmax[s] + delta_Linf[s];
+
+  // --- L0, k: construct log-scale parameters ---
   vector[2] log_L0;
   vector[2] log_k;
-  
+
   if (use_pooling == 1) {
-    // Non-centered: log_param = mu + tau * raw
     for (s in 1:2) {
-      log_Linf[s] = mu_Linf + tau_Linf * raw_Linf[s];
       log_L0[s] = mu_L0 + tau_L0 * raw_L0[s];
       log_k[s] = mu_k + tau_k * raw_k[s];
     }
   } else {
-    // No pooling: raw values are direct log parameters
-    log_Linf = raw_Linf;
     log_L0 = raw_L0;
     log_k = raw_k;
   }
-  
-  // Transform to natural scale with constraints
-  vector<lower=0>[2] Linf;
+
+  // Transform to natural scale
   vector<lower=0>[2] L0;
   vector<lower=0>[2] k;
-  
+
   for (s in 1:2) {
-    Linf[s] = fmax(exp(log_Linf[s]), Linf_lower[s]);
     L0[s] = exp(log_L0[s]);
     k[s] = exp(log_k[s]);
   }
-  
+
   // Constrain L0 < Linf
   vector<lower=0>[2] L0_constrained;
   for (s in 1:2) {
     L0_constrained[s] = fmin(L0[s], Linf[s] * 0.99);
   }
-  
+
   // Degrees of freedom
   real nu = robust ? nu_raw[1] : 100.0;
-  
+
   // Predicted lengths
   vector<lower=0>[N] mu;
-  
+
   for (i in 1:N) {
     int s = sex[i];
     real a = age[i];
-    
+
     if (which_model == 1) {
       // von Bertalanffy
       mu[i] = Linf[s] - (Linf[s] - L0_constrained[s]) * exp(-k[s] * a);
@@ -136,47 +139,47 @@ transformed parameters {
 }
 
 model {
-  // Priors
+  // === Linf priors: always independent gamma on delta ===
+  delta_Linf ~ gamma(alpha_delta, beta_delta);
+
+  // === Pooling structure ===
   if (use_pooling == 1) {
-    // Hyperpriors - use actual prior SDs
-    mu_Linf ~ normal(mean(prior_Linf_mu), mean(prior_Linf_sigma));
-    mu_L0 ~ normal(mean(prior_L0_mu), mean(prior_L0_sigma));
-    mu_k ~ normal(mean(prior_k_mu), mean(prior_k_sigma));
-    
-    // Half-normal priors on between-sex SD
+    // Soft pairwise shrinkage on log(Linf) — proportional interpretation
+    log(Linf[1]) - log(Linf[2]) ~ normal(0, tau_Linf);
     tau_Linf ~ normal(0, prior_tau_Linf);
+
+    // L0: standard non-centered hierarchical
+    mu_L0 ~ normal(mean(prior_L0_mu), mean(prior_L0_sigma));
     tau_L0 ~ normal(0, prior_tau_L0);
-    tau_k ~ normal(0, prior_tau_k);
-    
-    // Standard normal for non-centered raw deviates
-    raw_Linf ~ std_normal();
     raw_L0 ~ std_normal();
+
+    // k: standard non-centered hierarchical
+    mu_k ~ normal(mean(prior_k_mu), mean(prior_k_sigma));
+    tau_k ~ normal(0, prior_tau_k);
     raw_k ~ std_normal();
-    
+
   } else {
-    // Independent priors per sex (raw values are log parameters)
+    // === No pooling: independent priors per sex ===
     for (s in 1:2) {
-      raw_Linf[s] ~ normal(prior_Linf_mu[s], prior_Linf_sigma[s]);
       raw_L0[s] ~ normal(prior_L0_mu[s], prior_L0_sigma[s]);
       raw_k[s] ~ normal(prior_k_mu[s], prior_k_sigma[s]);
     }
-    
-    // Weakly constrain unused params
-    mu_Linf ~ normal(0, 1);
+
+    // Weakly constrain unused hierarchical params
     mu_L0 ~ normal(0, 1);
     mu_k ~ normal(0, 1);
-    tau_Linf ~ normal(0, 1);
-    tau_L0 ~ normal(0, 1);
-    tau_k ~ normal(0, 1);
+    tau_Linf ~ normal(0, 0.1);
+    tau_L0 ~ normal(0, 0.1);
+    tau_k ~ normal(0, 0.1);
   }
-  
+
   // Observation error priors
   sigma ~ cauchy(loc_sig, scale_sig);
-  
+
   if (robust) {
     nu_raw[1] ~ gamma(2, 0.1);
   }
-  
+
   // Likelihood
   for (i in 1:N) {
     int s = sex[i];
@@ -191,18 +194,18 @@ model {
 generated quantities {
   // Log-likelihood
   vector[N] log_lik;
-  
+
   // Posterior predictive
   vector[N] y_pred;
   vector[N] y_rep;
   vector[N] residual;
   vector[N] std_residual;
-  
-  // Sex differences (always computed)
-  real Linf_diff = Linf[1] - Linf[2];  // Female - Male
+
+  // Sex differences (Female - Male)
+  real Linf_diff = Linf[1] - Linf[2];
   real L0_diff = L0[1] - L0[2];
   real k_diff = k[1] - k[2];
-  
+
   // Sex-specific summary stats
   real mean_residual_f = 0;
   real mean_residual_m = 0;
@@ -210,42 +213,42 @@ generated quantities {
   real rmse_m = 0;
   int n_in_CI_f = 0;
   int n_in_CI_m = 0;
-  
+
   // Temporary accumulators
   real sum_resid_f = 0;
   real sum_resid_m = 0;
   real sum_sq_f = 0;
   real sum_sq_m = 0;
-  
+
   for (i in 1:N) {
     int s = sex[i];
-    
+
     // Log-likelihood
     if (robust) {
       log_lik[i] = student_t_lpdf(log_length[i] | nu, log(mu[i]), sigma[s]);
     } else {
       log_lik[i] = normal_lpdf(log_length[i] | log(mu[i]), sigma[s]);
     }
-    
+
     // Predictions
     y_pred[i] = mu[i];
-    
+
     if (robust) {
       real log_rep = student_t_rng(nu, log(mu[i]), sigma[s]);
       y_rep[i] = exp(log_rep);
     } else {
       y_rep[i] = lognormal_rng(log(mu[i]), sigma[s]);
     }
-    
+
     // Residuals
     residual[i] = length[i] - mu[i];
     std_residual[i] = (log_length[i] - log(mu[i])) / sigma[s];
-    
+
     // Accumulate by sex
     if (s == 1) {
       sum_resid_f += residual[i];
       sum_sq_f += square(residual[i]);
-      
+
       real lower_ci = exp(log(mu[i]) - 1.96 * sigma[s]);
       real upper_ci = exp(log(mu[i]) + 1.96 * sigma[s]);
       if (length[i] >= lower_ci && length[i] <= upper_ci) {
@@ -254,7 +257,7 @@ generated quantities {
     } else {
       sum_resid_m += residual[i];
       sum_sq_m += square(residual[i]);
-      
+
       real lower_ci = exp(log(mu[i]) - 1.96 * sigma[s]);
       real upper_ci = exp(log(mu[i]) + 1.96 * sigma[s]);
       if (length[i] >= lower_ci && length[i] <= upper_ci) {
@@ -262,7 +265,7 @@ generated quantities {
       }
     }
   }
-  
+
   // Finalize sex-specific stats
   if (n_female > 0) {
     mean_residual_f = sum_resid_f / n_female;
