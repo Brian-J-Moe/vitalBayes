@@ -1,7 +1,7 @@
 # Peterson-Wroblewski Natural Mortality Model
 
 Computes weight-based natural mortality following Peterson & Wroblewski
-(1984). Mortality scales allometrically with body weight.
+(1984).
 
 ## Usage
 
@@ -10,7 +10,8 @@ M_peterson_wroblewski(
   age,
   Linf,
   L0,
-  k,
+  Lmat,
+  tmat,
   lw_fun,
   growth_model = c("vb", "gompertz", "logistic")
 )
@@ -20,7 +21,7 @@ M_peterson_wroblewski(
 
 - age:
 
-  Numeric vector of ages at which to compute mortality.
+  Numeric vector of ages.
 
 - Linf:
 
@@ -30,18 +31,21 @@ M_peterson_wroblewski(
 
   Length at birth.
 
-- k:
+- Lmat:
 
-  Growth coefficient (model-specific, not necessarily VB).
+  Length at maturity.
+
+- tmat:
+
+  Age at maturity.
 
 - lw_fun:
 
-  Function mapping length to weight in grams: `lw_fun(L)`.
+  Length-weight function: `lw_fun(L)` returns weight in grams.
 
 - growth_model:
 
-  Character. Growth model for length prediction: `"vb"`, `"gompertz"`,
-  or `"logistic"`. Default `"vb"`.
+  Character. Growth model for L(t).
 
 ## Value
 
@@ -49,29 +53,13 @@ Numeric vector of instantaneous mortality rates.
 
 ## Details
 
-The model expresses mortality as a power function of body weight:
-\$\$M(W) = 1.92 \cdot W^{-0.25}\$\$ where \\W\\ is body weight in grams.
+\$\$M(W) = 1.92 \cdot W^{-0.25}\$\$
 
-This model is growth-model-agnostic: it only requires predicted body
-weight at age, which can be derived from any growth model via a
-length-weight relationship.
+**Warning**: This model was calibrated on teleost fishes and may produce
+biologically implausible mortality rates for elasmobranchs.
 
 ## References
 
 Peterson, I., & Wroblewski, J. S. (1984). Mortality rate of fishes in
 the pelagic ecosystem. *Canadian Journal of Fisheries and Aquatic
 Sciences*, 41(7), 1117-1120.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-lw_fun <- function(L) 0.0001 * L^3.1  # Length in cm, weight in g
-ages <- seq(0.5, 30, by = 0.5)
-
-M <- M_peterson_wroblewski(
-  age = ages, Linf = 100, L0 = 25, k = 0.1,
-  lw_fun = lw_fun, growth_model = "gompertz"
-)
-} # }
-```

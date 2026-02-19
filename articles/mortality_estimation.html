@@ -667,7 +667,7 @@ match.arg(palette)</p>
 <p>if (use_posterior) { if (show_progress) message(“Extracting
 parameters from growth model posterior…”)</p>
 <pre><code><span><span class="co"># Extract from posterior (works for any growth model)</span></span>
-<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_growth_parameters.html">extract_growth_parameters</a></span><span class="op">(</span></span>
+<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu">extract_growth_parameters</span><span class="op">(</span></span>
 <span>  growth_fit   <span class="op">=</span> <span class="va">growth_fit</span>,</span>
 <span>  maturity_fit <span class="op">=</span> <span class="va">maturity_fit</span>,</span>
 <span>  sex          <span class="op">=</span> <span class="va">sex</span>,</span>
@@ -769,7 +769,7 @@ nrow(par_draws))</p>
 <span><span class="va">M_raw</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/switch.html" class="external-link">switch</a></span><span class="op">(</span></span>
 <span>  <span class="va">method</span>,</span>
 <span>  </span>
-<span>  <span class="st">"CW"</span> <span class="op">=</span> <span class="fu"><a href="../reference/M_chen_watanabe_L0.html">M_chen_watanabe_L0</a></span><span class="op">(</span></span>
+<span>  <span class="st">"CW"</span> <span class="op">=</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
 <span>    age          <span class="op">=</span> <span class="va">ages</span>,</span>
 <span>    Linf         <span class="op">=</span> <span class="va">p_i</span><span class="op">$</span><span class="va">Linf</span>,</span>
 <span>    L0           <span class="op">=</span> <span class="va">p_i</span><span class="op">$</span><span class="va">L0</span>,</span>

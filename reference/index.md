@@ -2,28 +2,36 @@
 
 ## All functions
 
-- [`M_chen_watanabe_L0()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe_L0.md)
-  : Chen-Watanabe Natural Mortality (\\L_0\\ Parameterization)
+- [`M_chen_watanabe()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe.md)
+  : Chen-Watanabe Natural Mortality (Model-Dependent)
 - [`M_lorenzen()`](https://brian-j-moe.github.io/vitalBayes/reference/M_lorenzen.md)
   : Lorenzen Natural Mortality Model
 - [`M_peterson_wroblewski()`](https://brian-j-moe.github.io/vitalBayes/reference/M_peterson_wroblewski.md)
   : Peterson-Wroblewski Natural Mortality Model
+- [`approx_sd()`](https://brian-j-moe.github.io/vitalBayes/reference/approx_sd.md)
+  : Approximate Standard Deviation from Confidence Interval
 - [`compare_growth_models()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_growth_models.md)
   : Compare Multiple Growth Models
 - [`compare_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_loo.md)
   : Compare Models Using LOO
 - [`compare_pooling()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_pooling.md)
   : Compare Pooling Effects
-- [`compute_k_vb_equivalent()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)
-  : Compute Von Bertalanffy-Equivalent Growth Coefficient
+- [`compute_G()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_G.md)
+  : Compute Relative Size G(t) = L(t)/Linf
+- [`compute_L()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_L.md)
+  : Compute Length at Age L(t)
+- [`compute_Minf()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_Minf.md)
+  : Compute Asymptotic Mortality Rate (M_inf)
+- [`compute_k_native()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_native.md)
+  : Compute Native Growth Coefficient for a Specific Model
 - [`compute_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_loo.md)
   : LOO Cross-Validation for vitalBayes Models
+- [`compute_tmax()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_tmax.md)
+  : Compute Maximum Age from Growth Parameters
 - [`create_loo_table()`](https://brian-j-moe.github.io/vitalBayes/reference/create_loo_table.md)
   : Create LOO Comparison Table
 - [`create_parameter_table()`](https://brian-j-moe.github.io/vitalBayes/reference/create_parameter_table.md)
   : Create Parameter Summary Table
-- [`extract_growth_parameters()`](https://brian-j-moe.github.io/vitalBayes/reference/extract_growth_parameters.md)
-  : Extract Life History Parameters from Growth Model Posterior
 - [`fit_bayesian_birth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_birth.md)
   : Fit Bayesian Length-at-Birth Model
 - [`fit_bayesian_growth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)

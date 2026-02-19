@@ -1,36 +1,31 @@
 # Stochastic Estimation of Age-Specific Natural Mortality
 
 Monte Carlo simulation of age-specific natural mortality schedules with
-full uncertainty propagation from growth model posteriors. Supports
-Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
-derivation of VB-equivalent \\k\\ from any growth model fit.
+uncertainty propagation from growth and maturity parameters.
 
 ## Usage
 
 ``` r
 get_stochastic_mortality(
   method = c("CW", "PW", "L"),
-  growth_fit = NULL,
-  maturity_fit = NULL,
-  sex = NULL,
-  Linf = NULL,
-  L0 = NULL,
-  k = NULL,
-  tmat = NULL,
+  Linf,
+  L0,
+  Lmat,
+  tmat,
+  growth_model = c("vb", "gompertz", "logistic"),
   Linf_factor = 0.99,
   age_seq = function(tmax) seq(0.1, ceiling(tmax), length.out = 500),
   iter = 2000,
   scaled = TRUE,
   M_target = NULL,
   p = 0.001,
-  two_phase = TRUE,
+  two_phase = FALSE,
   late_model = c("gompertz", "logistic"),
   tm_factor = 2/3,
   M_mult = 2,
   smooth_factor = 1/3,
-  lw_fun = NULL,
   weight_based = FALSE,
-  growth_model = c("vb", "gompertz", "logistic"),
+  lw_fun = NULL,
   seed = 1234,
   palette = c("synthwave", "viridis", "okabe", "plasma", "inferno"),
   print_plot = TRUE,
@@ -44,36 +39,23 @@ get_stochastic_mortality(
 
   Character. Mortality model: `"CW"`, `"PW"`, or `"L"`.
 
-- growth_fit:
+- Linf, L0, Lmat, tmat:
 
-  Optional `CmdStanMCMC` object from
-  [`fit_bayesian_growth`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md).
-  If provided, parameters are extracted from the joint posterior.
+  Numeric vectors of length 2: `c(mean, sd)`.
 
-- maturity_fit:
+- growth_model:
 
-  Optional `CmdStanMCMC` object from
-  [`fit_bayesian_maturity`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md)
-  providing age-at-maturity for k-based growth fits or two-phase CW.
-
-- sex:
-
-  Integer. Sex code (1 = female, 2 = male) for hierarchical models.
-
-- Linf, L0, k, tmat:
-
-  Alternative to `growth_fit`: specify parameters directly as
-  `c(mean, sd)` vectors for independent normal sampling.
+  Character. Growth model for G(t) and L(t): `"vb"`, `"gompertz"`, or
+  `"logistic"`.
 
 - Linf_factor:
 
-  Numeric in (0, 1). Fraction of \\L\_\infty\\ for \\t\_{max}\\
-  estimation. Default 0.99.
+  Fraction of Linf used to estimate tmax. Default 0.99.
 
 - age_seq:
 
-  Function or numeric vector defining ages for mortality calculation.
-  Default `function(tmax) seq(0, ceiling(tmax), length.out = 500)`.
+  Function or numeric vector for age grid. Default creates 500 points
+  from 0.1 to tmax.
 
 - iter:
 
@@ -81,118 +63,110 @@ get_stochastic_mortality(
 
 - scaled:
 
-  Logical. If `TRUE` (default), scales mortality to `M_target` or
-  survival probability `p`.
+  Scale mortality to M_target? Default TRUE.
 
 - M_target:
 
-  Target mean mortality. Can be numeric scalar, function of tmax, or
-  `NULL` for survival-probability-based scaling.
+  Target mean mortality. Can be scalar, function of tmax, or NULL.
 
 - p:
 
-  Survival probability to \\t\_{max}\\ for scaling. Default 0.001.
+  Survival probability for scaling if M_target NULL. Default 0.001.
 
 - two_phase:
 
-  Logical. For CW model, use two-phase senescence? Default `TRUE`.
+  Use CW two-phase senescence? Default FALSE.
 
 - late_model:
 
-  Character. Senescence model: `"gompertz"` or `"logistic"`. Default
-  `"gompertz"`.
+  Senescence model: `"gompertz"` or `"logistic"`.
 
-- tm_factor, M_mult, smooth_factor:
+- tm_factor:
 
-  Two-phase model parameters.
+  Transition age factor. Default 2/3.
 
-- lw_fun:
+- M_mult:
 
-  Length-weight function for PW and weight-based Lorenzen.
+  Mortality multiplier for senescence. Default 2.
+
+- smooth_factor:
+
+  Transition smoothness. Default 1/3.
 
 - weight_based:
 
-  Logical. For Lorenzen, use weight-based formulation? Default `FALSE`.
+  For Lorenzen: use weight-based formulation? Default FALSE.
 
-- growth_model:
+- lw_fun:
 
-  Character. Growth model type when using manual parameters: `"vb"`,
-  `"gompertz"`, or `"logistic"`.
+  Length-weight function (required for PW and weight-based Lorenzen).
 
 - seed:
 
-  Random seed for reproducibility. Default 1234.
+  Random seed. Default 1234.
 
 - palette:
 
-  Color palette for plot: `"synthwave"`, `"viridis"`, `"okabe"`,
-  `"plasma"`, or `"inferno"`.
+  Color palette: `"synthwave"`, `"viridis"`, `"okabe"`, `"plasma"`, or
+  `"inferno"`.
 
 - print_plot:
 
-  Logical. Print plot on completion? Default `TRUE`.
+  Print plot? Default TRUE.
 
 - show_progress:
 
-  Logical. Show progress messages? Default `TRUE`.
+  Show progress messages? Default TRUE.
 
 ## Value
 
-A list with components: Schedules (data.table of all mortality schedules
-with columns set_id, age, M, M_scaled), Parameters (data.table of
-sampled life history parameters), Summary (data.table with median and 95
-percent CI by age), and Plot (ggplot2 object).
+A list with:
+
+- Schedules:
+
+  data.table with columns: set_id, age, M
+
+- Parameters:
+
+  data.table with columns: set_id, Linf, L0, Lmat, tmat, Minf, k_native,
+  tmax
+
+- Summary:
+
+  data.table with age-wise median and 95% CI
+
+- Plot:
+
+  ggplot2 object
 
 ## Details
 
-A key feature of this function is growth-model-agnostic mortality
-estimation. When a growth fit from
-[`fit_bayesian_growth`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)
-is provided, the function extracts biological milestones (Linf, L0,
-Lmat, tmat) and computes the VB-equivalent k needed for Chen-Watanabe
-and growth-based Lorenzen models.
+This function samples life history parameters from specified
+distributions and computes mortality schedules using the chosen method.
+The output format is compatible with
+[`simulate_survivorship`](https://brian-j-moe.github.io/vitalBayes/reference/simulate_survivorship.md).
 
-This allows users to fit whichever growth model (von Bertalanffy,
-Gompertz, or Logistic) best describes their data, then estimate
-mortality without theoretical compromise.
+Three mortality models are available:
 
-When `growth_fit` is provided, parameters are drawn from the joint
-posterior distribution, preserving correlations. This yields mortality
-estimates with appropriate (often narrower) uncertainty bounds compared
-to independent sampling of each parameter.
+- **CW**: Chen-Watanabe (1989) with model-dependent G(t)
 
-Three mortality models are available: CW (Chen-Watanabe 1989 with L0
-parameterization and optional two-phase senescence), PW
-(Peterson-Wroblewski 1984 weight-based allometric model), and L
-(Lorenzen 1996/2022 in weight-based or growth-based form).
+- **PW**: Peterson-Wroblewski (1984) weight-based
+
+- **L**: Lorenzen (1996/2022) weight- or growth-based
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-# From a Gompertz growth fit (maturity-based parameterization)
-mort <- get_stochastic_mortality(
-  method     = "CW",
-  growth_fit = gomp_fit,  # Any growth model works!
-  sex        = 1,
-  iter       = 2000,
-  scaled     = TRUE,
-  p          = 0.001
-)
-
-# View plot
-mort$Plot
-
-# Check VB-equivalent k distribution
-hist(mort$Parameters$k_vb_equiv)
-
-# Manual specification for sensitivity analysis
 mort <- get_stochastic_mortality(
   method = "CW",
-  Linf = c(100, 5),
-  L0   = c(25, 2),
-  k    = c(0.1, 0.02),  # VB k or VB-equivalent k
-  tmat = c(10, 1)
+  Linf = c(108, 10),
+  L0 = c(35, 2),
+  Lmat = c(83, 5),
+  tmat = c(47, 3),
+  growth_model = "gompertz",
+  iter = 2000
 )
+mort$Plot
 } # }
 ```

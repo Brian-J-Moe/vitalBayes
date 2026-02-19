@@ -5,9 +5,7 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Orbitron-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Peterson-Wroblewski Natural Mortality Model — M_peterson_wroblewski"><meta name="description" content="Computes weight-based natural mortality following Peterson &amp;amp; Wroblewski
-(1984). Mortality scales allometrically with body weight."><meta property="og:description" content="Computes weight-based natural mortality following Peterson &amp;amp; Wroblewski
-(1984). Mortality scales allometrically with body weight."><meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Orbitron-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Peterson-Wroblewski Natural Mortality Model — M_peterson_wroblewski"><meta name="description" content="Computes weight-based natural mortality following Peterson &amp;amp; Wroblewski (1984)."><meta property="og:description" content="Computes weight-based natural mortality following Peterson &amp;amp; Wroblewski (1984)."><meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -54,8 +52,7 @@
     </div>
 
     <div class="ref-description section level2">
-    <p>Computes weight-based natural mortality following Peterson &amp; Wroblewski
-(1984). Mortality scales allometrically with body weight.</p>
+    <p>Computes weight-based natural mortality following Peterson &amp; Wroblewski (1984).</p>
     </div>
 
     <div class="section level2">
@@ -64,7 +61,8 @@
 <span>  <span class="va">age</span>,</span>
 <span>  <span class="va">Linf</span>,</span>
 <span>  <span class="va">L0</span>,</span>
-<span>  <span class="va">k</span>,</span>
+<span>  <span class="va">Lmat</span>,</span>
+<span>  <span class="va">tmat</span>,</span>
 <span>  <span class="va">lw_fun</span>,</span>
 <span>  growth_model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"vb"</span>, <span class="st">"gompertz"</span>, <span class="st">"logistic"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -75,7 +73,7 @@
 
 
 <dl><dt id="arg-age">age<a class="anchor" aria-label="anchor" href="#arg-age"></a></dt>
-<dd><p>Numeric vector of ages at which to compute mortality.</p></dd>
+<dd><p>Numeric vector of ages.</p></dd>
 
 
 <dt id="arg-linf">Linf<a class="anchor" aria-label="anchor" href="#arg-linf"></a></dt>
@@ -86,17 +84,20 @@
 <dd><p>Length at birth.</p></dd>
 
 
-<dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>Growth coefficient (model-specific, not necessarily VB).</p></dd>
+<dt id="arg-lmat">Lmat<a class="anchor" aria-label="anchor" href="#arg-lmat"></a></dt>
+<dd><p>Length at maturity.</p></dd>
+
+
+<dt id="arg-tmat">tmat<a class="anchor" aria-label="anchor" href="#arg-tmat"></a></dt>
+<dd><p>Age at maturity.</p></dd>
 
 
 <dt id="arg-lw-fun">lw_fun<a class="anchor" aria-label="anchor" href="#arg-lw-fun"></a></dt>
-<dd><p>Function mapping length to weight in grams: <code>lw_fun(L)</code>.</p></dd>
+<dd><p>Length-weight function: <code>lw_fun(L)</code> returns weight in grams.</p></dd>
 
 
 <dt id="arg-growth-model">growth_model<a class="anchor" aria-label="anchor" href="#arg-growth-model"></a></dt>
-<dd><p>Character. Growth model for length prediction:
-<code>"vb"</code>, <code>"gompertz"</code>, or <code>"logistic"</code>. Default <code>"vb"</code>.</p></dd>
+<dd><p>Character. Growth model for L(t).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -105,12 +106,9 @@
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The model expresses mortality as a power function of body weight:
-$$M(W) = 1.92 \cdot W^{-0.25}$$
-where \(W\) is body weight in grams.</p>
-<p>This model is growth-model-agnostic: it only requires predicted body weight
-at age, which can be derived from any growth model via a length-weight
-relationship.</p>
+    <p>$$M(W) = 1.92 \cdot W^{-0.25}$$</p>
+<p><strong>Warning</strong>: This model was calibrated on teleost fishes and may
+produce biologically implausible mortality rates for elasmobranchs.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -119,20 +117,6 @@ pelagic ecosystem. <em>Canadian Journal of Fisheries and Aquatic Sciences</em>,
 41(7), 1117-1120.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">lw_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span><span class="op">)</span> <span class="fl">0.0001</span> <span class="op">*</span> <span class="va">L</span><span class="op">^</span><span class="fl">3.1</span>  <span class="co"># Length in cm, weight in g</span></span></span>
-<span class="r-in"><span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">M</span> <span class="op">&lt;-</span> <span class="fu">M_peterson_wroblewski</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.1</span>,</span></span>
-<span class="r-in"><span>  lw_fun <span class="op">=</span> <span class="va">lw_fun</span>, growth_model <span class="op">=</span> <span class="st">"gompertz"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

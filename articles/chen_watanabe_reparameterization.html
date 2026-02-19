@@ -302,7 +302,7 @@ the VB-equivalent <span class="math inline">\(k\)</span> captures the
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Extract biological parameters from Gompertz posterior</span></span>
-<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_growth_parameters.html">extract_growth_parameters</a></span><span class="op">(</span><span class="va">gomp_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
+<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu">extract_growth_parameters</span><span class="op">(</span><span class="va">gomp_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Examine the relationship between native Gompertz k and VB-equivalent k</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">params</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>k_gompertz <span class="op">=</span> <span class="va">k</span>, <span class="va">k_vb_equiv</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>

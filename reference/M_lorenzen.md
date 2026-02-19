@@ -1,7 +1,7 @@
 # Lorenzen Natural Mortality Model
 
 Computes size-dependent natural mortality following Lorenzen (1996,
-2022). Supports both weight-based and growth-based formulations.
+2022).
 
 ## Usage
 
@@ -10,11 +10,12 @@ M_lorenzen(
   age,
   Linf,
   L0,
-  k,
+  Lmat,
+  tmat,
   lw_fun = NULL,
   weight_based = FALSE,
   growth_model = c("vb", "gompertz", "logistic"),
-  sample_params = FALSE
+  sample_params = TRUE
 )
 ```
 
@@ -22,7 +23,7 @@ M_lorenzen(
 
 - age:
 
-  Numeric vector of ages at which to compute mortality.
+  Numeric vector of ages.
 
 - Linf:
 
@@ -32,30 +33,29 @@ M_lorenzen(
 
   Length at birth.
 
-- k:
+- Lmat:
 
-  Growth coefficient. For `weight_based = FALSE`, should be
-  VB-equivalent \\k\\ (use
-  [`compute_k_vb_equivalent`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)).
+  Length at maturity.
+
+- tmat:
+
+  Age at maturity.
 
 - lw_fun:
 
-  Function mapping length to weight (required if `weight_based = TRUE`).
+  Length-weight function (required if weight_based = TRUE).
 
 - weight_based:
 
-  Logical. If `TRUE`, uses weight-based formulation. If `FALSE`
-  (default), uses growth-based formulation.
+  Use weight-based formulation?
 
 - growth_model:
 
-  Character. Growth model for length prediction (only used for
-  weight-based formulation): `"vb"`, `"gompertz"`, or `"logistic"`.
+  Growth model for L(t).
 
 - sample_params:
 
-  Logical. If `TRUE`, samples allometric parameters from their
-  distributions. If `FALSE`, uses mean values.
+  Sample parameters from their distributions?
 
 ## Value
 
@@ -65,14 +65,13 @@ Numeric vector of instantaneous mortality rates.
 
 Two formulations are available:
 
-Weight-based (Lorenzen 1996): \$\$M(W) = \alpha \cdot W^{\beta}\$\$
-where \\\alpha \sim N(3.69, 0.502)\\ and \\\beta \sim N(-0.305,
-0.029)\\.
+**Weight-based** (Lorenzen 1996): \$\$M(W) = \alpha \cdot W^{\beta}\$\$
 
-Growth-based (Lorenzen 2022): \$\$\ln M = 0.28 - 1.30 \ln(L/L\_\infty) +
-1.08 \ln(k)\$\$ This formulation was calibrated using von Bertalanffy
-parameters, so \\k\\ should be the VB-equivalent \\k\\ when using fits
-from other growth models.
+**Growth-based** (Lorenzen 2022): \$\$\ln M = 0.28 - 1.30
+\ln(L/L\_\infty) + 1.08 \ln(k)\$\$
+
+For the growth-based formulation, M_inf (VB-derived) is used as k for
+consistency with the Chen-Watanabe framework.
 
 ## References
 
