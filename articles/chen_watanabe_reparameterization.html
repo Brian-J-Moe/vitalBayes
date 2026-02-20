@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Chen-Watanabe Reparameterization: From t₀ to L₀ • vitalBayes</title>
+<title>The Chen-Watanabe Reparameterization • vitalBayes</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -24,7 +24,7 @@
 <link href="../deps/Orbitron-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Chen-Watanabe Reparameterization: From t₀ to L₀">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="The Chen-Watanabe Reparameterization">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
@@ -80,7 +80,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Chen-Watanabe Reparameterization: From t₀ to L₀</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>The Chen-Watanabe Reparameterization</h1>
             <h3 data-toc-skip class="subtitle">Growth-Model-Agnostic
 Natural Mortality Estimation</h3>
             
@@ -94,469 +94,468 @@ Natural Mortality Estimation</h3>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>This vignette documents two methodological advances in vitalBayes’s
-approach to natural mortality estimation:</p>
+<p>This vignette documents the mathematical framework underlying
+vitalBayes’s implementation of the Chen &amp; Watanabe (1989) natural
+mortality model. Two methodological design choices distinguish this
+implementation from standard practice:</p>
 <ol style="list-style-type: decimal">
-<li><p><strong>L₀ parameterization of Chen-Watanabe</strong>: Replacing
-the theoretical parameter <span class="math inline">\(t_0\)</span> with
-the observable quantity <span class="math inline">\(L_0\)</span> (birth
-length)</p></li>
-<li><p><strong>Growth-model-agnostic k derivation</strong>: Computing a
-VB-equivalent growth coefficient from biological milestones, enabling
-Chen-Watanabe mortality estimation from <em>any</em> growth model fit
-(von Bertalanffy, Gompertz, or Logistic)</p></li>
+<li><p><strong><span class="math inline">\(L_0\)</span>
+parameterization</strong>: Expressing the CW model directly in terms of
+predicted body length <span class="math inline">\(L(t)\)</span> and
+asymptotic length <span class="math inline">\(L_\infty\)</span>,
+eliminating dependence on the theoretical parameter <span class="math inline">\(t_0\)</span>.</p></li>
+<li><p><strong>Growth-model-agnostic estimation</strong>: Defining
+mortality through a normalized growth coefficient <span class="math inline">\(G(t) = L(t) / L_\infty\)</span> and an asymptotic
+mortality rate <span class="math inline">\(M_\infty\)</span> that is
+equivalent to the von Bertalanffy <span class="math inline">\(k\)</span>, regardless of which growth model is
+used to describe the data.</p></li>
 </ol>
-<p>These developments align mortality estimation with vitalBayes’s core
-philosophy: parameterize models using biologically meaningful,
-observable quantities rather than abstract mathematical constructs.</p>
+<p>Together, these choices mean that users can fit whichever growth
+model best describes their data — von Bertalanffy, Gompertz, or Logistic
+— and still use the Chen-Watanabe mortality framework without
+theoretical compromise. For the mathematical details of the <span class="math inline">\(L_0\)</span>-based growth model equations
+themselves, see <code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code>.</p>
 </div>
 <div class="section level2">
-<h2 id="motivation">Motivation<a class="anchor" aria-label="anchor" href="#motivation"></a>
+<h2 id="the-chen-watanabe-model">The Chen-Watanabe Model<a class="anchor" aria-label="anchor" href="#the-chen-watanabe-model"></a>
 </h2>
 <div class="section level3">
-<h3 id="the-problem-with-t_0">The Problem with <span class="math inline">\(t_0\)</span><a class="anchor" aria-label="anchor" href="#the-problem-with-t_0"></a>
+<h3 id="l_0-parameterized-form">
+<span class="math inline">\(L_0\)</span>-Parameterized Form<a class="anchor" aria-label="anchor" href="#l_0-parameterized-form"></a>
 </h3>
-<p>The Chen-Watanabe (1989) natural mortality model was derived under
-von Bertalanffy growth dynamics and is traditionally expressed as:</p>
-<p><span class="math display">\[M(t) = \frac{k}{1 - e^{-k(t -
-t_0)}}\]</span></p>
-<p>where <span class="math inline">\(k\)</span> is the VB growth
-coefficient and <span class="math inline">\(t_0\)</span> is the
-“theoretical age at length zero” — the age at which an organism would
-have zero length if VB growth extended backward in time.</p>
-<p>The parameter <span class="math inline">\(t_0\)</span> presents
-several challenges:</p>
-<p><strong>Biological ambiguity.</strong> No fish has zero length at any
-age. The parameter is a mathematical artifact of extrapolating the VB
-curve backward, not a biological reality. Values can be positive,
-negative, or zero, and interpretation varies.</p>
-<p><strong>Estimation instability.</strong> When growth data are sparse
-at young ages (common in elasmobranch research), <span class="math inline">\(t_0\)</span> estimates become unreliable. Strong
-correlations with other parameters (<span class="math inline">\(k\)</span>, <span class="math inline">\(L_\infty\)</span>) make it poorly identified.</p>
-<p><strong>Awkward uncertainty propagation.</strong> Specifying priors
-on <span class="math inline">\(t_0\)</span> is unintuitive. What prior
-belief does one have about the “age at length zero”? This contrasts
-sharply with birth length (<span class="math inline">\(L_0\)</span>),
-where researchers often have strong prior information from embryo
-measurements.</p>
+<p>The Chen &amp; Watanabe (1989) model relates instantaneous natural
+mortality <span class="math inline">\(M(t)\)</span> to the von
+Bertalanffy growth coefficient <span class="math inline">\(k\)</span>.
+After reparameterizing from <span class="math inline">\(t_0\)</span> to
+<span class="math inline">\(L_0\)</span> (the algebraic steps are
+detailed in <code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code>), the CW model
+simplifies to:</p>
+<p><span class="math display">\[M(t) = \frac{k \cdot
+L_\infty}{L(t)}\]</span></p>
+<p>where <span class="math inline">\(L(t) = L_\infty - (L_\infty -
+L_0)e^{-kt}\)</span> is the von Bertalanffy predicted length at age
+<span class="math inline">\(t\)</span>, <span class="math inline">\(L_\infty\)</span> is asymptotic length, and <span class="math inline">\(k\)</span> is the VB growth coefficient.</p>
+<p>This compact form reveals the core biological mechanism:
+<strong>mortality is inversely proportional to body size</strong>.
+Small, young individuals are more vulnerable to predation, starvation,
+and environmental stochasticity; as an organism grows toward its
+asymptotic size, its instantaneous mortality declines toward a lower
+bound.</p>
 </div>
 <div class="section level3">
-<h3 id="the-problem-with-growth-model-dependence">The Problem with Growth Model Dependence<a class="anchor" aria-label="anchor" href="#the-problem-with-growth-model-dependence"></a>
+<h3 id="the-normalized-growth-coefficient-gt">The Normalized Growth Coefficient <span class="math inline">\(G(t)\)</span><a class="anchor" aria-label="anchor" href="#the-normalized-growth-coefficient-gt"></a>
 </h3>
-<p>The standard Chen-Watanabe formulation requires von Bertalanffy
-parameters specifically. This creates a practical problem: <strong>the
-VB model often performs poorly on elasmobranch data</strong>.</p>
-<p>In datasets with sparse adult observations — typical for
-slow-growing, long-lived species — the VB model frequently produces:</p>
-<ul>
-<li>Biologically implausible <span class="math inline">\(L_\infty\)</span> estimates (sometimes below
-observed maximum lengths)</li>
-<li>Unstable <span class="math inline">\(k\)</span> estimates driven by
-the <span class="math inline">\(L_\infty\)</span>-<span class="math inline">\(k\)</span> correlation</li>
-<li>Poor predictive performance compared to Gompertz or Logistic
-alternatives</li>
-</ul>
-<p>Researchers face an uncomfortable choice: use the best-fitting growth
-model for biological inference but abandon Chen-Watanabe mortality
-estimation, or force a VB fit specifically for mortality calculation
-despite knowing it describes the data poorly.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="mathematical-development">Mathematical Development<a class="anchor" aria-label="anchor" href="#mathematical-development"></a>
-</h2>
-<div class="section level3">
-<h3 id="reparameterization-t_0-rightarrow-l_0">Reparameterization: <span class="math inline">\(t_0 \rightarrow
-L_0\)</span><a class="anchor" aria-label="anchor" href="#reparameterization-t_0-rightarrow-l_0"></a>
-</h3>
-<p>We begin with the relationship between <span class="math inline">\(t_0\)</span> and <span class="math inline">\(L_0\)</span> under von Bertalanffy dynamics. At
-age <span class="math inline">\(t = 0\)</span>:</p>
-<p><span class="math display">\[L_0 = L_\infty \left(1 -
-e^{kt_0}\right)\]</span></p>
-<p>Solving for the exponential term:</p>
-<p><span class="math display">\[e^{kt_0} = 1 - \frac{L_0}{L_\infty} =
-\frac{L_\infty - L_0}{L_\infty}\]</span></p>
-<p>Now consider the denominator of the Chen-Watanabe equation at age
-<span class="math inline">\(t\)</span>:</p>
-<p><span class="math display">\[1 - e^{-k(t - t_0)} = 1 - e^{-kt} \cdot
-e^{kt_0}\]</span></p>
-<p>Substituting our expression for <span class="math inline">\(e^{kt_0}\)</span>:</p>
-<p><span class="math display">\[1 - e^{-k(t-t_0)} = 1 - e^{-kt} \cdot
-\frac{L_\infty - L_0}{L_\infty}\]</span></p>
-<p><span class="math display">\[= \frac{L_\infty - (L_\infty -
-L_0)e^{-kt}}{L_\infty}\]</span></p>
-<p>The numerator is precisely the von Bertalanffy growth equation:</p>
-<p><span class="math display">\[L(t) = L_\infty - (L_\infty -
-L_0)e^{-kt}\]</span></p>
-<p>Therefore:</p>
-<p><span class="math display">\[1 - e^{-k(t-t_0)} =
+<p>To generalize the CW model beyond von Bertalanffy growth, it is
+useful to define the <strong>normalized growth coefficient</strong>:</p>
+<p><span class="math display">\[G(t) =
 \frac{L(t)}{L_\infty}\]</span></p>
-<p>Substituting back into the Chen-Watanabe equation:</p>
-<p><span class="math display">\[\boxed{M(t) = \frac{k \cdot
-L_\infty}{L(t)}}\]</span></p>
-<p>This is the <strong>L₀-parameterized Chen-Watanabe model</strong>. It
-expresses mortality as inversely proportional to body size, with no
-dependence on <span class="math inline">\(t_0\)</span>.</p>
+<p>This is the fraction of asymptotic size achieved at age <span class="math inline">\(t\)</span>. At birth (<span class="math inline">\(t = 0\)</span>), <span class="math inline">\(G(0)
+= L_0 / L_\infty\)</span>, which is some small fraction. As <span class="math inline">\(t \to \infty\)</span>, <span class="math inline">\(G(t) \to 1\)</span> for all three growth models —
+the organism approaches its asymptotic size.</p>
+<p>Using <span class="math inline">\(G(t)\)</span>, the CW model
+becomes:</p>
+<p><span class="math display">\[M(t) =
+\frac{M_\infty}{G(t)}\]</span></p>
+<p>where <span class="math inline">\(M_\infty = k\)</span> is the
+<strong>asymptotic mortality rate</strong> — the mortality rate an
+individual would experience at asymptotic length. The entirety of the
+age-specific mortality pattern is captured by <span class="math inline">\(G(t)\)</span>: how quickly an organism reaches its
+full size determines how quickly its mortality declines.</p>
 </div>
 <div class="section level3">
-<h3 id="biological-interpretation">Biological Interpretation<a class="anchor" aria-label="anchor" href="#biological-interpretation"></a>
+<h3 id="why-m_infty-equals-the-von-bertalanffy-k">Why <span class="math inline">\(M_\infty\)</span> Equals the Von
+Bertalanffy <span class="math inline">\(k\)</span><a class="anchor" aria-label="anchor" href="#why-m_infty-equals-the-von-bertalanffy-k"></a>
 </h3>
-<p>The reparameterized form reveals the biological mechanism underlying
-Chen-Watanabe mortality: smaller individuals experience higher
-mortality, and this relationship scales with how close an organism is to
-its asymptotic size.</p>
-<p>The ratio <span class="math inline">\(L_\infty / L(t)\)</span> can be
-interpreted as a “size deficit” — how far the organism is from its
-maximum potential size. At birth (<span class="math inline">\(t =
-0\)</span>), this ratio is <span class="math inline">\(L_\infty /
-L_0\)</span>, its maximum value. As the organism grows, the ratio
-approaches 1, and mortality approaches <span class="math inline">\(k\)</span>.</p>
-<p>This interpretation aligns with life history theory: juvenile
-mortality is dominated by predation (size-dependent), while adult
-mortality approaches a baseline rate related to senescence and
-physiological constraints.</p>
-</div>
-<div class="section level3">
-<h3 id="growth-model-agnostic-k-the-central-insight">Growth-Model-Agnostic k: The Central Insight<a class="anchor" aria-label="anchor" href="#growth-model-agnostic-k-the-central-insight"></a>
-</h3>
-<p>The L₀-parameterized CW model still requires a von Bertalanffy <span class="math inline">\(k\)</span>. But here’s the crucial observation:
-<strong>all three growth models estimate the same biological
-quantities</strong>, just with different functional forms.</p>
-<p>Regardless of whether you fit von Bertalanffy, Gompertz, or Logistic,
-your growth model produces posterior distributions for:</p>
-<ul>
-<li>
-<span class="math inline">\(L_\infty\)</span> — asymptotic
-length</li>
-<li>
-<span class="math inline">\(L_0\)</span> — length at birth<br>
-</li>
-<li>
-<span class="math inline">\(L_{mat}\)</span> — length at maturity
-(in maturity-based parameterization)</li>
-<li>
-<span class="math inline">\(t_{mat}\)</span> — age at maturity</li>
-</ul>
-<p>These are real biological quantities that exist independently of the
-mathematical model. A shark has some true birth size and some true
-size/age at maturity — these don’t change based on which equation we use
-to describe growth.</p>
-<p>Given these biological milestones, we can ask: <strong>what von
-Bertalanffy <span class="math inline">\(k\)</span> would produce a
-growth curve passing through these points?</strong></p>
-<p>The derivation differs by growth model:</p>
-<p><strong>Von Bertalanffy:</strong></p>
-<p>At maturity (<span class="math inline">\(t = t_{mat}\)</span>, <span class="math inline">\(L = L_{mat}\)</span>):</p>
-<p><span class="math display">\[L_{mat} = L_\infty - (L_\infty -
-L_0)e^{-k \cdot t_{mat}}\]</span></p>
-<p>Solving for <span class="math inline">\(k\)</span>:</p>
-<p><span class="math display">\[\boxed{k_{VB}^{equiv} =
-\frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty -
-L_{mat}}\right)}\]</span></p>
-<p><strong>Gompertz:</strong></p>
-<p>At maturity:</p>
-<p><span class="math display">\[L_{mat} = L_\infty
-\exp\left[-\ln\left(\frac{L_\infty}{L_0}\right) e^{-k \cdot
-t_{mat}}\right]\]</span></p>
-<p>Solving for <span class="math inline">\(k\)</span>:</p>
-<p><span class="math display">\[\boxed{k_{VB}^{equiv} =
-\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_0)}{\ln(L_\infty /
-L_{mat})}\right)}\]</span></p>
-<p><strong>Logistic:</strong></p>
-<p>At maturity:</p>
-<p><span class="math display">\[L_{mat} = \frac{L_\infty}{1 +
-\left(\frac{L_\infty}{L_0} - 1\right) e^{-k \cdot t_{mat}}}\]</span></p>
-<p>Solving for <span class="math inline">\(k\)</span>:</p>
-<p><span class="math display">\[\boxed{k_{VB}^{equiv} =
-\frac{1}{t_{mat}} \ln\left(\frac{L_{mat}(L_\infty - L_0)}{L_0(L_\infty -
-L_{mat})}\right)}\]</span></p>
-<p>These <strong>VB-equivalent <span class="math inline">\(k\)</span></strong> values can be computed from
-the posterior of <em>any</em> growth model, as long as that model
-provides <span class="math inline">\((L_\infty, L_0, L_{mat},
-t_{mat})\)</span>.</p>
-</div>
-<div class="section level3">
-<h3 id="verification-vb-consistency">Verification: VB Consistency<a class="anchor" aria-label="anchor" href="#verification-vb-consistency"></a>
-</h3>
-<p>When the growth model <em>is</em> von Bertalanffy with maturity-based
-parameterization, the VB-equivalent <span class="math inline">\(k\)</span> computed from this formula exactly
-equals the <span class="math inline">\(k\)</span> estimated by Stan.
-This must be true by construction — the maturity-based VB model derives
-<span class="math inline">\(k\)</span> using this same relationship.</p>
-<p>For Gompertz and Logistic fits, the VB-equivalent <span class="math inline">\(k\)</span> will differ from the native <span class="math inline">\(k\)</span> of those models. This is expected: the
-three models use different functional forms, so their <span class="math inline">\(k\)</span> parameters have different meanings. But
-the VB-equivalent <span class="math inline">\(k\)</span> captures the
-“growth rate information” in a form that Chen-Watanabe can use.</p>
+<p>The identification <span class="math inline">\(M_\infty \equiv
+k_{VB}\)</span> emerges directly from the Chen-Watanabe derivation,
+which was built on von Bertalanffy growth dynamics. As age increases,
+the VB growth equation approaches <span class="math inline">\(L_\infty\)</span> and the CW mortality equation
+approaches <span class="math inline">\(k\)</span>:</p>
+<p><span class="math display">\[\lim_{t \to \infty} M(t) = \lim_{t \to
+\infty} \frac{k \cdot L_\infty}{L_\infty - (L_\infty - L_0)e^{-kt}} =
+k\]</span></p>
+<p>This makes biological sense. The von Bertalanffy <span class="math inline">\(k\)</span> governs the rate at which an organism
+approaches its asymptotic size; organisms with higher <span class="math inline">\(k\)</span> grow faster but have shorter lifespans
+and higher baseline mortality (Beverton &amp; Holt, 1959; Charnov,
+1993). The CW model formalizes this life history trade-off: <span class="math inline">\(k\)</span> simultaneously determines the growth
+rate (how fast <span class="math inline">\(G(t)\)</span> approaches 1)
+and the floor of the mortality curve.</p>
+<p>Critically, <strong>this relationship holds regardless of which
+growth model was used to fit the data</strong>. The Gompertz and
+Logistic models have their own growth coefficients <span class="math inline">\(k_g\)</span> and <span class="math inline">\(k_l\)</span>, but these are <em>not</em> <span class="math inline">\(M_\infty\)</span>. The CW mortality model was
+derived under VB assumptions, and the parameter <span class="math inline">\(k\)</span> in the CW equation is specifically the
+VB growth coefficient. When we use Gompertz or Logistic fits, we do not
+substitute their native <span class="math inline">\(k\)</span> into the
+CW equation — instead, we compute the VB-equivalent <span class="math inline">\(k\)</span> that encodes the same biological growth
+information (described below).</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="implementation-in-vitalbayes">Implementation in vitalBayes<a class="anchor" aria-label="anchor" href="#implementation-in-vitalbayes"></a>
+<h2 id="growth-specific-gt-functions">Growth-Specific <span class="math inline">\(G(t)\)</span>
+Functions<a class="anchor" aria-label="anchor" href="#growth-specific-gt-functions"></a>
 </h2>
+<p>Although <span class="math inline">\(M_\infty = k_{VB}\)</span> is
+common to all growth models, the shape of the mortality curve is
+governed by <span class="math inline">\(G(t)\)</span>, which differs
+across models. Each growth model implies a different trajectory toward
+asymptotic size, and therefore a different pattern of declining
+mortality. Below are the normalized growth coefficients for each <span class="math inline">\(L_0\)</span>-based growth model implemented in
+vitalBayes.</p>
 <div class="section level3">
-<h3 id="computing-vb-equivalent-k">Computing VB-Equivalent k<a class="anchor" aria-label="anchor" href="#computing-vb-equivalent-k"></a>
+<h3 id="von-bertalanffy">Von Bertalanffy<a class="anchor" aria-label="anchor" href="#von-bertalanffy"></a>
 </h3>
+<p><span class="math display">\[L_{VB}(t) = L_\infty - (L_\infty - L_0)
+\, e^{-k_{VB} \, t}\]</span></p>
+<p><span class="math display">\[G_{VB}(t) = 1 - \left(1 -
+\frac{L_0}{L_\infty}\right) e^{-k_{VB} \, t}\]</span></p>
+<p>The VB model describes growth as a constant exponential approach to
+<span class="math inline">\(L_\infty\)</span>. The absolute growth rate
+<span class="math inline">\(dL/dt\)</span> is highest at birth and
+declines monotonically. This produces a mortality curve that is steepest
+in early life and decelerates smoothly — a pattern consistent with
+strong predation pressure on neonates that diminishes as individuals
+grow through vulnerable size classes.</p>
+</div>
+<div class="section level3">
+<h3 id="gompertz">Gompertz<a class="anchor" aria-label="anchor" href="#gompertz"></a>
+</h3>
+<p><span class="math display">\[L_{Gomp}(t) = L_\infty
+\exp\!\left[-\ln\!\left(\frac{L_\infty}{L_0}\right) e^{-k_g \,
+t}\right]\]</span></p>
+<p><span class="math display">\[G_{Gomp}(t) =
+\exp\!\left[-\ln\!\left(\frac{L_\infty}{L_0}\right) e^{-k_g \,
+t}\right]\]</span></p>
+<p>The Gompertz model describes growth where the <em>rate of
+deceleration</em> itself decelerates — an exponentially declining growth
+rate rather than a linearly declining one. Growth is initially rapid but
+slows earlier and more abruptly than under VB dynamics. The inflection
+point occurs at <span class="math inline">\(L_\infty / e \approx 0.368
+\, L_\infty\)</span>, much earlier than the VB inflection at <span class="math inline">\(0.632 \, L_\infty\)</span>. In terms of mortality,
+the Gompertz <span class="math inline">\(G(t)\)</span> rises faster in
+early life than <span class="math inline">\(G_{VB}(t)\)</span>,
+producing a steeper initial decline in mortality but a slower final
+approach to <span class="math inline">\(M_\infty\)</span>.</p>
+</div>
+<div class="section level3">
+<h3 id="logistic">Logistic<a class="anchor" aria-label="anchor" href="#logistic"></a>
+</h3>
+<p><span class="math display">\[L_{Log}(t) = \frac{L_\infty}{1 +
+\left(\frac{L_\infty}{L_0} - 1\right) e^{-k_l \, t}}\]</span></p>
+<p><span class="math display">\[G_{Log}(t) = \frac{1}{1 +
+\left(\frac{L_\infty}{L_0} - 1\right) e^{-k_l \, t}}\]</span></p>
+<p>The Logistic model is symmetric around its inflection point at <span class="math inline">\(L_\infty / 2\)</span>, with growth accelerating
+before the midpoint and decelerating after. This produces the most
+distinct mortality pattern: mortality declines slowly in very early life
+(when growth is still accelerating), then drops steeply as the organism
+passes through the inflection point, before leveling off toward <span class="math inline">\(M_\infty\)</span>. This pattern may suit species
+where size-dependent mortality relief is concentrated in a relatively
+narrow size window.</p>
+</div>
+<div class="section level3">
+<h3 id="comparing-gt-across-models">Comparing <span class="math inline">\(G(t)\)</span> Across
+Models<a class="anchor" aria-label="anchor" href="#comparing-gt-across-models"></a>
+</h3>
+<p>The three <span class="math inline">\(G(t)\)</span> functions all
+share the same boundary conditions (<span class="math inline">\(G(0) =
+L_0/L_\infty\)</span> and <span class="math inline">\(G(\infty) =
+1\)</span>), but they differ in how they traverse the interval between
+these bounds. Because <span class="math inline">\(M(t) = M_\infty /
+G(t)\)</span>, the shape of <span class="math inline">\(G(t)\)</span>
+directly determines the mortality schedule:</p>
+<ul>
+<li>
+<strong>VB</strong>: Steady exponential approach. Mortality declines
+fastest at young ages and progressively slows.</li>
+<li>
+<strong>Gompertz</strong>: Rapid early approach, slower later
+convergence. Mortality drops quickly in early life but the final decline
+toward <span class="math inline">\(M_\infty\)</span> is drawn out.</li>
+<li>
+<strong>Logistic</strong>: Sigmoidal approach. Mortality is
+relatively flat in very early life, then drops sharply around the growth
+inflection, and converges toward <span class="math inline">\(M_\infty\)</span>.</li>
+</ul>
+<p>In practice, for many elasmobranch species and typical ratios of
+<span class="math inline">\(L_0/L_\infty\)</span> (roughly 0.15–0.40),
+the differences in <span class="math inline">\(G(t)\)</span> between
+models are modest provided the models fit the data comparably well. The
+choice of growth model has a larger effect on the early-age mortality
+curve (where <span class="math inline">\(G(t)\)</span> values are small
+and thus <span class="math inline">\(M(t)\)</span> values are large)
+than on mid- to late-life mortality.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Fit a Gompertz growth model (assume it fits your data better than VB)</span></span>
-<span><span class="va">gomp_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt        <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age       <span class="op">=</span> <span class="st">"age"</span>, </span>
-<span>  sex       <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data      <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  model     <span class="op">=</span> <span class="st">"gompertz"</span>,</span>
-<span>  k_based   <span class="op">=</span> <span class="cn">FALSE</span>,  <span class="co"># Maturity-based parameterization</span></span>
-<span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>,</span>
-<span>  L50_fit   <span class="op">=</span> <span class="va">L50_fit</span>,</span>
-<span>  t50_fit   <span class="op">=</span> <span class="va">t50_fit</span></span>
+<span><span class="co"># Example parameters</span></span>
+<span><span class="va">Linf</span> <span class="op">&lt;-</span> <span class="fl">100</span>; <span class="va">L0</span> <span class="op">&lt;-</span> <span class="fl">25</span></span>
+<span><span class="va">k_vb</span> <span class="op">&lt;-</span> <span class="fl">0.08</span>; <span class="va">k_g</span> <span class="op">&lt;-</span> <span class="fl">0.12</span>; <span class="va">k_l</span> <span class="op">&lt;-</span> <span class="fl">0.15</span></span>
+<span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compute G(t) for each model</span></span>
+<span><span class="va">G_vb</span>   <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">L0</span><span class="op">/</span><span class="va">Linf</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">k_vb</span> <span class="op">*</span> <span class="va">ages</span><span class="op">)</span></span>
+<span><span class="va">G_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">Linf</span><span class="op">/</span><span class="va">L0</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">k_g</span> <span class="op">*</span> <span class="va">ages</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">G_log</span>  <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="op">(</span><span class="va">Linf</span><span class="op">/</span><span class="va">L0</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">k_l</span> <span class="op">*</span> <span class="va">ages</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span>  age  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">ages</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  G    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">G_vb</span>, <span class="va">G_gomp</span>, <span class="va">G_log</span><span class="op">)</span>,</span>
+<span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"von Bertalanffy"</span>, <span class="st">"Gompertz"</span>, <span class="st">"Logistic"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ages</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Extract biological parameters from Gompertz posterior</span></span>
-<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu">extract_growth_parameters</span><span class="op">(</span><span class="va">gomp_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Examine the relationship between native Gompertz k and VB-equivalent k</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">params</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>k_gompertz <span class="op">=</span> <span class="va">k</span>, <span class="va">k_vb_equiv</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    k_gompertz k_vb_equiv</span></span>
-<span><span class="co">#&gt; 1:     0.0823     0.0945</span></span>
-<span><span class="co">#&gt; 2:     0.0791     0.0912</span></span>
-<span><span class="co">#&gt; 3:     0.0856     0.0987</span></span>
-<span><span class="co">#&gt; ...</span></span>
-<span></span>
-<span><span class="co"># They're correlated but not identical</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">k</span>, <span class="va">params</span><span class="op">$</span><span class="va">k_vb_equiv</span>, use <span class="op">=</span> <span class="st">"complete.obs"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.89</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="mortality-estimation-from-any-growth-model">Mortality Estimation from Any Growth Model<a class="anchor" aria-label="anchor" href="#mortality-estimation-from-any-growth-model"></a>
-</h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Chen-Watanabe mortality from a Gompertz fit — this now works!</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>,  <span class="co"># Gompertz, not VB</span></span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  iter       <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  scaled     <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  p          <span class="op">=</span> <span class="fl">0.001</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># The function automatically:</span></span>
-<span><span class="co"># 1. Extracts (Linf, L0, Lmat, tmat) from the Gompertz posterior</span></span>
-<span><span class="co"># 2. Computes VB-equivalent k for each posterior draw</span></span>
-<span><span class="co"># 3. Uses the L0-parameterized CW model</span></span>
-<span></span>
-<span><span class="co"># Check what k values were used</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Parameters</span><span class="op">$</span><span class="va">k_vb_equiv</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span><span class="co">#&gt;  0.0712  0.0891  0.0943  0.0951  0.1008  0.1234</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="comparing-mortality-from-different-growth-models">Comparing Mortality from Different Growth Models<a class="anchor" aria-label="anchor" href="#comparing-mortality-from-different-growth-models"></a>
-</h3>
-<p>A useful diagnostic is comparing mortality estimates derived from
-different growth models. If the models are all reasonable fits to the
-data, the mortality estimates should be similar:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Fit all three growth models</span></span>
-<span><span class="va">vb_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  model <span class="op">=</span> <span class="st">"vb"</span>, k_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>, L50_fit <span class="op">=</span> <span class="va">L50_fit</span>, t50_fit <span class="op">=</span> <span class="va">t50_fit</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">gomp_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  model <span class="op">=</span> <span class="st">"gompertz"</span>, k_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>, L50_fit <span class="op">=</span> <span class="va">L50_fit</span>, t50_fit <span class="op">=</span> <span class="va">t50_fit</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">logis_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  model <span class="op">=</span> <span class="st">"logistic"</span>, k_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>, L50_fit <span class="op">=</span> <span class="va">L50_fit</span>, t50_fit <span class="op">=</span> <span class="va">t50_fit</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Mortality from each</span></span>
-<span><span class="va">mort_vb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">vb_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, </span>
-<span>  print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">mort_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">mort_logis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">logis_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Combine for comparison</span></span>
-<span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
-<span>  <span class="va">mort_vb</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">model</span> <span class="op">:=</span> <span class="st">"von Bertalanffy"</span><span class="op">]</span>,</span>
-<span>  <span class="va">mort_gomp</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">model</span> <span class="op">:=</span> <span class="st">"Gompertz"</span><span class="op">]</span>,</span>
-<span>  <span class="va">mort_logis</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">model</span> <span class="op">:=</span> <span class="st">"Logistic"</span><span class="op">]</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Plot</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">combined</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age_round</span>, color <span class="op">=</span> <span class="va">model</span>, fill <span class="op">=</span> <span class="va">model</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">M_lower</span>, ymax <span class="op">=</span> <span class="va">M_upper</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.2</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">M_median</span><span class="op">)</span>, linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    x <span class="op">=</span> <span class="st">"Age (years)"</span>,</span>
-<span>    y <span class="op">=</span> <span class="st">"Natural Mortality (M)"</span>,</span>
-<span>    title <span class="op">=</span> <span class="st">"CW Mortality Estimates by Growth Model"</span>,</span>
-<span>    subtitle <span class="op">=</span> <span class="st">"All derived from same biological milestones"</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, y <span class="op">=</span> <span class="va">G</span>, color <span class="op">=</span> <span class="va">model</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Age (years)"</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/expression.html" class="external-link">expression</a></span><span class="op">(</span><span class="fu">G</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="op">==</span> <span class="fu">L</span><span class="op">(</span><span class="va">t</span><span class="op">)</span><span class="op">/</span><span class="va">L</span><span class="op">[</span><span class="va">infinity</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>       title <span class="op">=</span> <span class="st">"Normalized Growth Coefficient by Model"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
-<p>If the three curves are similar, this suggests the mortality
-estimates are robust to growth model choice — the biological information
-constrains the result regardless of functional form. If they diverge
-substantially, this reveals genuine model uncertainty that should be
-acknowledged.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="why-this-matters">Why This Matters<a class="anchor" aria-label="anchor" href="#why-this-matters"></a>
+<h2 id="computing-vb-equivalent-k-from-any-growth-model">Computing VB-Equivalent <span class="math inline">\(k\)</span> from
+Any Growth Model<a class="anchor" aria-label="anchor" href="#computing-vb-equivalent-k-from-any-growth-model"></a>
 </h2>
 <div class="section level3">
-<h3 id="practical-benefits">Practical Benefits<a class="anchor" aria-label="anchor" href="#practical-benefits"></a>
+<h3 id="the-biological-milestones-approach">The Biological Milestones Approach<a class="anchor" aria-label="anchor" href="#the-biological-milestones-approach"></a>
 </h3>
-<p><strong>Use the best model.</strong> Researchers can select the
-growth model that best fits their data (by LOO-CV or other criteria)
-without sacrificing mortality estimation capability.</p>
-<p><strong>Biologically meaningful priors.</strong> Specifying priors on
-<span class="math inline">\(L_0\)</span> (birth length) is
-straightforward — researchers often have direct measurements from
-embryos or neonates. Priors on <span class="math inline">\(t_0\)</span>
-were always awkward.</p>
-<p><strong>Interpretable parameters.</strong> The L₀-parameterized CW
-model makes the size-mortality relationship explicit. The mortality at
-any age can be understood as a function of current body size relative to
-asymptotic size.</p>
-<p><strong>Consistent workflow.</strong> The maturity-based
-parameterization philosophy extends naturally from growth to mortality.
-All models in the vitalBayes workflow use the same biological
-milestones.</p>
+<p>Since <span class="math inline">\(M_\infty = k_{VB}\)</span>, users
+who fit a Gompertz or Logistic model need a way to obtain the
+VB-equivalent <span class="math inline">\(k\)</span> without fitting a
+separate VB model. The solution exploits the fact that all three growth
+models estimate the same biological quantities — <span class="math inline">\(L_\infty\)</span>, <span class="math inline">\(L_0\)</span>, <span class="math inline">\(L_{mat}\)</span>, and <span class="math inline">\(t_{mat}\)</span> — regardless of their functional
+form. A shark has a true birth size, a true size at maturity, and a true
+asymptotic size; these do not change based on which equation we use to
+model growth.</p>
+<p>Given these shared biological milestones, the VB-equivalent <span class="math inline">\(k\)</span> is the growth coefficient that would
+produce a von Bertalanffy curve passing through <span class="math inline">\((0, L_0)\)</span> and <span class="math inline">\((t_{mat}, L_{mat})\)</span> with asymptote <span class="math inline">\(L_\infty\)</span>. Substituting <span class="math inline">\(L(t_{mat}) = L_{mat}\)</span> into the VB equation
+and solving:</p>
+<p><span class="math display">\[k_{VB}^{equiv} = \frac{1}{t_{mat}}
+\ln\!\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
+<p>This formula is applied draw-by-draw to the posterior of any growth
+model. When the growth model <em>is</em> von Bertalanffy with
+maturity-based parameterization, <span class="math inline">\(k_{VB}^{equiv}\)</span> exactly reproduces the
+fitted <span class="math inline">\(k\)</span> by construction. For
+Gompertz and Logistic fits, <span class="math inline">\(k_{VB}^{equiv}\)</span> will differ from their
+native <span class="math inline">\(k\)</span> values, since the three
+models define <span class="math inline">\(k\)</span> differently. But
+<span class="math inline">\(k_{VB}^{equiv}\)</span> is the correct input
+for the CW mortality model regardless.</p>
+<p>In vitalBayes, <code>compute_k_vb_equivalent()</code> performs this
+computation and <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code> calls it
+automatically when processing posteriors from non-VB growth fits.</p>
 </div>
 <div class="section level3">
-<h3 id="theoretical-coherence">Theoretical Coherence<a class="anchor" aria-label="anchor" href="#theoretical-coherence"></a>
+<h3 id="verification-consistency-when-using-vb">Verification: Consistency When Using VB<a class="anchor" aria-label="anchor" href="#verification-consistency-when-using-vb"></a>
 </h3>
-<p>A legitimate concern is whether using a non-VB growth model with
-Chen-Watanabe mortality is theoretically sound. After all, CW was
-<em>derived</em> under VB assumptions.</p>
-<p>Our position is that the VB-equivalent <span class="math inline">\(k\)</span> approach maintains theoretical
-coherence because:</p>
-<ol style="list-style-type: decimal">
-<li><p><strong>CW is fundamentally about size-dependent
-mortality.</strong> The biological mechanism — smaller individuals die
-faster — doesn’t depend on the VB functional form. It depends on the
-growth trajectory.</p></li>
-<li><p><strong>The biological milestones are model-agnostic.</strong> An
-organism’s birth size, maturity size/age, and asymptotic size exist
-independently of how we mathematically describe growth. We’re using
-these real quantities, not model artifacts.</p></li>
-<li><p><strong>VB-equivalent <span class="math inline">\(k\)</span>
-captures the relevant information.</strong> What CW needs is “how fast
-does this organism approach its asymptotic size?” The VB-equivalent
-<span class="math inline">\(k\)</span> answers this question using
-information that any growth model provides.</p></li>
-<li><p><strong>Consistency check available.</strong> If VB, Gompertz,
-and Logistic all produce similar mortality estimates (as they should
-when all fit the data reasonably), this validates the approach. If they
-diverge wildly, that reveals genuine uncertainty that shouldn’t be
-hidden.</p></li>
-</ol>
+<p>When the underlying growth model is von Bertalanffy with
+maturity-based parameterization, <span class="math inline">\(k_{VB}^{equiv}\)</span> is algebraically identical
+to the estimated <span class="math inline">\(k\)</span>. This serves as
+an internal consistency check:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Extract VB posterior draws</span></span>
+<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu">extract_growth_parameters</span><span class="op">(</span><span class="va">vb_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compare native k to VB-equivalent k</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">k</span>, <span class="va">params</span><span class="op">$</span><span class="va">k_vb_equiv</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>For Gompertz and Logistic fits, the VB-equivalent <span class="math inline">\(k\)</span> and native <span class="math inline">\(k\)</span> will be correlated but not
+identical:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">params_gomp</span> <span class="op">&lt;-</span> <span class="fu">extract_growth_parameters</span><span class="op">(</span><span class="va">gomp_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Native Gompertz k vs VB-equivalent k</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">params_gomp</span><span class="op">$</span><span class="va">k</span>, <span class="va">params_gomp</span><span class="op">$</span><span class="va">k_vb_equiv</span>, use <span class="op">=</span> <span class="st">"complete.obs"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 0.89  # Correlated but distinct</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
-<h2 id="limitations-and-caveats">Limitations and Caveats<a class="anchor" aria-label="anchor" href="#limitations-and-caveats"></a>
+<h2 id="late-life-senescence-modifications">Late-Life Senescence Modifications<a class="anchor" aria-label="anchor" href="#late-life-senescence-modifications"></a>
 </h2>
 <div class="section level3">
-<h3 id="when-models-disagree">When Models Disagree<a class="anchor" aria-label="anchor" href="#when-models-disagree"></a>
+<h3 id="the-problem-with-asymptotic-mortality">The Problem with Asymptotic Mortality<a class="anchor" aria-label="anchor" href="#the-problem-with-asymptotic-mortality"></a>
 </h3>
-<p>If different growth models produce substantially different mortality
-estimates, this indicates:</p>
-<ul>
-<li>The growth models encode meaningfully different information about
-growth rate</li>
-<li>Genuine model uncertainty that should be reported</li>
-<li>Possibly that some models fit poorly and shouldn’t be used</li>
-</ul>
-<p>In such cases, we recommend: (1) comparing growth models via LOO-CV,
-(2) using the best-fitting model for primary inference, and (3)
-reporting sensitivity to model choice.</p>
+<p>The single-phase CW model predicts that mortality monotonically
+decreases toward <span class="math inline">\(M_\infty\)</span> as <span class="math inline">\(G(t) \to 1\)</span>. This is biologically
+unrealistic for long-lived species: senescence, accumulated
+physiological damage, and declining immune function all contribute to
+increasing mortality at advanced ages. The monotonically declining CW
+curve captures juvenile and sub-adult mortality patterns well, but fails
+to represent late-life dynamics.</p>
 </div>
 <div class="section level3">
-<h3 id="very-different-growth-trajectories">Very Different Growth Trajectories<a class="anchor" aria-label="anchor" href="#very-different-growth-trajectories"></a>
+<h3 id="two-phase-extension">Two-Phase Extension<a class="anchor" aria-label="anchor" href="#two-phase-extension"></a>
 </h3>
-<p>The approach works best when all three growth models produce similar
-predicted trajectories across the observed age range. If a dataset
-strongly favors one model — e.g., Gompertz fits vastly better than VB —
-the VB-equivalent <span class="math inline">\(k\)</span> from Gompertz
-is still valid, but it’s essentially computing “what would VB k be if we
-forced this biology into VB form?”</p>
-<p>This is statistically defensible but philosophically imperfect. In
-extreme cases, researchers might consider whether a non-CW mortality
-model (Peterson-Wroblewski, Lorenzen) is more appropriate.</p>
+<p>vitalBayes implements a two-phase CW model that blends the standard
+declining-mortality trajectory with a senescence component. The
+transition occurs at a user-defined age <span class="math inline">\(t_m\)</span>, typically set as a fraction of the
+age at maturity (<span class="math inline">\(t_m = \frac{2}{3}
+t_{mat}\)</span> by default). Before <span class="math inline">\(t_m\)</span>, mortality follows the standard CW
+model. After <span class="math inline">\(t_m\)</span>, a senescence
+function gradually increases mortality toward <span class="math inline">\(t_{max}\)</span>.</p>
+<p>Two senescence models are available:</p>
+<p><strong>Gompertz senescence</strong>
+(<code>late_model = "gompertz"</code>):</p>
+<p><span class="math display">\[M_{late}(t) = M_s \exp\!\left[r \cdot (t
+- t_{max})\right]\]</span></p>
+<p>where <span class="math inline">\(M_s = c \cdot M(t_m)\)</span> is
+the mortality plateau at <span class="math inline">\(t_{max}\)</span>
+(with <span class="math inline">\(c\)</span> = <code>M_mult</code>,
+default 2), and <span class="math inline">\(r\)</span> is solved from
+continuity at <span class="math inline">\(t_m\)</span>:</p>
+<p><span class="math display">\[r = \frac{\ln\left(M(t_m) /
+M_s\right)}{t_m - t_{max}}\]</span></p>
+<p>This produces an accelerating increase in mortality — modest at
+first, then more pronounced as the organism approaches maximum age. This
+pattern aligns with actuarial models of biological senescence in which
+the hazard function increases exponentially (Gompertz, 1825).</p>
+<p><strong>Logistic senescence</strong>
+(<code>late_model = "logistic"</code>):</p>
+<p><span class="math display">\[M_{late}(t) = \frac{K}{1 +
+\exp\!\left[-r \cdot (t - t_{max})\right]}\]</span></p>
+<p>where <span class="math inline">\(K = 2 \, c \cdot M(t_m)\)</span>
+and <span class="math inline">\(r\)</span> is again solved from
+continuity at <span class="math inline">\(t_m\)</span>.</p>
+<p>Logistic senescence produces a bounded mortality increase that
+plateaus at <span class="math inline">\(K\)</span> rather than growing
+without limit. This may be more appropriate when there is reason to
+believe that late-life mortality stabilizes rather than continuing to
+accelerate — for example, in populations subject to a physiological
+upper bound on hazard rates.</p>
 </div>
 <div class="section level3">
-<h3 id="extrapolation-beyond-data">Extrapolation Beyond Data<a class="anchor" aria-label="anchor" href="#extrapolation-beyond-data"></a>
+<h3 id="smooth-blending">Smooth Blending<a class="anchor" aria-label="anchor" href="#smooth-blending"></a>
 </h3>
-<p>All mortality estimation involves extrapolation — we predict
-mortality at ages beyond our data range. The VB-equivalent <span class="math inline">\(k\)</span> approach doesn’t change this
-fundamental limitation. If biological milestones are poorly estimated
-(wide posteriors on <span class="math inline">\(L_{mat}\)</span> or
-<span class="math inline">\(t_{mat}\)</span>), mortality estimates will
-have appropriately wide uncertainty.</p>
+<p>The transition between the early-phase CW model and the late-phase
+senescence model is smoothed using a logistic weighting function:</p>
+<p><span class="math display">\[w(t) = \frac{1}{1 +
+\exp\!\left[-\frac{2(t - t_m)}{s \cdot |t_{max} -
+t_m|}\right]}\]</span></p>
+<p>where <span class="math inline">\(s\)</span> is the
+<code>smooth_factor</code> (default <span class="math inline">\(\frac{1}{3}\)</span>). The blended mortality at
+any age is:</p>
+<p><span class="math display">\[M(t) = (1 - w) \cdot M_{CW}(t) + w \cdot
+M_{late}(t)\]</span></p>
+<p>This ensures a smooth, differentiable transition rather than a sharp
+kink at <span class="math inline">\(t_m\)</span>.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">35</span>, by <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Single-phase: monotonic decline</span></span>
+<span><span class="va">M_single</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  two_phase <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Two-phase: Gompertz senescence</span></span>
+<span><span class="va">M_gomp</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  two_phase <span class="op">=</span> <span class="cn">TRUE</span>, tmat <span class="op">=</span> <span class="fl">12</span>, late_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Two-phase: Logistic senescence</span></span>
+<span><span class="va">M_logis</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  two_phase <span class="op">=</span> <span class="cn">TRUE</span>, tmat <span class="op">=</span> <span class="fl">12</span>, late_model <span class="op">=</span> <span class="st">"logistic"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">ages</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  M   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">M_single</span>, <span class="va">M_gomp</span>, <span class="va">M_logis</span><span class="op">)</span>,</span>
+<span>  Model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Single-phase"</span>, <span class="st">"Gompertz senescence"</span>, <span class="st">"Logistic senescence"</span><span class="op">)</span>,</span>
+<span>              each <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ages</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">dt</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, y <span class="op">=</span> <span class="va">M</span>, color <span class="op">=</span> <span class="va">Model</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Age (years)"</span>, y <span class="op">=</span> <span class="st">"Instantaneous Mortality (M)"</span>,</span>
+<span>       title <span class="op">=</span> <span class="st">"Chen-Watanabe Mortality with Senescence Modifications"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
-<h2 id="conclusions">Conclusions<a class="anchor" aria-label="anchor" href="#conclusions"></a>
+<h2 id="practical-implications">Practical Implications<a class="anchor" aria-label="anchor" href="#practical-implications"></a>
 </h2>
-<p>The L₀-parameterized, growth-model-agnostic Chen-Watanabe
-implementation in vitalBayes addresses long-standing practical
-limitations:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Observable parameters</strong>: Birth length replaces
-theoretical “age at length zero”</li>
-<li>
-<strong>Model flexibility</strong>: Any growth model can feed
-mortality estimation<br>
-</li>
-<li>
-<strong>Biological grounding</strong>: All inference flows from
-real, measurable quantities</li>
-<li>
-<strong>Uncertainty propagation</strong>: Full posterior information
-preserved</li>
-</ol>
-<p>This approach embodies the vitalBayes philosophy: parameterize with
-biology, not mathematics.</p>
+<div class="section level3">
+<h3 id="using-the-best-growth-model-for-mortality">Using the Best Growth Model for Mortality<a class="anchor" aria-label="anchor" href="#using-the-best-growth-model-for-mortality"></a>
+</h3>
+<p>The growth-model-agnostic framework means researchers no longer face
+a choice between statistical fit and mortality estimation capability. In
+elasmobranch datasets with sparse adult observations, the VB model
+frequently produces biologically implausible <span class="math inline">\(L_\infty\)</span> estimates (sometimes below
+observed maximum lengths) and unstable <span class="math inline">\(k\)</span> values driven by the strong <span class="math inline">\(L_\infty\)</span>-<span class="math inline">\(k\)</span> correlation (Katsanevakis &amp;
+Maravelias, 2008). Gompertz and Logistic models often provide more
+reliable fits under these conditions.</p>
+<p>With the reparameterization, the workflow is straightforward: fit all
+candidate growth models, select the best model by LOO-CV or other
+criteria, and pass that model’s posterior directly to
+<code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code>. The function handles the
+VB-equivalent <span class="math inline">\(k\)</span> computation
+automatically.</p>
+</div>
+<div class="section level3">
+<h3 id="when-growth-models-agree-and-disagree">When Growth Models Agree and Disagree<a class="anchor" aria-label="anchor" href="#when-growth-models-agree-and-disagree"></a>
+</h3>
+<p>If all three growth models fit the data comparably, their CW
+mortality estimates will be similar — the biological milestones <span class="math inline">\((L_\infty, L_0, L_{mat}, t_{mat})\)</span> are
+well-constrained and produce nearly identical <span class="math inline">\(k_{VB}^{equiv}\)</span> values. Divergence between
+mortality estimates from different growth models indicates genuine model
+uncertainty: the data do not strongly favor one growth trajectory, and
+the implied mortality schedules differ as a result. In such cases,
+reporting sensitivity to growth model choice is informative.</p>
+</div>
+<div class="section level3">
+<h3 id="relationship-to-other-mortality-models">Relationship to Other Mortality Models<a class="anchor" aria-label="anchor" href="#relationship-to-other-mortality-models"></a>
+</h3>
+<p>The <span class="math inline">\(M(t) = M_\infty / G(t)\)</span>
+formulation is specific to the Chen-Watanabe model. The
+Peterson-Wroblewski and Lorenzen mortality models in vitalBayes use
+different theoretical foundations (allometric scaling of metabolic rate
+with body weight) and do not share this <span class="math inline">\(G(t)\)</span> structure. See
+<code><a href="../articles/mortality_estimation.html">vignette("mortality_estimation")</a></code> for equations and
+practical guidance on all three mortality models.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Beverton, R. J. H., &amp; Holt, S. J. (1959). A review of the
+lifespans and mortality rates of fish in nature, and their relation to
+growth and other physiological characteristics. In G. E. W. Wolstenholme
+&amp; M. O’Connor (Eds.), <em>CIBA Foundation Colloquia on Ageing</em>
+(Vol. 5, pp. 142–180). Churchill.</p>
+<p>Charnov, E. L. (1993). <em>Life History Invariants: Some Explorations
+of Symmetry in Evolutionary Ecology</em>. Oxford University Press.</p>
 <p>Chen, S., &amp; Watanabe, S. (1989). Age dependence of natural
 mortality coefficient in fish population dynamics. <em>Nippon Suisan
-Gakkaishi</em>, 55(2), 205-208.</p>
+Gakkaishi</em>, 55(2), 205–208.</p>
+<p>Gompertz, B. (1825). On the nature of the function expressive of the
+law of human mortality, and on a new mode of determining the value of
+life contingencies. <em>Philosophical Transactions of the Royal Society
+of London</em>, 115, 513–583.</p>
 <p>Katsanevakis, S., &amp; Maravelias, C. D. (2008). Modelling fish
 growth: multi-model inference as a better alternative to a priori using
 von Bertalanffy equation. <em>Fish and Fisheries</em>, 9(2),
-178-187.</p>
-<p>Lorenzen, K. (1996). The relationship between body weight and natural
-mortality in juvenile and adult fish. <em>Journal of Fish Biology</em>,
-49(4), 627-642.</p>
-<p>Thorson, J. T., &amp; Prager, M. H. (2011). Better catch curves:
-Incorporating age-specific natural mortality and logistic selectivity.
-<em>Transactions of the American Fisheries Society</em>, 140(2),
-356-366.</p>
+178–187.</p>
+</div>
+<div class="section level2">
+<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h2>
+<ul>
+<li>
+<code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> — Growth model
+equations and the <span class="math inline">\(L_0\)</span>
+parameterization</li>
+<li>
+<code><a href="../articles/mortality_estimation.html">vignette("mortality_estimation")</a></code> — Stochastic mortality
+estimation with <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code>
+</li>
+<li>
+<code><a href="../articles/survivorship_simulation.html">vignette("survivorship_simulation")</a></code> — Cohort survival
+analysis using mortality schedules</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

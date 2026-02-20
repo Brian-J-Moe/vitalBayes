@@ -100,410 +100,550 @@ mortality estimates is particularly challenging: long lifespans make
 mark-recapture studies impractical, populations are often too sparse for
 reliable catch-curve analysis, and the absence of otoliths necessitates
 alternative aging structures with their own uncertainties.</p>
-<p>The <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code> function addresses this
-challenge by implementing three established life-history-based mortality
-models within a Monte Carlo framework that properly propagates
-uncertainty. The function accepts either vitalBayes stanfit objects
-(preserving posterior correlations) or manual <code>c(mean, sd)</code>
-specifications, with explicit handling of covariance between maturity
-parameters.</p>
+<p>The <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code> function addresses these
+challenges by generating Monte Carlo age-specific mortality schedules
+from growth model posteriors. By drawing parameter sets from the joint
+posterior distribution of a fitted growth model, the function propagates
+parameter uncertainty through to mortality estimates, producing credible
+intervals that honestly reflect our knowledge (or lack thereof) about
+the population. Three mortality models are available, each with distinct
+theoretical foundations, and all are compatible with any growth model
+fitted via <code><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth()</a></code>.</p>
 <p>This vignette covers:</p>
 <ul>
-<li>The unified mortality framework: <span class="math inline">\(M(t) =
-M_\infty / G(t)\)</span>
-</li>
-<li>Parameter input options: stanfit objects vs. manual
-specification</li>
-<li>Covariance handling for maturity parameters</li>
-<li>The three supported mortality models</li>
-<li>Integration with survivorship simulation</li>
+<li>Equations and biological rationale for each mortality model</li>
+<li>Scaling mortality schedules to empirical targets</li>
+<li>The Monte Carlo workflow and parameter handling</li>
+<li>Model comparison and sensitivity analysis</li>
+<li>Integration with downstream survival simulation</li>
 </ul>
-</div>
-<div class="section level2">
-<h2 id="the-unified-mortality-framework">The Unified Mortality Framework<a class="anchor" aria-label="anchor" href="#the-unified-mortality-framework"></a>
-</h2>
-<div class="section level3">
-<h3 id="core-formulation">Core Formulation<a class="anchor" aria-label="anchor" href="#core-formulation"></a>
-</h3>
-<p>The vitalBayes mortality framework expresses age-specific
-Chen-Watanabe mortality as:</p>
-<p><span class="math display">\[M(t) =
-\frac{M_\infty}{G(t)}\]</span></p>
-<p>where <span class="math inline">\(M_\infty\)</span> is the asymptotic
-mortality rate and <span class="math inline">\(G(t) =
-L(t)/L_\infty\)</span> is the relative size at age <span class="math inline">\(t\)</span>.</p>
-</div>
-<div class="section level3">
-<h3 id="the-unified-m_infty-anchor">The Unified <span class="math inline">\(M_\infty\)</span>
-Anchor<a class="anchor" aria-label="anchor" href="#the-unified-m_infty-anchor"></a>
-</h3>
-<p>The asymptotic mortality rate is computed using the von Bertalanffy
-formula regardless of which growth model is used:</p>
-<p><span class="math display">\[M_\infty = \frac{1}{t_{mat}}
-\ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
-<p>This provides a consistent mortality anchor across growth models.</p>
-</div>
-<div class="section level3">
-<h3 id="model-specific-native-k-derivations">Model-Specific Native <span class="math inline">\(k\)</span>
-Derivations<a class="anchor" aria-label="anchor" href="#model-specific-native-k-derivations"></a>
-</h3>
-<p>Each growth model requires its own <span class="math inline">\(k\)</span> derivation:</p>
-<p><strong>Von Bertalanffy:</strong> <span class="math display">\[k_{VB}
-= \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty -
-L_{mat}}\right)\]</span></p>
-<p><strong>Gompertz:</strong> <span class="math display">\[k_{Gomp} =
--\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_{mat})}{\ln(L_\infty
-/ L_0)}\right)\]</span></p>
-<p><strong>Logistic:</strong> <span class="math display">\[k_{Log} =
--\frac{1}{t_{mat}} \ln\left(\frac{L_\infty/L_{mat} - 1}{L_\infty/L_0 -
-1}\right)\]</span></p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="parameter-input-options">Parameter Input Options<a class="anchor" aria-label="anchor" href="#parameter-input-options"></a>
-</h2>
-<div class="section level3">
-<h3 id="option-1-vitalbayes-stanfit-objects-recommended">Option 1: vitalBayes Stanfit Objects (Recommended)<a class="anchor" aria-label="anchor" href="#option-1-vitalbayes-stanfit-objects-recommended"></a>
-</h3>
-<p>When vitalBayes fit objects are provided, posterior correlations
-between parameters are preserved:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># After fitting models in the vitalBayes workflow:</span></span>
-<span><span class="co"># birth_fit &lt;- fit_bayesian_birth(...)</span></span>
-<span><span class="co"># L50_fit &lt;- fit_bayesian_maturity(maturity = "mat", lt = "fl", ...)</span></span>
-<span><span class="co"># t50_fit &lt;- fit_bayesian_maturity(maturity = "mat", age = "age", ...)</span></span>
-<span><span class="co"># growth_fit &lt;- fit_bayesian_growth(..., k_based = FALSE)  # Maturity-based</span></span>
-<span></span>
-<span><span class="co"># Full correlation preservation (all from growth_fit)</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,   <span class="co"># Provides Linf, L0, Lmat, tmat</span></span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,            <span class="co"># Female</span></span>
-<span>  growth_model <span class="op">=</span> <span class="st">"vb"</span>,</span>
-<span>  iter       <span class="op">=</span> <span class="fl">2000</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="option-2-multiple-stanfit-objects">Option 2: Multiple Stanfit Objects<a class="anchor" aria-label="anchor" href="#option-2-multiple-stanfit-objects"></a>
-</h3>
-<p>When parameters come from different model fits:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Linf and L0 from growth fit, maturity from separate fits</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method              <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit          <span class="op">=</span> <span class="va">growth_fit</span>,           <span class="co"># Provides Linf, L0</span></span>
-<span>  length_maturity_fit <span class="op">=</span> <span class="va">L50_fit</span>,              <span class="co"># Provides Lmat</span></span>
-<span>  age_maturity_fit    <span class="op">=</span> <span class="va">t50_fit</span>,              <span class="co"># Provides tmat</span></span>
-<span>  maturity_cor        <span class="op">=</span> <span class="fl">0.5</span>,                  <span class="co"># Assumed Lmat-tmat correlation</span></span>
-<span>  sex                 <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  growth_model        <span class="op">=</span> <span class="st">"vb"</span>,</span>
-<span>  iter                <span class="op">=</span> <span class="fl">2000</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="option-3-manual-parameter-specification">Option 3: Manual Parameter Specification<a class="anchor" aria-label="anchor" href="#option-3-manual-parameter-specification"></a>
-</h3>
-<p>When stanfit objects aren’t available:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method       <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  Linf         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">126</span>, <span class="fl">10</span><span class="op">)</span>,   <span class="co"># c(mean, sd)</span></span>
-<span>  L0           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">35</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  Lmat         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">83</span>, <span class="fl">5</span><span class="op">)</span>,</span>
-<span>  tmat         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">47</span>, <span class="fl">4</span><span class="op">)</span>,</span>
-<span>  maturity_cor <span class="op">=</span> <span class="fl">0.5</span>,          <span class="co"># Lmat-tmat correlation</span></span>
-<span>  growth_model <span class="op">=</span> <span class="st">"vb"</span>,</span>
-<span>  iter         <span class="op">=</span> <span class="fl">2000</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="option-4-mixed-sources">Option 4: Mixed Sources<a class="anchor" aria-label="anchor" href="#option-4-mixed-sources"></a>
-</h3>
-<p>You can combine stanfit objects with manual specifications:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Growth parameters from fit, maturity manual</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,     <span class="co"># Provides Linf, L0</span></span>
-<span>  Lmat       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">83</span>, <span class="fl">5</span><span class="op">)</span>,       <span class="co"># Manual</span></span>
-<span>  tmat       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">47</span>, <span class="fl">4</span><span class="op">)</span>,       <span class="co"># Manual</span></span>
-<span>  maturity_cor <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Or use birth_fit for L0</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method    <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  Linf      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">126</span>, <span class="fl">10</span><span class="op">)</span>,</span>
-<span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>,       <span class="co"># Provides L0 from b50</span></span>
-<span>  Lmat      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">83</span>, <span class="fl">5</span><span class="op">)</span>,</span>
-<span>  tmat      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">47</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="parameter-priority">Parameter Priority<a class="anchor" aria-label="anchor" href="#parameter-priority"></a>
-</h3>
-<p>When multiple sources are available:</p>
-<table class="table">
-<thead><tr class="header">
-<th>Parameter</th>
-<th>Priority</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Linf</td>
-<td>growth_fit &gt; manual</td>
-</tr>
-<tr class="even">
-<td>L0</td>
-<td>growth_fit &gt; birth_fit &gt; manual</td>
-</tr>
-<tr class="odd">
-<td>Lmat</td>
-<td>growth_fit &gt; length_maturity_fit &gt; manual</td>
-</tr>
-<tr class="even">
-<td>tmat</td>
-<td>growth_fit &gt; age_maturity_fit &gt; manual</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="section level2">
-<h2 id="covariance-handling">Covariance Handling<a class="anchor" aria-label="anchor" href="#covariance-handling"></a>
-</h2>
-<div class="section level3">
-<h3 id="why-covariance-matters">Why Covariance Matters<a class="anchor" aria-label="anchor" href="#why-covariance-matters"></a>
-</h3>
-<p>Life history parameters are typically correlated. For maturity
-parameters, <span class="math inline">\(L_{mat}\)</span> and <span class="math inline">\(t_{mat}\)</span> are positively correlated—larger
-individuals tend to mature at older ages. Ignoring these correlations
-can generate biologically implausible parameter combinations and
-artificially inflate uncertainty bounds.</p>
-</div>
-<div class="section level3">
-<h3 id="correlation-scenarios">Correlation Scenarios<a class="anchor" aria-label="anchor" href="#correlation-scenarios"></a>
-</h3>
-<p><strong>1. Full Correlation Preservation</strong></p>
-<p>When all parameters come from the same <code>growth_fit</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,  <span class="co"># Has Linf, L0, Lmat, tmat</span></span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co"># Message: "All parameters from growth_fit - correlations fully preserved."</span></span></code></pre></div>
-<p><strong>2. Bivariate Normal Sampling</strong></p>
-<p>When <span class="math inline">\(L_{mat}\)</span> and <span class="math inline">\(t_{mat}\)</span> come from separate sources:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method              <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit          <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  length_maturity_fit <span class="op">=</span> <span class="va">L50_fit</span>,</span>
-<span>  age_maturity_fit    <span class="op">=</span> <span class="va">t50_fit</span>,</span>
-<span>  maturity_cor        <span class="op">=</span> <span class="fl">0.6</span>,</span>
-<span>  sex                 <span class="op">=</span> <span class="fl">1</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co"># Message: "Lmat and tmat from separate fits - using specified correlation (rho = 0.60)."</span></span></code></pre></div>
-<p><strong>3. Independent Sampling</strong></p>
-<p>Set <code>maturity_cor = 0</code> for independent sampling:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method       <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  Linf         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">126</span>, <span class="fl">10</span><span class="op">)</span>,</span>
-<span>  L0           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">35</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  Lmat         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">83</span>, <span class="fl">5</span><span class="op">)</span>,</span>
-<span>  tmat         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">47</span>, <span class="fl">4</span><span class="op">)</span>,</span>
-<span>  maturity_cor <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  growth_model <span class="op">=</span> <span class="st">"vb"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="choosing-maturity_cor">Choosing <code>maturity_cor</code><a class="anchor" aria-label="anchor" href="#choosing-maturity_cor"></a>
-</h3>
-<p>The default <code>maturity_cor = 0.5</code> reflects the biological
-expectation that larger individuals mature later. Alternatives:</p>
-<ul>
-<li>
-<strong>Estimate from data</strong>: If you have paired
-observations</li>
-<li>
-<strong>Literature values</strong>: Species-specific correlations
-from published studies</li>
-<li>
-<strong>Set to NA</strong>: Function attempts to estimate from
-aligned posterior draws</li>
-</ul>
-</div>
 </div>
 <div class="section level2">
 <h2 id="mortality-models">Mortality Models<a class="anchor" aria-label="anchor" href="#mortality-models"></a>
 </h2>
 <div class="section level3">
-<h3 id="chen-watanabe-cw">Chen-Watanabe (CW)<a class="anchor" aria-label="anchor" href="#chen-watanabe-cw"></a>
+<h3 id="chen-watanabe-1989">Chen-Watanabe (1989)<a class="anchor" aria-label="anchor" href="#chen-watanabe-1989"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mort_cw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  scaled     <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  p          <span class="op">=</span> <span class="fl">0.001</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># With two-phase senescence</span></span>
-<span><span class="va">mort_cw_2p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  two_phase  <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  late_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<p>The Chen-Watanabe model derives age-specific mortality from the
+relationship between body growth and mortality risk under von
+Bertalanffy dynamics. In the <span class="math inline">\(L_0\)</span>-parameterized form used by
+vitalBayes, the model is:</p>
+<p><span class="math display">\[M(t) = \frac{M_\infty \cdot
+L_\infty}{L(t)}\]</span></p>
+<p>where <span class="math inline">\(M_\infty \equiv k_{VB}\)</span> is
+the asymptotic mortality rate (equal to the von Bertalanffy growth
+coefficient), <span class="math inline">\(L_\infty\)</span> is
+asymptotic length, and <span class="math inline">\(L(t)\)</span> is the
+predicted length at age <span class="math inline">\(t\)</span>.
+Mortality is inversely proportional to body size: small, young
+individuals experience the highest mortality, which declines as the
+organism grows toward <span class="math inline">\(L_\infty\)</span>.</p>
+<p>When growth is fitted using a Gompertz or Logistic model rather than
+von Bertalanffy, the function automatically computes the VB-equivalent
+<span class="math inline">\(k\)</span> from the shared biological
+milestones <span class="math inline">\((L_\infty, L_0, L_{mat},
+t_{mat})\)</span>:</p>
+<p><span class="math display">\[k_{VB}^{equiv} = \frac{1}{t_{mat}}
+\ln\!\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
+<p>The Chen-Watanabe model also supports a two-phase extension for
+late-life senescence, in which mortality transitions from the declining
+CW trajectory to an increasing senescence function (Gompertz or
+Logistic) at a fraction of the age at maturity. For the complete
+mathematical development of the CW reparameterization, the normalized
+growth coefficient <span class="math inline">\(G(t)\)</span>, and the
+senescence extensions, see
+<code><a href="../articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code>.</p>
 </div>
 <div class="section level3">
-<h3 id="peterson-wroblewski-pw">Peterson-Wroblewski (PW)<a class="anchor" aria-label="anchor" href="#peterson-wroblewski-pw"></a>
+<h3 id="peterson-wroblewski-1984">Peterson-Wroblewski (1984)<a class="anchor" aria-label="anchor" href="#peterson-wroblewski-1984"></a>
 </h3>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">lw_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span><span class="op">)</span> <span class="fl">0.0001</span> <span class="op">*</span> <span class="va">L</span><span class="op">^</span><span class="fl">3.1</span></span>
-<span></span>
-<span><span class="va">mort_pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"PW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  lw_fun     <span class="op">=</span> <span class="va">lw_func</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<p>The Peterson-Wroblewski model estimates mortality from an allometric
+relationship between body weight and mortality rate, derived from
+empirical data on pelagic fish populations:</p>
+<p><span class="math display">\[M(W) = 1.92 \cdot
+W(t)^{-0.25}\]</span></p>
+<p>where <span class="math inline">\(W(t)\)</span> is body weight in
+grams at age <span class="math inline">\(t\)</span>, computed from
+predicted length via a user-supplied length-weight function <span class="math inline">\(W = f(L)\)</span>. The <span class="math inline">\(-0.25\)</span> exponent reflects metabolic scaling
+theory: metabolic rate scales approximately as <span class="math inline">\(W^{0.75}\)</span> (Kleiber’s law), and mortality
+is assumed proportional to mass-specific metabolic rate, yielding a
+<span class="math inline">\(W^{-0.25}\)</span> dependence.</p>
+<p>Unlike the CW model, the PW model requires a length-weight
+relationship function (provided via the <code>lw_fun</code> argument).
+Because the model operates on predicted body weight rather than growth
+model parameters directly, it is inherently growth-model-agnostic. Any
+growth model that predicts <span class="math inline">\(L(t)\)</span> can
+be combined with any <span class="math inline">\(L\)</span>-<span class="math inline">\(W\)</span> conversion to produce mortality
+estimates. The length-at-age predictions use the native growth model’s
+<span class="math inline">\(k\)</span> (not a VB-equivalent), since the
+PW model was not derived under VB-specific assumptions.</p>
 </div>
 <div class="section level3">
-<h3 id="lorenzen-l">Lorenzen (L)<a class="anchor" aria-label="anchor" href="#lorenzen-l"></a>
+<h3 id="lorenzen-1996-2022">Lorenzen (1996, 2022)<a class="anchor" aria-label="anchor" href="#lorenzen-1996-2022"></a>
 </h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Growth-based</span></span>
-<span><span class="va">mort_lor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method       <span class="op">=</span> <span class="st">"L"</span>,</span>
-<span>  growth_fit   <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  sex          <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Weight-based</span></span>
-<span><span class="va">mort_lor_wt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method       <span class="op">=</span> <span class="st">"L"</span>,</span>
-<span>  growth_fit   <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  sex          <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  weight_based <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  lw_fun       <span class="op">=</span> <span class="va">lw_func</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<p>The Lorenzen model relates natural mortality to body size through
+empirical calibration across a broad taxonomic range. vitalBayes
+supports two formulations.</p>
+<p><strong>Weight-based</strong> (Lorenzen, 1996):</p>
+<p><span class="math display">\[M(W) = \alpha \cdot
+W(t)^{\beta}\]</span></p>
+<p>where <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span> are allometric parameters estimated
+from a meta-analysis of marine and freshwater fishes (<span class="math inline">\(\alpha \sim \mathcal{N}(3.69, \, 0.502)\)</span>,
+<span class="math inline">\(\beta \sim \mathcal{N}(-0.305, \,
+0.029)\)</span>). Like the PW model, this requires a length-weight
+function and uses the native growth model’s <span class="math inline">\(k\)</span> and <span class="math inline">\(L(t)\)</span> predictions.</p>
+<p><strong>Growth-based</strong> (Lorenzen, 2022):</p>
+<p><span class="math display">\[\ln M = 0.28 - 1.30 \,
+\ln\!\left(\frac{L(t)}{L_\infty}\right) + 1.08 \, \ln(k)\]</span></p>
+<p>This formulation was calibrated using von Bertalanffy parameters, so
+<span class="math inline">\(k\)</span> should be the VB-equivalent
+growth coefficient when inputs come from Gompertz or Logistic model
+fits. The growth-based formulation has the advantage of not requiring a
+length-weight relationship, making it useful when <span class="math inline">\(L\)</span>-<span class="math inline">\(W\)</span>
+data are unavailable.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="output-structure">Output Structure<a class="anchor" aria-label="anchor" href="#output-structure"></a>
+<h2 id="scaling-mortality-schedules">Scaling Mortality Schedules<a class="anchor" aria-label="anchor" href="#scaling-mortality-schedules"></a>
 </h2>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mort</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Schedules"  "Parameters" "Summary"    "Plot"</span></span>
-<span></span>
-<span><span class="co"># Schedules: age-specific M for each parameter set</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Schedules</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Parameters: sampled values with derived quantities</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Parameters</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Summary: age-wise statistics</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Summary</span><span class="op">)</span></span></code></pre></div>
-<p>The plot caption indicates the correlation status and key model
-choices.</p>
+<div class="section level3">
+<h3 id="why-scale">Why Scale?<a class="anchor" aria-label="anchor" href="#why-scale"></a>
+</h3>
+<p>Theoretical mortality models (CW, PW, Lorenzen) produce age-specific
+<em>shapes</em> that are biologically informative, but their absolute
+levels often do not match empirical observations. This is expected: the
+models were derived from general relationships across broad taxonomic
+groups, not calibrated to the specific population under study. Scaling
+adjusts the overall mortality level while preserving the age-specific
+pattern, anchoring the curve to an independent empirical estimate.</p>
 </div>
-<div class="section level2">
-<h2 id="scaling-mortality">Scaling Mortality<a class="anchor" aria-label="anchor" href="#scaling-mortality"></a>
-</h2>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Survival probability (default)</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<div class="section level3">
+<h3 id="the-scaling-transformation">The Scaling Transformation<a class="anchor" aria-label="anchor" href="#the-scaling-transformation"></a>
+</h3>
+<p>Given a raw mortality schedule <span class="math inline">\(M_{raw}(t)\)</span> and a target mean mortality
+<span class="math inline">\(\bar{M}_{target}\)</span>, the scaled
+schedule is:</p>
+<p><span class="math display">\[M_{scaled}(t) = M_{raw}(t) \times
+\frac{\bar{M}_{target}}{\bar{M}_{raw}}\]</span></p>
+<p>where <span class="math inline">\(\bar{M}_{raw} = \frac{1}{n} \sum_t
+M_{raw}(t)\)</span> is the mean of the unscaled schedule. This
+multiplicative adjustment preserves the relative differences between
+ages — if neonatal mortality is 5<span class="math inline">\(\times\)</span> adult mortality in the raw
+schedule, it remains 5<span class="math inline">\(\times\)</span> in the
+scaled schedule.</p>
+</div>
+<div class="section level3">
+<h3 id="target-specification">Target Specification<a class="anchor" aria-label="anchor" href="#target-specification"></a>
+</h3>
+<p>The scaling target <span class="math inline">\(\bar{M}_{target}\)</span> can be specified in
+three ways.</p>
+<p><strong>Survival probability</strong>
+(<code>M_target = NULL, p = ...</code>): Specify the proportion of a
+cohort expected to survive to maximum age <span class="math inline">\(t_{max}\)</span>. The target is derived as:</p>
+<p><span class="math display">\[\bar{M}_{target} =
+-\frac{\ln(p)}{t_{max}}\]</span></p>
+<p>A common choice is <span class="math inline">\(p = 0.001\)</span>
+(0.1% survival to <span class="math inline">\(t_{max}\)</span>), which
+produces moderate scaling for long-lived species.</p>
+<p><strong>Empirical relationship</strong>
+(<code>M_target = function(tmax) ...</code>): Supply a function of <span class="math inline">\(t_{max}\)</span>, such as the Then et al. (2015)
+estimator:</p>
+<p><span class="math display">\[\bar{M}_{target} = 4.899 \cdot
+t_{max}^{-0.916}\]</span></p>
+<p>This approach leverages the strong empirical correlation between
+maximum age and mean mortality across fish taxa.</p>
+<p><strong>Fixed value</strong> (<code>M_target = 0.15</code>): Directly
+specify a target mean mortality from literature estimates or independent
+analyses.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Survival probability scaling (0.1% survive to tmax)</span></span>
+<span><span class="va">mort_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  scaled <span class="op">=</span> <span class="cn">TRUE</span>, p <span class="op">=</span> <span class="fl">0.001</span></span>
+<span>  scaled <span class="op">=</span> <span class="cn">TRUE</span>, M_target <span class="op">=</span> <span class="cn">NULL</span>, p <span class="op">=</span> <span class="fl">0.001</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Empirical relationship</span></span>
+<span><span class="co"># Then et al. (2015) empirical relationship</span></span>
 <span><span class="va">then_2015</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tmax</span><span class="op">)</span> <span class="fl">4.899</span> <span class="op">*</span> <span class="va">tmax</span><span class="op">^</span><span class="op">(</span><span class="op">-</span><span class="fl">0.916</span><span class="op">)</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span><span class="va">mort_then</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  scaled <span class="op">=</span> <span class="cn">TRUE</span>, M_target <span class="op">=</span> <span class="va">then_2015</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Fixed target</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span><span class="co"># Fixed target from independent analysis</span></span>
+<span><span class="va">mort_fixed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  scaled <span class="op">=</span> <span class="cn">TRUE</span>, M_target <span class="op">=</span> <span class="fl">0.15</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
+</div>
 <div class="section level2">
-<h2 id="integration-with-survivorship">Integration with Survivorship<a class="anchor" aria-label="anchor" href="#integration-with-survivorship"></a>
+<h2 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  iter       <span class="op">=</span> <span class="fl">2000</span>,</span>
+<div class="section level3">
+<h3 id="standard-workflow-with-vitalbayes-fits">Standard Workflow with vitalBayes Fits<a class="anchor" aria-label="anchor" href="#standard-workflow-with-vitalbayes-fits"></a>
+</h3>
+<p>The typical workflow begins with growth (and optionally maturity)
+model fitting, then feeds posteriors into mortality estimation:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Step 1: Fit growth model (any of the three)</span></span>
+<span><span class="co"># growth_fit &lt;- fit_bayesian_growth(...)</span></span>
+<span><span class="co"># maturity_fit &lt;- fit_bayesian_maturity(...)</span></span>
+<span></span>
+<span><span class="co"># Step 2: Generate Chen-Watanabe mortality schedules</span></span>
+<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method       <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>  growth_fit   <span class="op">=</span> <span class="va">growth_fit</span>,</span>
+<span>  maturity_fit <span class="op">=</span> <span class="va">maturity_fit</span>,</span>
+<span>  sex          <span class="op">=</span> <span class="fl">2</span>,        <span class="co"># Males</span></span>
+<span>  iter         <span class="op">=</span> <span class="fl">2000</span>,     <span class="co"># Number of posterior draws</span></span>
+<span>  scaled       <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  p            <span class="op">=</span> <span class="fl">0.001</span>,    <span class="co"># 0.1% survival to tmax</span></span>
+<span>  two_phase    <span class="op">=</span> <span class="cn">TRUE</span>,     <span class="co"># Include senescence</span></span>
+<span>  late_model   <span class="op">=</span> <span class="st">"gompertz"</span>,</span>
+<span>  print_plot   <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The function automatically extracts <span class="math inline">\((L_\infty, L_0, L_{mat}, t_{mat})\)</span> from
+the growth posterior and computes the VB-equivalent <span class="math inline">\(k\)</span> when the growth model is Gompertz or
+Logistic. Joint posterior sampling preserves parameter correlations —
+critically, the strong negative correlation between <span class="math inline">\(L_\infty\)</span> and <span class="math inline">\(k\)</span> that is typical of growth model
+fits.</p>
+</div>
+<div class="section level3">
+<h3 id="output-structure">Output Structure<a class="anchor" aria-label="anchor" href="#output-structure"></a>
+</h3>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mort</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Schedules"  "Parameters" "Summary"    "Plot"</span></span>
+<span></span>
+<span><span class="co"># Full age-specific schedules for every posterior draw</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Schedules</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    set_id  age     M_raw  M_scaled age_round</span></span>
+<span><span class="co">#&gt;     &lt;int&gt; &lt;num&gt;     &lt;num&gt;    &lt;num&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      1   0.5  0.42318  0.31204       0.5</span></span>
+<span><span class="co">#&gt; 2:      1   1.0  0.33721  0.24870       1.0</span></span>
+<span></span>
+<span><span class="co"># Parameter draws used (includes k_vb_equiv)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Parameters</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    set_id   Linf     L0   Lmat  tmat k_original k_vb_equiv k_for_mort  tmax</span></span>
+<span><span class="co">#&gt;     &lt;int&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt; &lt;num&gt;      &lt;num&gt;      &lt;num&gt;      &lt;num&gt; &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      1  98.42  24.31  68.92  11.2     0.0823     0.0945     0.0945  34.2</span></span>
+<span></span>
+<span><span class="co"># Summary statistics across posterior draws</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Summary</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    age_round M_median M_mean M_lower M_upper</span></span>
+<span><span class="co">#&gt;        &lt;num&gt;    &lt;num&gt;  &lt;num&gt;   &lt;num&gt;   &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:       0.5   0.3012 0.3124  0.2018  0.4532</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="manual-parameter-specification">Manual Parameter Specification<a class="anchor" aria-label="anchor" href="#manual-parameter-specification"></a>
+</h3>
+<p>For literature-based analyses where posterior draws are unavailable,
+parameters can be specified as mean-SD pairs:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mort_manual</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>  Linf   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">8</span><span class="op">)</span>,     <span class="co"># mean, sd</span></span>
+<span>  L0     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  k      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="fl">0.01</span><span class="op">)</span>,</span>
+<span>  tmat   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">1.5</span><span class="op">)</span>,</span>
+<span>  iter   <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  scaled <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  p      <span class="op">=</span> <span class="fl">0.001</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Note that manual specification samples parameters independently,
+destroying any correlations. This typically produces wider (less
+precise) uncertainty bands than joint posterior sampling from a fitted
+model.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="comparing-mortality-models">Comparing Mortality Models<a class="anchor" aria-label="anchor" href="#comparing-mortality-models"></a>
+</h2>
+<div class="section level3">
+<h3 id="across-mortality-methods">Across Mortality Methods<a class="anchor" aria-label="anchor" href="#across-mortality-methods"></a>
+</h3>
+<p>Comparing mortality estimates from different theoretical frameworks
+provides a measure of structural uncertainty:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Chen-Watanabe</span></span>
+<span><span class="va">mort_cw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  scaled <span class="op">=</span> <span class="cn">TRUE</span>, p <span class="op">=</span> <span class="fl">0.001</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Peterson-Wroblewski (requires length-weight function)</span></span>
+<span><span class="va">lw_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span><span class="op">)</span> <span class="fl">0.0001</span> <span class="op">*</span> <span class="va">L</span><span class="op">^</span><span class="fl">3.1</span></span>
+<span><span class="va">mort_pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="st">"PW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  lw_fun <span class="op">=</span> <span class="va">lw_fun</span>, scaled <span class="op">=</span> <span class="cn">TRUE</span>, p <span class="op">=</span> <span class="fl">0.001</span>,</span>
 <span>  print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
-<span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
-<span>  n         <span class="op">=</span> <span class="fl">50000</span>,</span>
-<span>  n_iter    <span class="op">=</span> <span class="fl">2000</span></span>
+<span><span class="co"># Lorenzen growth-based</span></span>
+<span><span class="va">mort_lor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="st">"L"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span>, scaled <span class="op">=</span> <span class="cn">TRUE</span>, p <span class="op">=</span> <span class="fl">0.001</span>,</span>
+<span>  print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Combine for comparison plot</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="va">combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="va">mort_cw</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">model</span> <span class="op">:=</span> <span class="st">"Chen-Watanabe"</span><span class="op">]</span>,</span>
+<span>  <span class="va">mort_pw</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">model</span> <span class="op">:=</span> <span class="st">"Peterson-Wroblewski"</span><span class="op">]</span>,</span>
+<span>  <span class="va">mort_lor</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">model</span> <span class="op">:=</span> <span class="st">"Lorenzen"</span><span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">combined</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age_round</span>, color <span class="op">=</span> <span class="va">model</span>, fill <span class="op">=</span> <span class="va">model</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">M_lower</span>, ymax <span class="op">=</span> <span class="va">M_upper</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.2</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">M_median</span><span class="op">)</span>, linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_color_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="../reference/vital_palette.html">vital_palette</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="../reference/vital_palette.html">vital_palette</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Age (years)"</span>, y <span class="op">=</span> <span class="st">"Natural Mortality (M)"</span>,</span>
+<span>       title <span class="op">=</span> <span class="st">"Mortality Model Comparison"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
+<p>All three models predict declining mortality with age, but they
+differ in their curvature, early-age magnitude, and late-life behavior.
+Comparing across models gives a sense of how sensitive management
+conclusions are to the choice of theoretical framework.</p>
+</div>
+<div class="section level3">
+<h3 id="across-growth-models">Across Growth Models<a class="anchor" aria-label="anchor" href="#across-growth-models"></a>
+</h3>
+<p>A complementary diagnostic tests whether mortality estimates are
+robust to the choice of growth model:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Fit all three growth models</span></span>
+<span><span class="co"># vb_fit   &lt;- fit_bayesian_growth(..., model = "v")</span></span>
+<span><span class="co"># gomp_fit &lt;- fit_bayesian_growth(..., model = "g")</span></span>
+<span><span class="co"># logis_fit &lt;- fit_bayesian_growth(..., model = "l")</span></span>
+<span></span>
+<span><span class="co"># CW mortality from each growth model</span></span>
+<span><span class="va">mort_from_vb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">vb_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">mort_from_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">mort_from_logis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">logis_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">combined_growth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="va">mort_from_vb</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">growth_model</span> <span class="op">:=</span> <span class="st">"von Bertalanffy"</span><span class="op">]</span>,</span>
+<span>  <span class="va">mort_from_gomp</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">growth_model</span> <span class="op">:=</span> <span class="st">"Gompertz"</span><span class="op">]</span>,</span>
+<span>  <span class="va">mort_from_logis</span><span class="op">$</span><span class="va">Summary</span><span class="op">[</span>, <span class="va">growth_model</span> <span class="op">:=</span> <span class="st">"Logistic"</span><span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">combined_growth</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age_round</span>, color <span class="op">=</span> <span class="va">growth_model</span>, fill <span class="op">=</span> <span class="va">growth_model</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">M_lower</span>, ymax <span class="op">=</span> <span class="va">M_upper</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.2</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">M_median</span><span class="op">)</span>, linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Age (years)"</span>, y <span class="op">=</span> <span class="st">"Natural Mortality (M)"</span>,</span>
+<span>       title <span class="op">=</span> <span class="st">"CW Mortality by Growth Model"</span>,</span>
+<span>       subtitle <span class="op">=</span> <span class="st">"All derived from same biological milestones"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
+<p>If the three curves are similar, mortality estimates are robust to
+growth model choice. Divergence indicates genuine model uncertainty that
+should be reported.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="modular-mortality-functions">Modular Mortality Functions<a class="anchor" aria-label="anchor" href="#modular-mortality-functions"></a>
+</h2>
+<p>For applications outside the Monte Carlo framework — quick
+calculations, integration into custom analyses, or pedagogical
+exploration — vitalBayes exports the individual mortality model
+functions:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Chen-Watanabe (single-phase and two-phase)</span></span>
+<span><span class="va">M_cw_single</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  two_phase <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">M_cw_senesc</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  two_phase <span class="op">=</span> <span class="cn">TRUE</span>, tmat <span class="op">=</span> <span class="fl">12</span>, late_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Peterson-Wroblewski</span></span>
+<span><span class="va">lw_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span><span class="op">)</span> <span class="fl">0.0001</span> <span class="op">*</span> <span class="va">L</span><span class="op">^</span><span class="fl">3.1</span></span>
+<span><span class="va">M_pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_peterson_wroblewski.html">M_peterson_wroblewski</a></span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  lw_fun <span class="op">=</span> <span class="va">lw_func</span>, growth_model <span class="op">=</span> <span class="st">"vb"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Lorenzen growth-based</span></span>
+<span><span class="va">M_lor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_lorenzen.html">M_lorenzen</a></span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Scale any of them</span></span>
+<span><span class="va">M_scaled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/scale_mortality.html">scale_mortality</a></span><span class="op">(</span><span class="va">M_cw_senesc</span>, M_target <span class="op">=</span> <span class="cn">NULL</span>, tmax <span class="op">=</span> <span class="fl">35</span>, p <span class="op">=</span> <span class="fl">0.001</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="downstream-integration-survival-simulation">Downstream Integration: Survival Simulation<a class="anchor" aria-label="anchor" href="#downstream-integration-survival-simulation"></a>
+</h2>
+<p>Mortality schedules from <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code> feed
+directly into <code><a href="../reference/simulate_survivorship.html">simulate_survivorship()</a></code> for cohort survival
+analysis:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
+<span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
+<span>  n         <span class="op">=</span> <span class="fl">50000</span>,    <span class="co"># Starting cohort size</span></span>
+<span>  n_iter    <span class="op">=</span> <span class="fl">2000</span>,     <span class="co"># Simulation iterations</span></span>
+<span>  mode      <span class="op">=</span> <span class="st">"random"</span>  <span class="co"># Sample parameter sets randomly</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Key survival metrics</span></span>
 <span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Age_of_Death</span></span>
-<span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmat</span></span></code></pre></div>
+<span><span class="co">#&gt;     mean    sd  lower  upper</span></span>
+<span><span class="co">#&gt;    &lt;num&gt; &lt;num&gt;  &lt;num&gt;  &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:  8.42  2.31   4.89  13.21</span></span>
+<span></span>
+<span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmat</span></span>
+<span><span class="co">#&gt;     mean      sd   lower   upper</span></span>
+<span><span class="co">#&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;   &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 0.312  0.0891   0.168   0.512</span></span></code></pre></div>
+<p>See <code><a href="../articles/survivorship_simulation.html">vignette("survivorship_simulation")</a></code> for
+comprehensive coverage of survival analysis options, visualization, and
+interpretation.</p>
+</div>
+<div class="section level2">
+<h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="21%">
+<col width="48%">
+<col width="30%">
+</colgroup>
+<thead><tr class="header">
+<th>Issue</th>
+<th>Possible Cause</th>
+<th>Solution</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Negative mortality values</td>
+<td>CW two-phase Taylor expansion breakdown</td>
+<td>Function automatically caps at 0; consider single-phase or different
+<code>late_model</code>
+</td>
+</tr>
+<tr class="even">
+<td>Very wide uncertainty bands</td>
+<td>Weak growth model posterior</td>
+<td>Check growth model convergence and parameter correlations</td>
+</tr>
+<tr class="odd">
+<td>Unrealistic tmax estimates</td>
+<td>
+<code>Linf_factor</code> too extreme</td>
+<td>Reduce from 0.99 to 0.95 for exploratory analysis</td>
+</tr>
+<tr class="even">
+<td>Missing tmat error</td>
+<td>CW needs age-at-maturity</td>
+<td>Provide <code>maturity_fit</code> or manual <code>tmat</code>
+parameter</td>
+</tr>
+<tr class="odd">
+<td>
+<code>lw_fun</code> error</td>
+<td>PW/Lorenzen weight-based needs length-weight</td>
+<td>Provide function: <code>lw_fun = function(L) a * L^b</code>
+</td>
+</tr>
+<tr class="even">
+<td>CW and PW disagree strongly</td>
+<td>Different theoretical assumptions</td>
+<td>Report both; consider which assumptions best match your species</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section level2">
 <h2 id="reporting-results">Reporting Results<a class="anchor" aria-label="anchor" href="#reporting-results"></a>
 </h2>
-<p>Document parameter sources, correlation handling, and model
-choices:</p>
+<p>When reporting mortality estimates in publications, include:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Model specification</strong>: Which mortality model(s),
+growth model used, scaling approach, and parameter sources.</li>
+<li>
+<strong>Growth parameter source</strong>: vitalBayes fit (specify
+model: VB, Gompertz, or Logistic) or literature values.</li>
+<li>
+<strong>Key metrics</strong>: Mean <span class="math inline">\(M\)</span>, age-specific <span class="math inline">\(M\)</span> at key life stages (e.g., neonate,
+sub-adult, adult), <span class="math inline">\(t_{max}\)</span>
+estimate.</li>
+<li>
+<strong>Uncertainty</strong>: 95% credible intervals throughout,
+noting whether these reflect joint posterior sampling or independent
+parameter variation.</li>
+</ol>
+<p>Example methods text:</p>
 <blockquote>
-<p>“Natural mortality was estimated using the Chen-Watanabe model within
-the vitalBayes unified framework. Growth parameters (<span class="math inline">\(L_\infty\)</span>, <span class="math inline">\(L_0\)</span>) were drawn from the joint posterior
-of a von Bertalanffy growth model, while maturity parameters (<span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span>) were obtained from separate
-maturity ogive fits with assumed correlation <span class="math inline">\(\rho = 0.5\)</span>. Mortality schedules were
-scaled to achieve 0.1% survival to maximum age (n = 2,000 Monte Carlo
-iterations).”</p>
+<p>“Natural mortality was estimated using the Chen-Watanabe model (Chen
+&amp; Watanabe, 1989) with Gompertz senescence, implemented via the
+vitalBayes package (v1.0.0; Author, Year). Growth parameters were drawn
+from the joint posterior of a Gompertz growth model (selected by
+LOO-CV), with VB-equivalent <span class="math inline">\(k\)</span>
+computed from biological milestones following the approach described in
+[vignette reference]. Mortality schedules were scaled to 0.1% survival
+at estimated <span class="math inline">\(t_{max}\)</span> and propagated
+through 2,000 Monte Carlo simulations. Median age-specific mortality
+with 95% credible intervals is reported.”</p>
 </blockquote>
-</div>
-<div class="section level2">
-<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
-</h2>
-<ul>
-<li>
-<code><a href="../articles/survivorship_simulation.html">vignette("survivorship_simulation")</a></code> - Cohort survival
-analysis</li>
-<li>
-<code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> - Growth model
-fitting</li>
-<li>
-<code><a href="../articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code> -
-Mathematical framework</li>
-</ul>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <p>Chen, S., &amp; Watanabe, S. (1989). Age dependence of natural
 mortality coefficient in fish population dynamics. <em>Nippon Suisan
-Gakkaishi</em>, 55(2), 205-208.</p>
+Gakkaishi</em>, 55(2), 205–208.</p>
+<p>Lorenzen, K. (1996). The relationship between body weight and natural
+mortality in juvenile and adult fish. <em>Journal of Fish Biology</em>,
+49(4), 627–642.</p>
 <p>Lorenzen, K. (2022). Size- and age-dependent natural mortality in
 fish populations. <em>Fisheries Research</em>, 255, 106454.</p>
 <p>Peterson, I., &amp; Wroblewski, J. S. (1984). Mortality rate of
 fishes in the pelagic ecosystem. <em>Canadian Journal of Fisheries and
-Aquatic Sciences</em>, 41(7), 1117-1120.</p>
-<p>Then, A. Y., et al. (2015). Evaluating the predictive performance of
-empirical estimators of natural mortality rate. <em>ICES Journal of
-Marine Science</em>, 72(1), 82-92.</p>
+Aquatic Sciences</em>, 41(7), 1117–1120.</p>
+<p>Then, A. Y., Hoenig, J. M., Hall, N. G., &amp; Hewitt, D. A. (2015).
+Evaluating the predictive performance of empirical estimators of natural
+mortality rate using information on over 200 fish species. <em>ICES
+Journal of Marine Science</em>, 72(1), 82–92.</p>
+</div>
+<div class="section level2">
+<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h2>
+<ul>
+<li>
+<code><a href="../articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code> —
+Mathematical derivation of the CW reparameterization and <span class="math inline">\(G(t)\)</span> framework</li>
+<li>
+<code><a href="../articles/survivorship_simulation.html">vignette("survivorship_simulation")</a></code> — Cohort survival
+analysis using mortality schedules</li>
+<li>
+<code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> — Growth model fitting
+that feeds the mortality workflow</li>
+<li>
+<code><a href="../articles/fit_bayesian_maturity.html">vignette("fit_bayesian_maturity")</a></code> — Maturity estimation
+for <span class="math inline">\(t_{mat}\)</span> and <span class="math inline">\(L_{mat}\)</span>
+</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -252,8 +252,8 @@ reproducible vital rate analyses.*
 
 ### All vignettes
 
-- [Chen-Watanabe Reparameterization: From t₀ to
-  L₀](https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.md):
+- [The Chen-Watanabe
+  Reparameterization](https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.md):
 - [Estimating Birth Size with
   fit_bayesian_birth()](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_birth.md):
 - [Growth Modeling with
