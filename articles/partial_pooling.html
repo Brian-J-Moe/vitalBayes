@@ -95,19 +95,10 @@
 <p>Elasmobranch datasets frequently have unequal sample sizes between
 sexes. The <code>imbalanced_data</code> example dataset illustrates this
 common scenario with 150 females but only 34 males. Fitting separate
-models for each sex leads to:</p>
-<ul>
-<li>
-<strong>Wide credible intervals</strong> for the sparse sex
-(males)</li>
-<li>
-<strong>Unstable estimates</strong> driven by a few influential
-observations</li>
-<li>
-<strong>Inefficient use of information</strong> — we ignore the fact
-that both sexes are <em>the same species</em>
-</li>
-</ul>
+models for each sex leads to wide credible intervals for the sparse sex,
+unstable estimates driven by a few influential observations, and
+inefficient use of information — ignoring the fact that both sexes are
+the same species.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
@@ -131,8 +122,8 @@ that both sexes are <em>the same species</em>
 <p>Assume both sexes share identical parameters:</p>
 <p><span class="math display">\[\theta_{\text{female}} =
 \theta_{\text{male}} = \theta\]</span></p>
-<p><strong>Problem</strong>: Ignores real biological differences between
-sexes.</p>
+<p>This ignores real biological differences between sexes, such as
+sexual dimorphism in size at maturity.</p>
 </div>
 <div class="section level3">
 <h3 id="no-pooling-fully-separate">2. No Pooling (Fully Separate)<a class="anchor" aria-label="anchor" href="#no-pooling-fully-separate"></a>
@@ -140,8 +131,9 @@ sexes.</p>
 <p>Estimate each sex independently:</p>
 <p><span class="math display">\[\theta_{\text{female}} \perp
 \theta_{\text{male}}\]</span></p>
-<p><strong>Problem</strong>: Ignores that both sexes are the same
-species. The sparse sex gets unreliable estimates.</p>
+<p>This ignores that both sexes are the same species. The sparse sex
+gets unreliable estimates, and point estimates can be driven by a
+handful of observations near the decision boundary.</p>
 </div>
 <div class="section level3">
 <h3 id="partial-pooling-hierarchical">3. Partial Pooling (Hierarchical)<a class="anchor" aria-label="anchor" href="#partial-pooling-hierarchical"></a>
@@ -153,12 +145,12 @@ distribution:</p>
 <p>where <span class="math inline">\(\mu\)</span> is the species-level
 mean and <span class="math inline">\(\tau\)</span> controls between-sex
 variation.</p>
-<p><strong>Key insight</strong>: The model <em>learns</em> <span class="math inline">\(\tau\)</span> from the data:</p>
-<ul>
-<li>If sexes are similar → small <span class="math inline">\(\tau\)</span> → estimates shrink together</li>
-<li>If sexes are different → large <span class="math inline">\(\tau\)</span> → estimates stay separated</li>
-<li>Sparse sex → borrows strength from data-rich sex</li>
-</ul>
+<p>The key insight is that the model <em>learns</em> <span class="math inline">\(\tau\)</span> from the data. If sexes are similar,
+the estimated <span class="math inline">\(\tau\)</span> will be small
+and estimates shrink together. If sexes are different, <span class="math inline">\(\tau\)</span> will be large and estimates stay
+separated. And when one sex is sparse, it borrows strength from the
+data-rich sex — reducing variance without requiring the assumption that
+both sexes are identical.</p>
 </div>
 </div>
 <div class="section level2">
@@ -168,11 +160,20 @@ variation.</p>
 <h3 id="non-centered-parameterization">Non-Centered Parameterization<a class="anchor" aria-label="anchor" href="#non-centered-parameterization"></a>
 </h3>
 <p>For numerical stability, vitalBayes uses a non-centered
-parameterization:</p>
+parameterization on the log scale:</p>
 <p><span class="math display">\[\log(\theta_s) = \mu + \tau \cdot
 \eta_s, \quad \eta_s \sim \mathcal{N}(0, 1)\]</span></p>
 <p>This separates the global mean (<span class="math inline">\(\mu\)</span>) from sex-specific deviations (<span class="math inline">\(\eta_s\)</span>), which dramatically improves MCMC
-sampling when <span class="math inline">\(\tau\)</span> is small.</p>
+sampling when <span class="math inline">\(\tau\)</span> is small. Under
+centered parameterization, HMC struggles in the “funnel” geometry that
+arises when <span class="math inline">\(\tau\)</span> is near zero — the
+non-centered form eliminates this pathology by sampling on a standard
+normal and rescaling.</p>
+<p>Working on the log scale ensures that parameters remain positive
+(lengths, ages, growth coefficients are all positive quantities) and
+that the hierarchical variation is proportional rather than additive — a
+10% difference between sexes means the same thing whether the species is
+50 cm or 300 cm.</p>
 </div>
 <div class="section level3">
 <h3 id="prior-on-tau">Prior on <span class="math inline">\(\tau\)</span><a class="anchor" aria-label="anchor" href="#prior-on-tau"></a>
@@ -181,15 +182,10 @@ sampling when <span class="math inline">\(\tau\)</span> is small.</p>
 <p><span class="math display">\[\tau \sim \text{Half-Normal}(0,
 \sigma_\tau)\]</span></p>
 <p>where <span class="math inline">\(\sigma_\tau\)</span> is set via the
-<code>prior_tau</code> argument. This prior:</p>
-<ul>
-<li>Allows <span class="math inline">\(\tau = 0\)</span> (complete
-pooling) when data support it</li>
-<li>Permits large <span class="math inline">\(\tau\)</span> when sexes
-genuinely differ</li>
-<li>Avoids the heavy tails of half-Cauchy that can cause
-divergences</li>
-</ul>
+<code>prior_tau</code> argument. This prior allows <span class="math inline">\(\tau = 0\)</span> (complete pooling) when data
+support it, permits large <span class="math inline">\(\tau\)</span> when
+sexes genuinely differ, and avoids the heavy tails of half-Cauchy that
+can cause divergences in Stan.</p>
 </div>
 </div>
 <div class="section level2">
@@ -204,21 +200,21 @@ divergences</li>
 <span></span>
 <span><span class="co"># With partial pooling (recommended for imbalanced data)</span></span>
 <span><span class="va">L50_pooled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
-<span> maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
-<span> lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span> sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data        <span class="op">=</span> <span class="va">mat_data</span>,</span>
-<span> use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,    <span class="co"># Enable hierarchical structure</span></span>
-<span> prior_tau   <span class="op">=</span> <span class="fl">0.5</span>      <span class="co"># Half-normal scale (on log scale)</span></span>
+<span>  maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
+<span>  lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
+<span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data        <span class="op">=</span> <span class="va">mat_data</span>,</span>
+<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,    <span class="co"># Enable hierarchical structure</span></span>
+<span>  prior_tau   <span class="op">=</span> <span class="fl">0.5</span>      <span class="co"># Half-normal scale (on log scale)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Without partial pooling (separate estimation)</span></span>
 <span><span class="va">L50_unpooled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
-<span> maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
-<span> lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span> sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data        <span class="op">=</span> <span class="va">mat_data</span>,</span>
-<span> use_pooling <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
+<span>  lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
+<span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data        <span class="op">=</span> <span class="va">mat_data</span>,</span>
+<span>  use_pooling <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -242,9 +238,9 @@ divergences</li>
 <p>Use <code><a href="../reference/compare_pooling.html">compare_pooling()</a></code> to quantify the difference:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/compare_pooling.html">compare_pooling</a></span><span class="op">(</span></span>
-<span> pooled   <span class="op">=</span> <span class="va">L50_pooled</span>,</span>
-<span> unpooled <span class="op">=</span> <span class="va">L50_unpooled</span>,</span>
-<span> params   <span class="op">=</span> <span class="st">"L50"</span></span>
+<span>  pooled   <span class="op">=</span> <span class="va">L50_pooled</span>,</span>
+<span>  unpooled <span class="op">=</span> <span class="va">L50_unpooled</span>,</span>
+<span>  params   <span class="op">=</span> <span class="st">"L50"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Output shows:</span></span>
@@ -258,18 +254,11 @@ divergences</li>
 </h2>
 <p>Partial pooling produces <strong>shrinkage</strong>: estimates for
 the sparse group are pulled toward the overall mean. The amount of
-shrinkage depends on:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Sample size ratio</strong>: More imbalance → more shrinkage
-for sparse sex</li>
-<li>
-<strong>Observed difference</strong>: Large apparent differences →
-less shrinkage</li>
-<li>
-<strong>Within-group variance</strong>: High variance → more
-shrinkage</li>
-</ol>
+shrinkage depends on the sample size ratio (more imbalance produces more
+shrinkage for the sparse sex), the observed difference (large apparent
+differences produce less shrinkage), and the within-group variance (high
+variance produces more shrinkage, since extreme values are less
+informative).</p>
 <div class="section level3">
 <h3 id="visualizing-shrinkage">Visualizing Shrinkage<a class="anchor" aria-label="anchor" href="#visualizing-shrinkage"></a>
 </h3>
@@ -282,14 +271,14 @@ shrinkage</li>
 <span></span>
 <span><span class="co"># Compare male estimates (the sparse sex)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">draws_unpooled</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">`L50[2]`</span>, fill <span class="op">=</span> <span class="st">"Unpooled"</span><span class="op">)</span>, </span>
-<span>              alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">draws_pooled</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">`L50[2]`</span>, fill <span class="op">=</span> <span class="st">"Pooled"</span><span class="op">)</span>, </span>
-<span>              alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Male L50 (cm)"</span>, y <span class="op">=</span> <span class="st">"Density"</span>, </span>
-<span>      title <span class="op">=</span> <span class="st">"Effect of Partial Pooling on Male L50 Estimate"</span>,</span>
-<span>      subtitle <span class="op">=</span> <span class="st">"Note the narrower credible interval with pooling"</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu"><a href="../reference/theme_vital.html">theme_vital</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">draws_unpooled</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">`L50[2]`</span>, fill <span class="op">=</span> <span class="st">"Unpooled"</span><span class="op">)</span>,</span>
+<span>               alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">draws_pooled</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">`L50[2]`</span>, fill <span class="op">=</span> <span class="st">"Pooled"</span><span class="op">)</span>,</span>
+<span>               alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Male L50 (cm)"</span>, y <span class="op">=</span> <span class="st">"Density"</span>,</span>
+<span>       title <span class="op">=</span> <span class="st">"Effect of Partial Pooling on Male L50 Estimate"</span>,</span>
+<span>       subtitle <span class="op">=</span> <span class="st">"Note the narrower credible interval with pooling"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/theme_vital.html">theme_vital</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -298,51 +287,68 @@ shrinkage</li>
 <div class="section level3">
 <h3 id="recommended-use_pooling-true">Recommended (use_pooling = TRUE)<a class="anchor" aria-label="anchor" href="#recommended-use_pooling-true"></a>
 </h3>
-<ul>
-<li>
-<strong>Imbalanced sample sizes</strong> between sexes (like the
-<code>imbalanced_data</code> example)</li>
-<li>
-<strong>Moderate expected differences</strong> between sexes</li>
-<li>
-<strong>Sparse data</strong> overall</li>
-<li>
-<strong>Downstream use</strong> of estimates (growth models,
-population models)</li>
-</ul>
+<p>Partial pooling is recommended when sample sizes are imbalanced
+between sexes, when moderate (rather than extreme) differences between
+sexes are expected, when overall sample sizes are small, and when
+downstream use of the estimates (in growth models, population models,
+mortality estimation) will propagate any instability forward.</p>
 </div>
 <div class="section level3">
 <h3 id="optional-use_pooling-false">Optional (use_pooling = FALSE)<a class="anchor" aria-label="anchor" href="#optional-use_pooling-false"></a>
 </h3>
-<ul>
-<li>
-<strong>Balanced sample sizes</strong> and adequate data for both
-sexes (like the <code>growth_data</code> example)</li>
-<li>
-<strong>Strong prior belief</strong> that sexes are very
-different</li>
-<li>
-<strong>Exploratory analysis</strong> to assess sex differences
-without shrinkage</li>
-</ul>
+<p>Separate estimation may be appropriate when sample sizes are balanced
+and adequate for both sexes (like the <code>growth_data</code> example
+with 189F, 176M), when there is strong prior belief that sexes are very
+different, or during exploratory analysis to assess sex differences
+without any shrinkage.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="partial-pooling-in-growth-models">Partial Pooling in Growth Models<a class="anchor" aria-label="anchor" href="#partial-pooling-in-growth-models"></a>
 </h2>
-<p>The same principles apply to growth parameters:</p>
+<p>The same hierarchical principles apply to growth parameters. However,
+when the maturity-based parameterization is used, a subtlety arises: if
+the upstream maturity models were themselves fitted with partial
+pooling, the maturity parameters <span class="math inline">\((L_{mat},
+t_{mat})\)</span> already carry pooled information. Pooling them again
+in the growth model creates <strong>double-pooling</strong> that can
+over-shrink sex differences.</p>
+<p>vitalBayes addresses this with <strong>selective pooling</strong>: by
+default, only <span class="math inline">\(L_\infty\)</span> and <span class="math inline">\(L_0\)</span> are pooled in the growth model’s
+hierarchical structure, while <span class="math inline">\(L_{mat}\)</span> and <span class="math inline">\(t_{mat}\)</span> receive direct sex-specific
+priors from the upstream maturity fits. This is controlled by the
+<code>pool_maturity</code> argument and is auto-detected when vitalBayes
+maturity fit objects are provided. See
+<code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> for the complete
+treatment.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Prepare growth data from imbalanced dataset</span></span>
 <span><span class="va">gdata</span> <span class="op">&lt;-</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
-<span><span class="co"># Partial pooling on Linf, L0, k, Lmat, tmat</span></span>
+<span><span class="co"># First, fit maturity models with pooling</span></span>
+<span><span class="va">L50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
+<span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, lt <span class="op">=</span> <span class="st">"fl"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">t50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
+<span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Growth model with selective pooling (auto-detected)</span></span>
 <span><span class="va">growth_pooled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span> lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span> age         <span class="op">=</span> <span class="st">"age"</span>,</span>
-<span> sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data        <span class="op">=</span> <span class="va">gdata</span>,</span>
-<span> use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span> prior_tau   <span class="op">=</span> <span class="fl">0.2</span>     <span class="co"># Tighter for growth (less between-sex variation expected)</span></span>
+<span>  lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
+<span>  age         <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data        <span class="op">=</span> <span class="va">gdata</span>,</span>
+<span>  k_based     <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  length.mature_stanfit <span class="op">=</span> <span class="va">L50_fit</span>,</span>
+<span>  age.mature_stanfit    <span class="op">=</span> <span class="va">t50_fit</span>,</span>
+<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prior_tau   <span class="op">=</span> <span class="fl">0.2</span>     <span class="co"># Tighter for growth (less between-sex variation expected)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Sex-specific estimates with uncertainty reduction</span></span>
@@ -355,8 +361,13 @@ without shrinkage</li>
 <h2 id="choosing-prior_tau">Choosing <code>prior_tau</code><a class="anchor" aria-label="anchor" href="#choosing-prior_tau"></a>
 </h2>
 <p>The <code>prior_tau</code> argument controls the half-normal scale
-for between-sex SD:</p>
+for between-sex SD on the log scale:</p>
 <table class="table">
+<colgroup>
+<col width="21%">
+<col width="48%">
+<col width="30%">
+</colgroup>
 <thead><tr class="header">
 <th>Value</th>
 <th>Interpretation</th>
@@ -371,12 +382,12 @@ for between-sex SD:</p>
 <tr class="even">
 <td>0.2</td>
 <td>Expect modest differences</td>
-<td>Linf, L0</td>
+<td>Linf, L0, growth models (default)</td>
 </tr>
 <tr class="odd">
 <td>0.5</td>
 <td>Expect moderate differences</td>
-<td>L50, t50 (default)</td>
+<td>L50, t50, maturity models (default)</td>
 </tr>
 <tr class="even">
 <td>1.0</td>
@@ -385,9 +396,11 @@ for between-sex SD:</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Rule of thumb</strong>: Since parameters are on log scale,
+<p>Since parameters are modeled on the log scale,
 <code>prior_tau = 0.5</code> corresponds to roughly 50% expected
-variation between sexes (before seeing data).</p>
+variation between sexes before seeing the data. For growth parameters,
+which tend to differ less between sexes than maturity parameters, a
+tighter value (0.2) is often appropriate.</p>
 </div>
 <div class="section level2">
 <h2 id="diagnosing-pooling-behavior">Diagnosing Pooling Behavior<a class="anchor" aria-label="anchor" href="#diagnosing-pooling-behavior"></a>
@@ -396,9 +409,14 @@ variation between sexes (before seeing data).</p>
 <h3 id="check-the-estimated-tau">Check the Estimated <span class="math inline">\(\tau\)</span><a class="anchor" aria-label="anchor" href="#check-the-estimated-tau"></a>
 </h3>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Large tau = sexes are different</span></span>
+<code class="sourceCode R"><span><span class="co"># Large tau = sexes are different (less shrinkage)</span></span>
 <span><span class="co"># Small tau = sexes are similar (more shrinkage)</span></span>
 <span><span class="va">L50_pooled</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"tau_L50"</span><span class="op">)</span></span></code></pre></div>
+<p>A very small <span class="math inline">\(\tau\)</span> (say <span class="math inline">\(&lt; 0.02\)</span>) indicates the data strongly
+support similar parameters across sexes — at this point partial pooling
+approaches complete pooling. A large <span class="math inline">\(\tau\)</span> (say <span class="math inline">\(&gt; 0.5\)</span>) indicates substantial
+dimorphism, and partial pooling provides minimal shrinkage, approaching
+independent estimation.</p>
 </div>
 <div class="section level3">
 <h3 id="compare-loo-cv">Compare LOO-CV<a class="anchor" aria-label="anchor" href="#compare-loo-cv"></a>
@@ -408,8 +426,8 @@ variation between sexes (before seeing data).</p>
 <span><span class="va">loo_unpooled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_loo.html">compute_loo</a></span><span class="op">(</span><span class="va">L50_unpooled</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/compare_loo.html">compare_loo</a></span><span class="op">(</span></span>
-<span> <span class="st">"Partial Pooling"</span> <span class="op">=</span> <span class="va">loo_pooled</span>,</span>
-<span> <span class="st">"No Pooling"</span> <span class="op">=</span> <span class="va">loo_unpooled</span></span>
+<span>  <span class="st">"Partial Pooling"</span> <span class="op">=</span> <span class="va">loo_pooled</span>,</span>
+<span>  <span class="st">"No Pooling"</span> <span class="op">=</span> <span class="va">loo_unpooled</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Pooled model often has better (higher) elpd when:</span></span>
@@ -426,30 +444,39 @@ variation between sexes (before seeing data).</p>
 <p>No. Partial pooling produces <strong>regularized</strong> estimates
 that trade a small amount of bias for substantial variance reduction.
 For the sparse sex, this trade-off almost always improves mean squared
-error.</p>
+error. In the Bayesian framework, this is simply the natural consequence
+of a hierarchical prior — it concentrates posterior mass on plausible
+parameter combinations and reduces the influence of sampling noise.</p>
 </div>
 <div class="section level3">
 <h3 id="can-i-still-detect-sex-differences">Can I still detect sex differences?<a class="anchor" aria-label="anchor" href="#can-i-still-detect-sex-differences"></a>
 </h3>
-<p>Yes! The model estimates <code>L50_diff</code>,
-<code>Linf_diff</code>, etc. — the posterior difference between sexes.
-If sexes truly differ, the credible interval for these differences will
-exclude zero.</p>
+<p>Yes. The model estimates difference parameters
+(<code>L50_diff</code>, <code>Linf_diff</code>, <code>k_diff</code>,
+etc.) — the posterior difference between sexes. If sexes truly differ,
+the credible interval for these differences will exclude zero. Pooling
+does not prevent the detection of differences; it simply regularizes the
+individual estimates so that the difference is estimated more
+precisely.</p>
 </div>
 <div class="section level3">
 <h3 id="what-if-sexes-are-truly-very-different">What if sexes are truly very different?<a class="anchor" aria-label="anchor" href="#what-if-sexes-are-truly-very-different"></a>
 </h3>
 <p>The model will estimate a large <span class="math inline">\(\tau\)</span>, which reduces shrinkage. In the
 limit of very large <span class="math inline">\(\tau\)</span>, partial
-pooling converges to no pooling.</p>
+pooling converges to no pooling. This is the self-correcting property of
+hierarchical models: when the data provide strong evidence of
+between-group differences, the hierarchical prior yields to the
+likelihood.</p>
 </div>
 <div class="section level3">
 <h3 id="should-i-always-use-pooling">Should I always use pooling?<a class="anchor" aria-label="anchor" href="#should-i-always-use-pooling"></a>
 </h3>
 <p>For two-sex elasmobranch models with typical sample sizes, yes. The
 only case to avoid pooling is when you have abundant, balanced data for
-both sexes (like the <code>growth_data</code> example with 189F, 176M)
-AND strong prior belief in very different parameters.</p>
+both sexes AND strong prior belief in very different parameters. Even
+then, partial pooling with appropriate <code>prior_tau</code> rarely
+harms and often helps.</p>
 </div>
 </div>
 <div class="section level2">
@@ -464,28 +491,32 @@ AND strong prior belief in very different parameters.</p>
 <span></span>
 <span><span class="co"># ---- Maturity with Pooling ----</span></span>
 <span><span class="va">L50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
-<span> maturity <span class="op">=</span> <span class="st">"mat"</span>, lt <span class="op">=</span> <span class="st">"fl"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data <span class="op">=</span> <span class="va">mat_data</span>,</span>
-<span> use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span> prior_tau <span class="op">=</span> <span class="fl">0.5</span></span>
+<span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, lt <span class="op">=</span> <span class="st">"fl"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">mat_data</span>,</span>
+<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prior_tau <span class="op">=</span> <span class="fl">0.5</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">t50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
-<span> maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span> use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span> prior_tau <span class="op">=</span> <span class="fl">0.5</span></span>
+<span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prior_tau <span class="op">=</span> <span class="fl">0.5</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># ---- Growth with Pooling ----</span></span>
+<span><span class="co"># ---- Growth with Selective Pooling ----</span></span>
+<span><span class="co"># pool_maturity auto-detects to FALSE because L50_fit and t50_fit</span></span>
+<span><span class="co"># are CmdStanMCMC objects from vitalBayes maturity fits</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span> lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span> data <span class="op">=</span> <span class="va">gdata</span>,</span>
-<span> k_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span> L50_fit <span class="op">=</span> <span class="va">L50_fit</span>,</span>
-<span> t50_fit <span class="op">=</span> <span class="va">t50_fit</span>,</span>
-<span> use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span> prior_tau <span class="op">=</span> <span class="fl">0.2</span></span>
+<span>  lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
+<span>  age         <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data        <span class="op">=</span> <span class="va">gdata</span>,</span>
+<span>  k_based     <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  length.mature_stanfit <span class="op">=</span> <span class="va">L50_fit</span>,</span>
+<span>  age.mature_stanfit    <span class="op">=</span> <span class="va">t50_fit</span>,</span>
+<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  prior_tau   <span class="op">=</span> <span class="fl">0.2</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># ---- Results ----</span></span>
@@ -501,7 +532,7 @@ AND strong prior belief in very different parameters.</p>
 <p>The package includes datasets that illustrate when pooling matters
 most:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Imbalanced data (150F, 34M) - pooling helps</span></span>
+<code class="sourceCode R"><span><span class="co"># Imbalanced data (150F, 34M) - pooling helps substantially</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">imbalanced_data</span><span class="op">)</span></span>
 <span><span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">.N</span>, by <span class="op">=</span> <span class="va">sex</span><span class="op">]</span></span>
 <span></span>
@@ -558,26 +589,15 @@ is the recommended default</strong> when fitting two-sex models.</p>
 </h2>
 <ul>
 <li>
-<a href="Understanding_vitalBayes.html#maturity">Statistical
-Methods: Partial Pooling</a> — Full mathematical derivation with
-non-centered parameterization details</li>
-<li>
-<a href="Understanding_vitalBayes.html#cv-priors">Statistical
-Methods: CV-Based Priors</a> — How prior_tau works</li>
+<code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> — Growth model fitting
+with selective pooling</li>
 <li>
 <code><a href="../articles/fit_bayesian_maturity.html">vignette("fit_bayesian_maturity")</a></code> — Maturity model
-fitting</li>
-<li>
-<code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> — Growth model
 fitting</li>
 <li>
 <code><a href="../articles/model_diagnostics.html">vignette("model_diagnostics")</a></code> — Comparing pooled vs
 unpooled via LOO-CV</li>
 </ul>
-<hr>
-<p><em>This document is part of the vitalBayes R package. For bug
-reports, feature requests, or questions, please visit the GitHub
-repository.</em></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

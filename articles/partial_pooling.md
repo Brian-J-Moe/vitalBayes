@@ -5,12 +5,9 @@
 Elasmobranch datasets frequently have unequal sample sizes between
 sexes. The `imbalanced_data` example dataset illustrates this common
 scenario with 150 females but only 34 males. Fitting separate models for
-each sex leads to:
-
-- **Wide credible intervals** for the sparse sex (males)
-- **Unstable estimates** driven by a few influential observations
-- **Inefficient use of information** — we ignore the fact that both
-  sexes are *the same species*
+each sex leads to wide credible intervals for the sparse sex, unstable
+estimates driven by a few influential observations, and inefficient use
+of information — ignoring the fact that both sexes are the same species.
 
 ``` r
 library(vitalBayes)
@@ -37,7 +34,8 @@ Assume both sexes share identical parameters:
 
 \\\theta\_{\text{female}} = \theta\_{\text{male}} = \theta\\
 
-**Problem**: Ignores real biological differences between sexes.
+This ignores real biological differences between sexes, such as sexual
+dimorphism in size at maturity.
 
 ### 2. No Pooling (Fully Separate)
 
@@ -45,8 +43,9 @@ Estimate each sex independently:
 
 \\\theta\_{\text{female}} \perp \theta\_{\text{male}}\\
 
-**Problem**: Ignores that both sexes are the same species. The sparse
-sex gets unreliable estimates.
+This ignores that both sexes are the same species. The sparse sex gets
+unreliable estimates, and point estimates can be driven by a handful of
+observations near the decision boundary.
 
 ### 3. Partial Pooling (Hierarchical)
 
@@ -57,25 +56,35 @@ Model sex-specific parameters as draws from a common distribution:
 where \\\mu\\ is the species-level mean and \\\tau\\ controls
 between-sex variation.
 
-**Key insight**: The model *learns* \\\tau\\ from the data:
-
-- If sexes are similar → small \\\tau\\ → estimates shrink together
-- If sexes are different → large \\\tau\\ → estimates stay separated
-- Sparse sex → borrows strength from data-rich sex
+The key insight is that the model *learns* \\\tau\\ from the data. If
+sexes are similar, the estimated \\\tau\\ will be small and estimates
+shrink together. If sexes are different, \\\tau\\ will be large and
+estimates stay separated. And when one sex is sparse, it borrows
+strength from the data-rich sex — reducing variance without requiring
+the assumption that both sexes are identical.
 
 ## The vitalBayes Implementation
 
 ### Non-Centered Parameterization
 
-For numerical stability, vitalBayes uses a non-centered
-parameterization:
+For numerical stability, vitalBayes uses a non-centered parameterization
+on the log scale:
 
 \\\log(\theta_s) = \mu + \tau \cdot \eta_s, \quad \eta_s \sim
 \mathcal{N}(0, 1)\\
 
 This separates the global mean (\\\mu\\) from sex-specific deviations
 (\\\eta_s\\), which dramatically improves MCMC sampling when \\\tau\\ is
-small.
+small. Under centered parameterization, HMC struggles in the “funnel”
+geometry that arises when \\\tau\\ is near zero — the non-centered form
+eliminates this pathology by sampling on a standard normal and
+rescaling.
+
+Working on the log scale ensures that parameters remain positive
+(lengths, ages, growth coefficients are all positive quantities) and
+that the hierarchical variation is proportional rather than additive — a
+10% difference between sexes means the same thing whether the species is
+50 cm or 300 cm.
 
 ### Prior on \\\tau\\
 
@@ -83,11 +92,10 @@ The between-sex standard deviation uses a half-normal prior:
 
 \\\tau \sim \text{Half-Normal}(0, \sigma\_\tau)\\
 
-where \\\sigma\_\tau\\ is set via the `prior_tau` argument. This prior:
-
-- Allows \\\tau = 0\\ (complete pooling) when data support it
-- Permits large \\\tau\\ when sexes genuinely differ
-- Avoids the heavy tails of half-Cauchy that can cause divergences
+where \\\sigma\_\tau\\ is set via the `prior_tau` argument. This prior
+allows \\\tau = 0\\ (complete pooling) when data support it, permits
+large \\\tau\\ when sexes genuinely differ, and avoids the heavy tails
+of half-Cauchy that can cause divergences in Stan.
 
 ## Practical Usage
 
@@ -99,21 +107,21 @@ mat_data <- imbalanced_data[embryo == FALSE & !is.na(mat)]
 
 # With partial pooling (recommended for imbalanced data)
 L50_pooled <- fit_bayesian_maturity(
- maturity    = "mat",
- lt          = "fl",
- sex         = "sex",
- data        = mat_data,
- use_pooling = TRUE,    # Enable hierarchical structure
- prior_tau   = 0.5      # Half-normal scale (on log scale)
+  maturity    = "mat",
+  lt          = "fl",
+  sex         = "sex",
+  data        = mat_data,
+  use_pooling = TRUE,    # Enable hierarchical structure
+  prior_tau   = 0.5      # Half-normal scale (on log scale)
 )
 
 # Without partial pooling (separate estimation)
 L50_unpooled <- fit_bayesian_maturity(
- maturity    = "mat",
- lt          = "fl",
- sex         = "sex",
- data        = mat_data,
- use_pooling = FALSE
+  maturity    = "mat",
+  lt          = "fl",
+  sex         = "sex",
+  data        = mat_data,
+  use_pooling = FALSE
 )
 ```
 
@@ -140,9 +148,9 @@ to quantify the difference:
 
 ``` r
 compare_pooling(
- pooled   = L50_pooled,
- unpooled = L50_unpooled,
- params   = "L50"
+  pooled   = L50_pooled,
+  unpooled = L50_unpooled,
+  params   = "L50"
 )
 
 # Output shows:
@@ -154,12 +162,11 @@ compare_pooling(
 ## Understanding Shrinkage
 
 Partial pooling produces **shrinkage**: estimates for the sparse group
-are pulled toward the overall mean. The amount of shrinkage depends on:
-
-1.  **Sample size ratio**: More imbalance → more shrinkage for sparse
-    sex
-2.  **Observed difference**: Large apparent differences → less shrinkage
-3.  **Within-group variance**: High variance → more shrinkage
+are pulled toward the overall mean. The amount of shrinkage depends on
+the sample size ratio (more imbalance produces more shrinkage for the
+sparse sex), the observed difference (large apparent differences produce
+less shrinkage), and the within-group variance (high variance produces
+more shrinkage, since extreme values are less informative).
 
 ### Visualizing Shrinkage
 
@@ -172,49 +179,80 @@ draws_unpooled <- L50_unpooled$draws("L50", format = "df")
 
 # Compare male estimates (the sparse sex)
 ggplot() +
- geom_density(data = draws_unpooled, aes(x = `L50[2]`, fill = "Unpooled"), 
-              alpha = 0.5) +
- geom_density(data = draws_pooled, aes(x = `L50[2]`, fill = "Pooled"), 
-              alpha = 0.5) +
- labs(x = "Male L50 (cm)", y = "Density", 
-      title = "Effect of Partial Pooling on Male L50 Estimate",
-      subtitle = "Note the narrower credible interval with pooling") +
- theme_vital()
+  geom_density(data = draws_unpooled, aes(x = `L50[2]`, fill = "Unpooled"),
+               alpha = 0.5) +
+  geom_density(data = draws_pooled, aes(x = `L50[2]`, fill = "Pooled"),
+               alpha = 0.5) +
+  labs(x = "Male L50 (cm)", y = "Density",
+       title = "Effect of Partial Pooling on Male L50 Estimate",
+       subtitle = "Note the narrower credible interval with pooling") +
+  theme_vital()
 ```
 
 ## When to Use Partial Pooling
 
 ### Recommended (use_pooling = TRUE)
 
-- **Imbalanced sample sizes** between sexes (like the `imbalanced_data`
-  example)
-- **Moderate expected differences** between sexes
-- **Sparse data** overall
-- **Downstream use** of estimates (growth models, population models)
+Partial pooling is recommended when sample sizes are imbalanced between
+sexes, when moderate (rather than extreme) differences between sexes are
+expected, when overall sample sizes are small, and when downstream use
+of the estimates (in growth models, population models, mortality
+estimation) will propagate any instability forward.
 
 ### Optional (use_pooling = FALSE)
 
-- **Balanced sample sizes** and adequate data for both sexes (like the
-  `growth_data` example)
-- **Strong prior belief** that sexes are very different
-- **Exploratory analysis** to assess sex differences without shrinkage
+Separate estimation may be appropriate when sample sizes are balanced
+and adequate for both sexes (like the `growth_data` example with 189F,
+176M), when there is strong prior belief that sexes are very different,
+or during exploratory analysis to assess sex differences without any
+shrinkage.
 
 ## Partial Pooling in Growth Models
 
-The same principles apply to growth parameters:
+The same hierarchical principles apply to growth parameters. However,
+when the maturity-based parameterization is used, a subtlety arises: if
+the upstream maturity models were themselves fitted with partial
+pooling, the maturity parameters \\(L\_{mat}, t\_{mat})\\ already carry
+pooled information. Pooling them again in the growth model creates
+**double-pooling** that can over-shrink sex differences.
+
+vitalBayes addresses this with **selective pooling**: by default, only
+\\L\_\infty\\ and \\L_0\\ are pooled in the growth model’s hierarchical
+structure, while \\L\_{mat}\\ and \\t\_{mat}\\ receive direct
+sex-specific priors from the upstream maturity fits. This is controlled
+by the `pool_maturity` argument and is auto-detected when vitalBayes
+maturity fit objects are provided. See
+[`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)
+for the complete treatment.
 
 ``` r
 # Prepare growth data from imbalanced dataset
 gdata <- imbalanced_data[embryo == FALSE & !is.na(age)]
 
-# Partial pooling on Linf, L0, k, Lmat, tmat
+# First, fit maturity models with pooling
+L50_fit <- fit_bayesian_maturity(
+  maturity = "mat", lt = "fl", sex = "sex",
+  data = imbalanced_data[embryo == FALSE & !is.na(mat)],
+  use_pooling = TRUE
+)
+
+t50_fit <- fit_bayesian_maturity(
+  maturity = "mat", age = "age", sex = "sex",
+  data = imbalanced_data[embryo == FALSE & !is.na(mat) & !is.na(age)],
+  use_pooling = TRUE
+)
+
+# Growth model with selective pooling (auto-detected)
 growth_pooled <- fit_bayesian_growth(
- lt          = "fl",
- age         = "age",
- sex         = "sex",
- data        = gdata,
- use_pooling = TRUE,
- prior_tau   = 0.2     # Tighter for growth (less between-sex variation expected)
+  lt          = "fl",
+  age         = "age",
+  sex         = "sex",
+  data        = gdata,
+  k_based     = FALSE,
+  length.mature_stanfit = L50_fit,
+  age.mature_stanfit    = t50_fit,
+  use_pooling = TRUE,
+  prior_tau   = 0.2     # Tighter for growth (less between-sex variation expected)
 )
 
 # Sex-specific estimates with uncertainty reduction
@@ -227,28 +265,36 @@ growth_pooled$summary(c("Linf_diff", "k_diff"))
 ## Choosing `prior_tau`
 
 The `prior_tau` argument controls the half-normal scale for between-sex
-SD:
+SD on the log scale:
 
-| Value | Interpretation                 | Use Case                       |
-|-------|--------------------------------|--------------------------------|
-| 0.1   | Expect very similar sexes      | Growth rate, measurement error |
-| 0.2   | Expect modest differences      | Linf, L0                       |
-| 0.5   | Expect moderate differences    | L50, t50 (default)             |
-| 1.0   | Expect substantial differences | Rare; consider no pooling      |
+| Value | Interpretation                 | Use Case                            |
+|-------|--------------------------------|-------------------------------------|
+| 0.1   | Expect very similar sexes      | Growth rate, measurement error      |
+| 0.2   | Expect modest differences      | Linf, L0, growth models (default)   |
+| 0.5   | Expect moderate differences    | L50, t50, maturity models (default) |
+| 1.0   | Expect substantial differences | Rare; consider no pooling           |
 
-**Rule of thumb**: Since parameters are on log scale, `prior_tau = 0.5`
-corresponds to roughly 50% expected variation between sexes (before
-seeing data).
+Since parameters are modeled on the log scale, `prior_tau = 0.5`
+corresponds to roughly 50% expected variation between sexes before
+seeing the data. For growth parameters, which tend to differ less
+between sexes than maturity parameters, a tighter value (0.2) is often
+appropriate.
 
 ## Diagnosing Pooling Behavior
 
 ### Check the Estimated \\\tau\\
 
 ``` r
-# Large tau = sexes are different
+# Large tau = sexes are different (less shrinkage)
 # Small tau = sexes are similar (more shrinkage)
 L50_pooled$summary("tau_L50")
 ```
+
+A very small \\\tau\\ (say \\\< 0.02\\) indicates the data strongly
+support similar parameters across sexes — at this point partial pooling
+approaches complete pooling. A large \\\tau\\ (say \\\> 0.5\\) indicates
+substantial dimorphism, and partial pooling provides minimal shrinkage,
+approaching independent estimation.
 
 ### Compare LOO-CV
 
@@ -257,8 +303,8 @@ loo_pooled <- compute_loo(L50_pooled)
 loo_unpooled <- compute_loo(L50_unpooled)
 
 compare_loo(
- "Partial Pooling" = loo_pooled,
- "No Pooling" = loo_unpooled
+  "Partial Pooling" = loo_pooled,
+  "No Pooling" = loo_unpooled
 )
 
 # Pooled model often has better (higher) elpd when:
@@ -272,26 +318,35 @@ compare_loo(
 
 No. Partial pooling produces **regularized** estimates that trade a
 small amount of bias for substantial variance reduction. For the sparse
-sex, this trade-off almost always improves mean squared error.
+sex, this trade-off almost always improves mean squared error. In the
+Bayesian framework, this is simply the natural consequence of a
+hierarchical prior — it concentrates posterior mass on plausible
+parameter combinations and reduces the influence of sampling noise.
 
 ### Can I still detect sex differences?
 
-Yes! The model estimates `L50_diff`, `Linf_diff`, etc. — the posterior
-difference between sexes. If sexes truly differ, the credible interval
-for these differences will exclude zero.
+Yes. The model estimates difference parameters (`L50_diff`, `Linf_diff`,
+`k_diff`, etc.) — the posterior difference between sexes. If sexes truly
+differ, the credible interval for these differences will exclude zero.
+Pooling does not prevent the detection of differences; it simply
+regularizes the individual estimates so that the difference is estimated
+more precisely.
 
 ### What if sexes are truly very different?
 
 The model will estimate a large \\\tau\\, which reduces shrinkage. In
 the limit of very large \\\tau\\, partial pooling converges to no
-pooling.
+pooling. This is the self-correcting property of hierarchical models:
+when the data provide strong evidence of between-group differences, the
+hierarchical prior yields to the likelihood.
 
 ### Should I always use pooling?
 
 For two-sex elasmobranch models with typical sample sizes, yes. The only
 case to avoid pooling is when you have abundant, balanced data for both
-sexes (like the `growth_data` example with 189F, 176M) AND strong prior
-belief in very different parameters.
+sexes AND strong prior belief in very different parameters. Even then,
+partial pooling with appropriate `prior_tau` rarely harms and often
+helps.
 
 ## Example: Full Workflow with Pooling
 
@@ -304,28 +359,32 @@ gdata <- imbalanced_data[embryo == FALSE & !is.na(age)]
 
 # ---- Maturity with Pooling ----
 L50_fit <- fit_bayesian_maturity(
- maturity = "mat", lt = "fl", sex = "sex",
- data = mat_data,
- use_pooling = TRUE,
- prior_tau = 0.5
+  maturity = "mat", lt = "fl", sex = "sex",
+  data = mat_data,
+  use_pooling = TRUE,
+  prior_tau = 0.5
 )
 
 t50_fit <- fit_bayesian_maturity(
- maturity = "mat", age = "age", sex = "sex",
- data = mat_data[!is.na(age)],
- use_pooling = TRUE,
- prior_tau = 0.5
+  maturity = "mat", age = "age", sex = "sex",
+  data = mat_data[!is.na(age)],
+  use_pooling = TRUE,
+  prior_tau = 0.5
 )
 
-# ---- Growth with Pooling ----
+# ---- Growth with Selective Pooling ----
+# pool_maturity auto-detects to FALSE because L50_fit and t50_fit
+# are CmdStanMCMC objects from vitalBayes maturity fits
 growth_fit <- fit_bayesian_growth(
- lt = "fl", age = "age", sex = "sex",
- data = gdata,
- k_based = FALSE,
- L50_fit = L50_fit,
- t50_fit = t50_fit,
- use_pooling = TRUE,
- prior_tau = 0.2
+  lt          = "fl",
+  age         = "age",
+  sex         = "sex",
+  data        = gdata,
+  k_based     = FALSE,
+  length.mature_stanfit = L50_fit,
+  age.mature_stanfit    = t50_fit,
+  use_pooling = TRUE,
+  prior_tau   = 0.2
 )
 
 # ---- Results ----
@@ -341,7 +400,7 @@ growth_fit$summary(c("Linf_diff", "k_diff"))
 The package includes datasets that illustrate when pooling matters most:
 
 ``` r
-# Imbalanced data (150F, 34M) - pooling helps
+# Imbalanced data (150F, 34M) - pooling helps substantially
 data(imbalanced_data)
 imbalanced_data[embryo == FALSE, .N, by = sex]
 
@@ -369,21 +428,9 @@ recommended default** when fitting two-sex models.
 
 ## See Also
 
-- [Statistical Methods: Partial
-  Pooling](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity)
-  — Full mathematical derivation with non-centered parameterization
-  details
-- [Statistical Methods: CV-Based
-  Priors](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#cv-priors)
-  — How prior_tau works
+- [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)
+  — Growth model fitting with selective pooling
 - [`vignette("fit_bayesian_maturity")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md)
   — Maturity model fitting
-- [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)
-  — Growth model fitting
 - [`vignette("model_diagnostics")`](https://brian-j-moe.github.io/vitalBayes/articles/model_diagnostics.md)
   — Comparing pooled vs unpooled via LOO-CV
-
-------------------------------------------------------------------------
-
-*This document is part of the vitalBayes R package. For bug reports,
-feature requests, or questions, please visit the GitHub repository.*

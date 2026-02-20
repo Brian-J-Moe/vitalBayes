@@ -94,26 +94,86 @@
 </h2>
 <p>The <code><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth()</a></code> function fits von Bertalanffy,
 Gompertz, or Logistic growth models using Bayesian methods. A central
-methodological feature is the <strong>maturity-based
-parameterization</strong>, which derives the growth coefficient <span class="math inline">\(k\)</span> from observable maturity metrics rather
-than estimating it directly.</p>
+design choice is the <strong>maturity-based parameterization</strong>,
+which derives the growth coefficient <span class="math inline">\(k\)</span> from observable maturity metrics rather
+than estimating it directly. This breaks the notorious <span class="math inline">\((L_\infty, k)\)</span> correlation, anchors the
+growth curve to biologically interpretable quantities, and propagates
+uncertainty from upstream maturity estimates into the growth
+posterior.</p>
 </div>
 <div class="section level2">
 <h2 id="growth-model-equations">Growth Model Equations<a class="anchor" aria-label="anchor" href="#growth-model-equations"></a>
 </h2>
-<p><strong>von Bertalanffy</strong> (<code>model = "v"</code>): <span class="math display">\[L(t) = L_\infty - (L_\infty - L_0)
+<p>All three growth models are implemented in <span class="math inline">\(L_0\)</span>-based form, where <span class="math inline">\(L_0\)</span> is length at birth — a directly
+observable quantity, unlike the VB parameter <span class="math inline">\(t_0\)</span> (the theoretical age at length zero).
+This ensures that priors can be set from embryo or neonate
+measurements.</p>
+<div class="section level3">
+<h3 id="von-bertalanffy">Von Bertalanffy<a class="anchor" aria-label="anchor" href="#von-bertalanffy"></a>
+</h3>
+<p><span class="math display">\[L(t) = L_\infty - (L_\infty - L_0) \,
 e^{-kt}\]</span></p>
-<p><strong>Gompertz</strong> (<code>model = "g"</code>): <span class="math display">\[L(t) = L_\infty
-\exp\left[-\ln\left(\frac{L_\infty}{L_0}\right)
+<p>The von Bertalanffy (VB) model describes growth as a constant
+exponential approach to <span class="math inline">\(L_\infty\)</span>.
+The absolute growth rate <span class="math inline">\(dL/dt\)</span> is
+highest at birth and declines monotonically, with an inflection point at
+<span class="math inline">\(0.632 \, L_\infty\)</span>. This pattern
+suits species where somatic growth is fastest in early life and steadily
+decelerates as the organism approaches asymptotic size.</p>
+<p>The VB model is the most widely used growth function in fisheries
+science and provides the baseline parameterization for the Chen-Watanabe
+natural mortality model (see
+<code><a href="../articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code>). However, it
+is sensitive to data coverage at extreme ages: sparse adult observations
+can produce biologically implausible <span class="math inline">\(L_\infty\)</span> estimates, and the strong <span class="math inline">\(L_\infty\)</span>-<span class="math inline">\(k\)</span> correlation under traditional
+parameterization can lead to poorly identified posteriors.</p>
+</div>
+<div class="section level3">
+<h3 id="gompertz">Gompertz<a class="anchor" aria-label="anchor" href="#gompertz"></a>
+</h3>
+<p><span class="math display">\[L(t) = L_\infty
+\exp\!\left[-\ln\!\left(\frac{L_\infty}{L_0}\right)
 e^{-kt}\right]\]</span></p>
-<p><strong>Logistic</strong> (<code>model = "l"</code>): <span class="math display">\[L(t) = \frac{L_\infty}{1 +
+<p>The Gompertz model describes growth where the <em>rate of
+deceleration</em> itself decelerates — an exponentially declining growth
+rate rather than a linearly declining one. Growth is initially rapid but
+slows earlier and more abruptly than under VB dynamics. The inflection
+point occurs at <span class="math inline">\(L_\infty / e \approx 0.368
+\, L_\infty\)</span>, much earlier in ontogeny than the VB
+inflection.</p>
+<p>The early inflection makes the Gompertz particularly suitable for
+species exhibiting rapid juvenile growth followed by pronounced
+deceleration. Many small coastal elasmobranchs (bonnetheads, Atlantic
+sharpnose sharks, some skate species) show this pattern, with growth
+effectively ceasing near reproductive maturity. The Gompertz model also
+tends to produce more stable <span class="math inline">\(L_\infty\)</span> estimates than the VB when adult
+data are sparse, since it doesn’t require the data to resolve the
+late-asymptotic curvature as precisely.</p>
+</div>
+<div class="section level3">
+<h3 id="logistic">Logistic<a class="anchor" aria-label="anchor" href="#logistic"></a>
+</h3>
+<p><span class="math display">\[L(t) = \frac{L_\infty}{1 +
 \left(\frac{L_\infty}{L_0} - 1\right) e^{-kt}}\]</span></p>
+<p>The Logistic model is symmetric around its inflection point at <span class="math inline">\(L_\infty / 2\)</span>, with growth accelerating
+before the midpoint and decelerating after. This sigmoidal trajectory is
+less commonly applied in fisheries, but it can be appropriate for
+species where early juvenile growth is initially slow (due to
+nutritional constraints, habitat transitions, or ontogenetic diet
+shifts) before accelerating during a rapid growth phase and then
+decelerating toward asymptotic size.</p>
+<p>In practice, the Logistic model provides the tightest approach to
+<span class="math inline">\(L_\infty\)</span> — it reaches asymptotic
+size faster than either VB or Gompertz for equivalent parameter values.
+This can sometimes produce <span class="math inline">\(L_\infty\)</span>
+estimates uncomfortably close to the maximum observed length.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="two-parameterization-approaches">Two Parameterization Approaches<a class="anchor" aria-label="anchor" href="#two-parameterization-approaches"></a>
 </h2>
 <div class="section level3">
-<h3 id="k-based-traditional">1. K-Based (Traditional)<a class="anchor" aria-label="anchor" href="#k-based-traditional"></a>
+<h3 id="k-based-traditional">K-Based (Traditional)<a class="anchor" aria-label="anchor" href="#k-based-traditional"></a>
 </h3>
 <p>Directly estimates the growth coefficient <span class="math inline">\(k\)</span>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -141,23 +201,34 @@ e^{-kt}\right]\]</span></p>
 <span><span class="va">growth_k</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Linf"</span>, <span class="st">"L0"</span>, <span class="st">"k"</span>, <span class="st">"sigma"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="maturity-based-recommended">2. Maturity-Based (Recommended)<a class="anchor" aria-label="anchor" href="#maturity-based-recommended"></a>
+<h3 id="maturity-based-recommended">Maturity-Based (Recommended)<a class="anchor" aria-label="anchor" href="#maturity-based-recommended"></a>
 </h3>
-<p>Derives <span class="math inline">\(k\)</span> from maturity
-parameters (<span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span>), ensuring biological
-consistency. The derivation differs by growth model:</p>
-<p><strong>von Bertalanffy:</strong> <span class="math display">\[k =
-\frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty -
-L_{mat}}\right)\]</span></p>
-<p><strong>Gompertz:</strong> <span class="math display">\[k =
-\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_0)}{\ln(L_\infty /
+<p>The maturity-based parameterization derives <span class="math inline">\(k\)</span> from the maturity milestones <span class="math inline">\((L_{mat}, t_{mat})\)</span>, ensuring that the
+growth curve passes through the maturity point and that prior
+information from maturity models propagates into the growth posterior.
+The derivation is model-specific: substituting <span class="math inline">\(L(t_{mat}) = L_{mat}\)</span> into each growth
+equation and solving for <span class="math inline">\(k\)</span>
+yields:</p>
+<p><strong>Von Bertalanffy:</strong></p>
+<p><span class="math display">\[k_{VB} = \frac{1}{t_{mat}}
+\ln\!\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
+<p><strong>Gompertz:</strong></p>
+<p><span class="math display">\[k_g = \frac{1}{t_{mat}}
+\ln\!\left(\frac{\ln(L_\infty / L_0)}{\ln(L_\infty /
 L_{mat})}\right)\]</span></p>
-<p><strong>Logistic:</strong> <span class="math display">\[k =
-\frac{1}{t_{mat}} \ln\left(\frac{L_{mat}(L_\infty - L_0)}{L_0(L_\infty -
+<p><strong>Logistic:</strong></p>
+<p><span class="math display">\[k_l = \frac{1}{t_{mat}}
+\ln\!\left(\frac{L_{mat}(L_\infty - L_0)}{L_0(L_\infty -
 L_{mat})}\right)\]</span></p>
-<p>Each derivation ensures the growth curve passes exactly through the
-point <span class="math inline">\((t_{mat}, L_{mat})\)</span>, anchoring
-the model to an observable biological milestone.</p>
+<p>In each case, <span class="math inline">\(k\)</span> is a
+deterministic function of <span class="math inline">\((L_\infty, L_0,
+L_{mat}, t_{mat})\)</span> — parameters that are either directly
+estimated in the Stan model or informed by upstream birth and maturity
+fits. This eliminates the need to specify a prior on <span class="math inline">\(k\)</span> directly and breaks the <span class="math inline">\(L_\infty\)</span>-<span class="math inline">\(k\)</span> posterior correlation that plagues
+traditional parameterizations. Note that <span class="math inline">\(k\)</span> has different meanings across the three
+models and should not be directly compared (e.g., Gompertz <span class="math inline">\(k_g\)</span> is generally larger than VB <span class="math inline">\(k_{VB}\)</span> for the same species). What
+matters for biological inference is the resulting growth trajectory, not
+the numerical value of <span class="math inline">\(k\)</span>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># First, fit maturity models</span></span>
 <span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
@@ -188,47 +259,41 @@ the model to an observable biological milestone.</p>
 <span>  data      <span class="op">=</span> <span class="va">gdata</span>,</span>
 <span>  model     <span class="op">=</span> <span class="st">"v"</span>,</span>
 <span>  k_based   <span class="op">=</span> <span class="cn">FALSE</span>,                    <span class="co"># Use maturity-based parameterization</span></span>
-<span>  length.mature_stanfit <span class="op">=</span> <span class="va">L50_fit</span>,      <span class="co"># Provides Lmat prior</span></span>
-<span>  age.mature_stanfit    <span class="op">=</span> <span class="va">t50_fit</span>,      <span class="co"># Provides tmat prior</span></span>
-<span>  birth_stanfit         <span class="op">=</span> <span class="va">birth_fit</span>,    <span class="co"># Provides L0 prior</span></span>
+<span>  length.mature_stanfit <span class="op">=</span> <span class="va">L50_fit</span>,       <span class="co"># Provides Lmat prior</span></span>
+<span>  age.mature_stanfit    <span class="op">=</span> <span class="va">t50_fit</span>,       <span class="co"># Provides tmat prior</span></span>
+<span>  birth_stanfit         <span class="op">=</span> <span class="va">birth_fit</span>,     <span class="co"># Provides L0 prior</span></span>
 <span>  parallel  <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># k is now a derived quantity</span></span>
 <span><span class="va">growth_mat</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Linf"</span>, <span class="st">"L0"</span>, <span class="st">"Lmat"</span>, <span class="st">"tmat"</span>, <span class="st">"k"</span>, <span class="st">"sigma"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Why maturity-based?</strong></p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Reduced correlation</strong>: <span class="math inline">\((L_\infty, k)\)</span> are notoriously correlated;
-maturity parameters break this</li>
-<li>
-<strong>Observable anchoring</strong>: Maturity milestones fall
-within the data range, unlike <span class="math inline">\(L_\infty\)</span>
-</li>
-<li>
-<strong>Prior propagation</strong>: Uncertainty from maturity models
-flows into growth estimates</li>
-<li>
-<strong>Biological coherence</strong>: The growth curve
-<em>must</em> pass through <span class="math inline">\((t_{mat},
-L_{mat})\)</span>
-</li>
-</ol>
-<p>For the full derivation, see the <a href="Understanding_vitalBayes.html#maturity-param">Maturity-Based
-Parameterization section</a> in the Statistical Methods guide.</p>
+<p><strong>Why maturity-based?</strong> The maturity-based
+parameterization offers several advantages. First, it reduces posterior
+correlation: <span class="math inline">\((L_\infty, k)\)</span> are
+notoriously correlated under traditional parameterization, and replacing
+<span class="math inline">\(k\)</span> with <span class="math inline">\((L_{mat}, t_{mat})\)</span> breaks this
+collinearity. Second, it provides observable anchoring: maturity
+milestones fall within the observed data range, unlike <span class="math inline">\(L_\infty\)</span> which is an extrapolation beyond
+the largest individuals. Third, prior information from upstream maturity
+models propagates directly into growth estimates, providing informative
+regularization for both sexes. Fourth, it enforces biological coherence:
+the fitted growth curve necessarily passes through <span class="math inline">\((t_{mat}, L_{mat})\)</span>, which is a real
+biological constraint rather than a mathematical convenience.</p>
+<p>For the full derivation, see the model equations reference or the
+Stan source code.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="the-l_infty-constraint">The <span class="math inline">\(L_\infty\)</span> Constraint<a class="anchor" aria-label="anchor" href="#the-l_infty-constraint"></a>
 </h2>
-<p>A critical issue: unconstrained <span class="math inline">\(L_\infty\)</span> often converges to values
-<em>below</em> the largest observed individuals—biologically
-impossible.</p>
-<p><strong>vitalBayes enforces</strong> <span class="math inline">\(L_\infty &gt; L_{max}\)</span> (the maximum
-observed length). For the biological and statistical rationale, see <a href="Understanding_vitalBayes.html#linf">Why <span class="math inline">\(L_\infty\)</span> Must Exceed Maximum Observed
-Length</a> in the Statistical Methods guide.</p>
+<p>A critical issue in growth modeling: unconstrained <span class="math inline">\(L_\infty\)</span> often converges to values
+<em>below</em> the largest observed individuals — biologically
+impossible. vitalBayes enforces <span class="math inline">\(L_\infty
+&gt; L_{max}\)</span> (the maximum observed length in the data), with
+the prior mean set at <code>Linf_multiplier</code> <span class="math inline">\(\times\)</span> <span class="math inline">\(L_{max}\)</span> (default 1.05, i.e., 5% above
+maximum observed length).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Lmax is auto-detected from data</span></span>
+<code class="sourceCode R"><span><span class="co"># Lmax is auto-detected from data (including rows without age)</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
 <span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
@@ -243,13 +308,36 @@ Length</a> in the Statistical Methods guide.</p>
 <span>  data <span class="op">=</span> <span class="va">gdata</span>,</span>
 <span>  Lmax <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">95</span><span class="op">)</span>  <span class="co"># Female, Male</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>Note that the <code>data</code> argument can include incomplete cases
+(length without age), which are used only to determine <span class="math inline">\(L_{max}\)</span>. This is useful when your dataset
+contains measured individuals that were not aged — their lengths still
+inform the plausible range of <span class="math inline">\(L_\infty\)</span>.</p>
+</div>
+<div class="section level2">
+<h2 id="observation-model">Observation Model<a class="anchor" aria-label="anchor" href="#observation-model"></a>
+</h2>
+<p>By default, vitalBayes models observation error as lognormal — the
+log of predicted length plus Gaussian noise. This ensures positive
+predictions, accommodates the typically multiplicative nature of growth
+measurement error (larger individuals have proportionally larger
+errors), and produces well-behaved likelihoods.</p>
+<p>For datasets with outliers or heavy-tailed residuals, the
+<code>robust = TRUE</code> option switches to a Student-t observation
+model, which downweights extreme observations:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">growth_robust</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
+<span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">gdata</span>,</span>
+<span>  robust <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># Student-t instead of lognormal</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="two-sex-models-pooling-strategies">Two-Sex Models: Pooling Strategies<a class="anchor" aria-label="anchor" href="#two-sex-models-pooling-strategies"></a>
 </h2>
 <p>When sample sizes are imbalanced between sexes (common in
 elasmobranch research), partial pooling borrows strength across sexes to
-reduce uncertainty for the sparse group.</p>
+reduce uncertainty for the sparse group. For the general theory of
+partial pooling, see <code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code>.</p>
 <div class="section level3">
 <h3 id="the-double-pooling-problem">The Double-Pooling Problem<a class="anchor" aria-label="anchor" href="#the-double-pooling-problem"></a>
 </h3>
@@ -258,19 +346,17 @@ parameterization</strong> with <strong>partial pooling</strong>: if the
 upstream maturity models (<code><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity()</a></code>) were
 themselves fit with <code>use_pooling = TRUE</code>, the maturity
 parameters (<span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span>) already contain pooled
-estimates. Pooling them <em>again</em> in the growth model can:</p>
-<ol style="list-style-type: decimal">
-<li>Over-shrink sex differences toward the population mean</li>
-<li>In extreme cases, reverse genuine biological dimorphism</li>
-<li>Artificially tighten credible intervals</li>
-</ol>
+estimates. Pooling them <em>again</em> in the growth model can
+over-shrink sex differences toward the population mean, in extreme cases
+reversing genuine biological dimorphism, and can artificially tighten
+credible intervals.</p>
 </div>
 <div class="section level3">
 <h3 id="selective-pooling-default">Selective Pooling (Default)<a class="anchor" aria-label="anchor" href="#selective-pooling-default"></a>
 </h3>
 <p>The <code>pool_maturity</code> argument controls whether maturity
 parameters enter the hierarchical structure:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># When both maturity fits are CmdStanMCMC objects from vitalBayes,</span></span>
 <span><span class="co"># pool_maturity auto-detects to FALSE (selective pooling)</span></span>
 <span><span class="va">growth_2sex</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
@@ -327,9 +413,9 @@ shrinkage.</p>
 <h3 id="full-pooling-with-anchoring">Full Pooling with Anchoring<a class="anchor" aria-label="anchor" href="#full-pooling-with-anchoring"></a>
 </h3>
 <p>If you prefer full pooling (or must use it with manual priors), the
-function uses <strong>widened anchoring priors</strong> (3x original SD)
-to prevent over-constraint:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+function uses <strong>widened anchoring priors</strong> (3<span class="math inline">\(\times\)</span> original SD) to prevent
+over-constraint:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Force full pooling explicitly</span></span>
 <span><span class="va">growth_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
@@ -344,7 +430,7 @@ to prevent over-constraint:</p>
 <span>  pool_maturity <span class="op">=</span> <span class="cn">TRUE</span>,   <span class="co"># Override auto-detection</span></span>
 <span>  parallel      <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co"># Note: "pool_maturity = TRUE with vitalBayes maturity fits may cause </span></span>
+<span><span class="co"># Note: "pool_maturity = TRUE with vitalBayes maturity fits may cause</span></span>
 <span><span class="co">#        double-pooling. Using widened priors (3x SD) to mitigate."</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -352,11 +438,11 @@ to prevent over-constraint:</p>
 </h3>
 <p>When providing manual priors instead of vitalBayes fits, full pooling
 is the default since there’s no prior pooling to double:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Manual priors: pool_maturity defaults to TRUE</span></span>
 <span><span class="va">growth_manual</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age         <span class="op">=</span> <span class="st">"age"</span>, </span>
+<span>  age         <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
 <span>  data        <span class="op">=</span> <span class="va">gdata</span>,</span>
 <span>  model       <span class="op">=</span> <span class="st">"v"</span>,</span>
@@ -415,7 +501,10 @@ maturity</td>
 <div class="section level2">
 <h2 id="comparing-growth-models">Comparing Growth Models<a class="anchor" aria-label="anchor" href="#comparing-growth-models"></a>
 </h2>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<p>Selecting among growth models is a standard part of the vitalBayes
+workflow. All three models can be fit with the same data and prior
+structure, then compared via LOO-CV:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fit all three models</span></span>
 <span><span class="va">vb_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>, data <span class="op">=</span> <span class="va">gdata</span>,</span>
@@ -445,33 +534,40 @@ maturity</td>
 <span>  <span class="st">"Gompertz"</span> <span class="op">=</span> <span class="va">loo_gomp</span>,</span>
 <span>  <span class="st">"Logistic"</span> <span class="op">=</span> <span class="va">loo_logis</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>The selected model can then be passed to
+<code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code> for mortality estimation,
+regardless of which growth model was chosen (see
+<code><a href="../articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code>).</p>
 </div>
 <div class="section level2">
 <h2 id="cv-based-prior-specification">CV-Based Prior Specification<a class="anchor" aria-label="anchor" href="#cv-based-prior-specification"></a>
 </h2>
-<p>Priors are specified via coefficient of variation for intuitive
-scaling:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>Priors are specified via coefficient of variation for intuitive,
+scale-invariant control:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
 <span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">gdata</span>,</span>
-<span>  </span>
+<span></span>
 <span>  <span class="co"># Prior CVs (proportion of mean)</span></span>
 <span>  CV_Linf <span class="op">=</span> <span class="fl">0.20</span>,    <span class="co"># 20% uncertainty on Linf</span></span>
 <span>  CV_L0   <span class="op">=</span> <span class="fl">0.30</span>,    <span class="co"># 30% uncertainty on L0</span></span>
 <span>  CV_k    <span class="op">=</span> <span class="fl">0.50</span>,    <span class="co"># 50% uncertainty on k (if k_based = TRUE)</span></span>
 <span>  CV_Lmat <span class="op">=</span> <span class="fl">0.20</span>,    <span class="co"># 20% uncertainty on Lmat</span></span>
 <span>  CV_tmat <span class="op">=</span> <span class="fl">0.30</span>,    <span class="co"># 30% uncertainty on tmat</span></span>
-<span>  </span>
+<span></span>
 <span>  <span class="co"># Linf prior mean = 1.05 * Lmax by default</span></span>
 <span>  Linf_multiplier <span class="op">=</span> <span class="fl">1.05</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>The CV approach ensures priors scale sensibly across species of
+different sizes — a 20% CV on <span class="math inline">\(L_\infty\)</span> means the same thing whether the
+species is 50 cm or 300 cm.</p>
 </div>
 <div class="section level2">
 <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
 </h2>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Basic growth curve</span></span>
 <span><span class="fu"><a href="../reference/plot_growth_curve.html">plot_growth_curve</a></span><span class="op">(</span></span>
 <span>  fit        <span class="op">=</span> <span class="va">growth_2sex</span>,</span>
@@ -503,7 +599,7 @@ scaling:</p>
 <div class="section level2">
 <h2 id="posterior-predictive-checks">Posterior Predictive Checks<a class="anchor" aria-label="anchor" href="#posterior-predictive-checks"></a>
 </h2>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Built-in PPC metrics</span></span>
 <span><span class="va">growth_2sex</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rmse_f"</span>, <span class="st">"rmse_m"</span>, <span class="st">"mean_residual_f"</span>, <span class="st">"mean_residual_m"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -519,7 +615,7 @@ scaling:</p>
 <div class="section level2">
 <h2 id="complete-workflow-example">Complete Workflow Example<a class="anchor" aria-label="anchor" href="#complete-workflow-example"></a>
 </h2>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">growth_data</span><span class="op">)</span></span>
 <span></span>
@@ -534,13 +630,13 @@ scaling:</p>
 <span></span>
 <span><span class="va">L50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
 <span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, lt <span class="op">=</span> <span class="st">"fl"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">mat_data</span>, </span>
+<span>  data <span class="op">=</span> <span class="va">mat_data</span>,</span>
 <span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">t50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
 <span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>, </span>
+<span>  data <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -583,7 +679,7 @@ scaling:</p>
 <tbody>
 <tr class="odd">
 <td>Divergent transitions</td>
-<td>Increase <code>adapt_delta</code> (0.95 to 0.99)</td>
+<td>Increase <code>adapt_delta</code> (0.95 → 0.99)</td>
 </tr>
 <tr class="even">
 <td>
@@ -600,17 +696,23 @@ L_{mat}\)</span>
 </td>
 </tr>
 <tr class="even">
+<td>
+<span class="math inline">\(L_\infty\)</span> boundary pile-up
+(posterior median at <span class="math inline">\(L_{max}\)</span>)</td>
+<td>Consider wider <code>CV_Linf</code> or different growth model</td>
+</tr>
+<tr class="odd">
 <td>Poor fit at young ages</td>
 <td>Consider different growth model (Gompertz often better for
 juveniles)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Sex differences reversed</td>
 <td>Check <code>pool_maturity</code>; try
 <code>pool_maturity = FALSE</code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Over-tight credible intervals</td>
 <td>May indicate double-pooling; use selective pooling</td>
 </tr>
@@ -625,15 +727,14 @@ juveniles)</td>
 <code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code> — When and how to use
 hierarchical structure for imbalanced sex ratios</li>
 <li>
-<a href="Understanding_vitalBayes.html#growth">Statistical Methods:
-Growth Models</a> — Full mathematical derivation</li>
+<code><a href="../articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code> — How
+growth parameters feed into CW mortality estimation</li>
 <li>
-<a href="Understanding_vitalBayes.html#maturity-param">Statistical
-Methods: Maturity-Based Parameterization</a> — Methodological
-foundation</li>
+<code><a href="../articles/mortality_estimation.html">vignette("mortality_estimation")</a></code> — Natural mortality
+from growth posteriors</li>
 <li>
-<a href="Understanding_vitalBayes.html#cv-priors">Statistical
-Methods: CV-Based Priors</a> — How priors are specified</li>
+<code><a href="../articles/model_diagnostics.html">vignette("model_diagnostics")</a></code> — LOO-CV model comparison
+and convergence checks</li>
 <li>
 <code><a href="../reference/plot_growth_curve.html">plot_growth_curve()</a></code>,
 <code><a href="../reference/compare_growth_models.html">compare_growth_models()</a></code> — Visualization</li>
@@ -641,10 +742,6 @@ Methods: CV-Based Priors</a> — How priors are specified</li>
 <code><a href="../reference/compute_loo.html">compute_loo()</a></code>, <code><a href="../reference/compare_loo.html">compare_loo()</a></code> — Model
 comparison</li>
 </ul>
-<hr>
-<p><em>This document is part of the vitalBayes R package. For bug
-reports, feature requests, or questions, please visit the GitHub
-repository.</em></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
