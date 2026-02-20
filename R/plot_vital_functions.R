@@ -773,8 +773,7 @@ plot_growth_curve <- function(
 #' @param data Optional data.table/data.frame with observed data.
 #' @param age_col,length_col,sex_col Column names in data.
 #' @param sex_labels Named character vector. Labels for sex in plot legend and facets.
-#'   Default \code{c("1" = "Female", "2" = "Male")}. Can be customized for other
-#'   languages, e.g., \code{c("1" = "Femelle", "2" = "Mâle")} (French).
+#'   Default \code{c("1" = "Female", "2" = "Male")}.
 #' @param age_range Numeric vector of length 2. If \code{NULL}, auto-determined.
 #' @param k_based_list Logical vector indicating which models are k-based.
 #'   If \code{NULL}, assumes all are maturity-based.
@@ -808,7 +807,7 @@ plot_growth_curve <- function(
 #'
 #' \code{vignette("model_diagnostics")} for model comparison via LOO-CV.
 #'
-#' \href{../doc/vitalBayes_stats_explained.html#assessment}{Statistical Methods: Model Assessment}
+#' \href{../doc/Understanding_vitalBayes.html#assessment}{Statistical Methods: Model Assessment}
 #' for LOO-CV theory.
 #'
 #' \code{\link{plot_growth_curve}}, \code{\link{compute_loo}}, \code{\link{compare_loo}}
