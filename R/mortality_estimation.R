@@ -1,9 +1,14 @@
 # =============================================================================
-# vitalBayes Mortality Estimation Functions
+# vitalBayes Mortality Estimation Functions (Updated)
 # =============================================================================
 #
 # This module implements natural mortality estimation using biological
 # milestones (Linf, L0, Lmat, tmat) with model-dependent G(t).
+#
+# UPDATED: Now accepts vitalBayes stanfit objects OR manual c(mean, sd)
+# specifications. When using stanfit objects, posterior correlations are
+# preserved. When maturity parameters come from separate fits, user can
+# specify assumed correlation to maintain biological plausibility.
 #
 # Core mortality formula:
 #   M(t) = M_inf / G(t)
@@ -12,11 +17,6 @@
 #   M_inf = (1/tmat) * ln[(Linf - L0)/(Linf - Lmat)]  (VB-derived, unified anchor)
 #   G(t) = L(t)/Linf  (computed using native growth model trajectory)
 #
-# Supported mortality models:
-#   - CW: Chen-Watanabe (1989) with optional two-phase senescence
-#   - PW: Peterson-Wroblewski (1984) weight-based
-#   - L:  Lorenzen (1996/2022) weight- or growth-based
-#
 # =============================================================================
 
 
@@ -24,24 +24,11 @@
 # SECTION 1: CORE HELPER FUNCTIONS
 # =============================================================================
 
-
 #' Compute Native Growth Coefficient for a Specific Model
 #'
 #' @description
 #' Derives the growth coefficient \eqn{k} for a specified growth model from
 #' biological milestones \eqn{(L_\infty, L_0, L_{mat}, t_{mat})}.
-#'
-#' @details
-#' The native k formulas for each model are:
-#'
-#' \strong{Von Bertalanffy:}
-#' \deqn{k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
-#'
-#' \strong{Gompertz:}
-#' \deqn{k = -\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_{mat})}{\ln(L_\infty / L_0)}\right)}
-#'
-#' \strong{Logistic:}
-#' \deqn{k = -\frac{1}{t_{mat}} \ln\left(\frac{L_\infty/L_{mat} - 1}{L_\infty/L_0 - 1}\right)}
 #'
 #' @param Linf Numeric vector. Asymptotic length.
 #' @param L0 Numeric vector. Length at birth.
@@ -52,12 +39,6 @@
 #' @param warn Logical. Warn on invalid values?
 #'
 #' @return Numeric vector of native k values. Invalid values returned as NA.
-#'
-#' @examples
-#' k_vb <- compute_k_native(Linf = 126, L0 = 35, Lmat = 83, tmat = 47,
-#'                          growth_model = "vb")
-#' k_gomp <- compute_k_native(Linf = 108, L0 = 35, Lmat = 83, tmat = 47,
-#'                            growth_model = "gompertz")
 #'
 #' @export
 compute_k_native <- function(Linf, L0, Lmat, tmat,
@@ -116,13 +97,6 @@ compute_k_native <- function(Linf, L0, Lmat, tmat,
 #' milestones using the VB formula. This serves as the unified mortality
 #' scaling factor in the Chen-Watanabe framework.
 #'
-#' @details
-#' \deqn{M_\infty = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
-#'
-#' This formula is used regardless of growth model, providing a consistent
-#' mortality anchor that prevents the ~10-fold survival differences arising
-#' from model-native k formulas.
-#'
 #' @param Linf Numeric vector. Asymptotic length.
 #' @param L0 Numeric vector. Length at birth.
 #' @param Lmat Numeric vector. Length at maturity.
@@ -130,9 +104,6 @@ compute_k_native <- function(Linf, L0, Lmat, tmat,
 #' @param warn Logical. Warn on invalid values?
 #'
 #' @return Numeric vector of asymptotic mortality rates.
-#'
-#' @examples
-#' Minf <- compute_Minf(Linf = 126, L0 = 35, Lmat = 83, tmat = 47)
 #'
 #' @export
 compute_Minf <- function(Linf, L0, Lmat, tmat, warn = TRUE) {
@@ -165,7 +136,6 @@ compute_Minf <- function(Linf, L0, Lmat, tmat, warn = TRUE) {
 #'
 #' @description
 #' Computes the relative size at specified ages using a given growth model.
-#' This is the denominator in the mortality formula M(t) = M_inf / G(t).
 #'
 #' @param age Numeric vector. Ages at which to compute G(t).
 #' @param Linf Numeric. Asymptotic length.
@@ -174,10 +144,6 @@ compute_Minf <- function(Linf, L0, Lmat, tmat, warn = TRUE) {
 #' @param growth_model Character. Growth model.
 #'
 #' @return Numeric vector of G(t) values bounded in (0, 1].
-#'
-#' @examples
-#' ages <- seq(0, 100, by = 1)
-#' G_vb <- compute_G(ages, Linf = 126, L0 = 35, k = 0.016, growth_model = "vb")
 #'
 #' @export
 compute_G <- function(age, Linf, L0, k,
@@ -204,9 +170,6 @@ compute_G <- function(age, Linf, L0, k,
 
 #' Compute Length at Age L(t)
 #'
-#' @description
-#' Computes predicted length at age using a specified growth model.
-#'
 #' @param age Numeric vector. Ages.
 #' @param Linf Numeric. Asymptotic length.
 #' @param L0 Numeric. Length at birth.
@@ -214,9 +177,6 @@ compute_G <- function(age, Linf, L0, k,
 #' @param growth_model Character. Growth model.
 #'
 #' @return Numeric vector of predicted lengths.
-#'
-#' @examples
-#' L_vb <- compute_L(0:50, Linf = 126, L0 = 35, k = 0.016, growth_model = "vb")
 #'
 #' @export
 compute_L <- function(age, Linf, L0, k,
@@ -241,9 +201,6 @@ compute_L <- function(age, Linf, L0, k,
 
 #' Compute Maximum Age from Growth Parameters
 #'
-#' @description
-#' Estimates tmax as age when L(t) reaches a specified fraction of Linf.
-#'
 #' @param Linf Numeric. Asymptotic length.
 #' @param L0 Numeric. Length at birth.
 #' @param k Numeric. Native growth coefficient.
@@ -251,10 +208,6 @@ compute_L <- function(age, Linf, L0, k,
 #' @param Linf_factor Numeric in (0,1). Fraction of Linf (default 0.99).
 #'
 #' @return Numeric tmax value.
-#'
-#' @examples
-#' tmax <- compute_tmax(Linf = 126, L0 = 35, k = 0.016,
-#'                      growth_model = "vb", Linf_factor = 0.99)
 #'
 #' @export
 compute_tmax <- function(Linf, L0, k,
@@ -283,9 +236,453 @@ compute_tmax <- function(Linf, L0, k,
 
 
 # =============================================================================
-# SECTION 2: MORTALITY MODELS
+# SECTION 2: PARAMETER EXTRACTION
 # =============================================================================
 
+
+#' Check if Object is a CmdStanMCMC Fit
+#'
+#' @param x Object to check.
+#' @return Logical.
+#' @keywords internal
+is_stanfit <- function(x) {
+  if (is.null(x)) return(FALSE)
+  inherits(x, "CmdStanMCMC")
+}
+
+
+#' Extract Posterior Draws from a Stanfit Object
+#'
+#' @description
+#' Extracts posterior draws for a parameter, handling both single-sex and
+#' two-sex models.
+#'
+#' @param fit CmdStanMCMC object.
+#' @param param Character. Parameter name.
+#' @param sex Integer or NULL. Sex index for two-sex models.
+#'
+#' @return Numeric vector of draws.
+#' @keywords internal
+extract_param_draws <- function(fit, param, sex = NULL) {
+
+  if (!param %in% fit$metadata()$stan_variables) {
+    return(NULL)
+  }
+
+  draws <- fit$draws(param, format = "matrix")
+
+  if (is.null(sex) || ncol(draws) == 1) {
+    return(as.vector(draws[, 1]))
+  }
+
+  if (sex > ncol(draws)) {
+    warning(sprintf("Sex index %d exceeds available columns for %s. Using column 1.",
+                    sex, param), call. = FALSE)
+    return(as.vector(draws[, 1]))
+  }
+
+  as.vector(draws[, sex])
+}
+
+
+#' Sample from Bivariate Normal with Specified Correlation
+#'
+#' @description
+#' Generates correlated samples from two normal distributions.
+#'
+#' @param n Number of samples.
+#' @param mu1,mu2 Means.
+#' @param sd1,sd2 Standard deviations.
+#' @param rho Correlation coefficient.
+#' @param seed Random seed.
+#'
+#' @return List with components x1 and x2.
+#' @keywords internal
+sample_bivariate_normal <- function(n, mu1, sd1, mu2, sd2, rho, seed = NULL) {
+
+  if (!is.null(seed)) set.seed(seed)
+
+  # Generate independent standard normals
+  z1 <- stats::rnorm(n)
+  z2 <- stats::rnorm(n)
+
+  # Apply Cholesky factorization for correlation
+  x1 <- mu1 + sd1 * z1
+  x2 <- mu2 + sd2 * (rho * z1 + sqrt(1 - rho^2) * z2)
+
+  list(x1 = x1, x2 = x2)
+}
+
+
+#' Extract Life History Parameters from vitalBayes Fits or Manual Specification
+#'
+#' @description
+#' Extracts life history parameters from a combination of vitalBayes stanfit
+#' objects and/or manual \code{c(mean, sd)} specifications. When stanfit objects
+#' are provided, posterior correlations are preserved. When maturity parameters
+#' come from separate fits, optional correlation can be specified.
+#'
+#' @param growth_fit CmdStanMCMC object from \code{fit_bayesian_growth}, or NULL.
+#' @param birth_fit CmdStanMCMC object from \code{fit_bayesian_birth}, or NULL.
+#' @param length_maturity_fit CmdStanMCMC object from \code{fit_bayesian_maturity}
+#'   for length-at-maturity, or NULL.
+#' @param age_maturity_fit CmdStanMCMC object from \code{fit_bayesian_maturity}
+#'   for age-at-maturity, or NULL.
+#' @param Linf,L0,Lmat,tmat Manual specification as \code{c(mean, sd)}, or NULL.
+#' @param maturity_cor Correlation between Lmat and tmat when both are from
+#'   manual specification or separate fits. Default 0.5 (positive correlation
+#'   reflecting that larger individuals tend to mature later). Set to 0 for
+#'   independent sampling, or NA to attempt estimation from data.
+#' @param sex Integer. Sex code (1 = female, 2 = male) for extracting from
+#'   two-sex models. Default 1.
+#' @param iter Number of parameter sets to generate. Default 2000.
+#' @param seed Random seed. Default 1234.
+#' @param show_progress Logical. Show messages? Default TRUE.
+#'
+#' @return A data.table with columns: set_id, Linf, L0, Lmat, tmat, plus
+#'   attribute "sources" indicating parameter origins.
+#'
+#' @keywords internal
+extract_lh_params <- function(
+    growth_fit = NULL,
+    birth_fit = NULL,
+    length_maturity_fit = NULL,
+    age_maturity_fit = NULL,
+    Linf = NULL,
+    L0 = NULL,
+    Lmat = NULL,
+    tmat = NULL,
+    maturity_cor = 0.5,
+    sex = 1L,
+    iter = 2000,
+    seed = 1234,
+    show_progress = TRUE
+) {
+
+  set.seed(seed)
+  sex <- as.integer(sex)
+
+  # ---------------------------------------------------------------------------
+  # Determine sources and check availability
+  # ---------------------------------------------------------------------------
+
+  sources <- list()
+  has_growth <- is_stanfit(growth_fit)
+  has_birth <- is_stanfit(birth_fit)
+  has_Lmat_fit <- is_stanfit(length_maturity_fit)
+  has_tmat_fit <- is_stanfit(age_maturity_fit)
+
+  # Check what's available from growth_fit
+  gf_has_Linf <- has_growth && "Linf" %in% growth_fit$metadata()$stan_variables
+  gf_has_L0 <- has_growth && "L0" %in% growth_fit$metadata()$stan_variables
+  gf_has_Lmat <- has_growth && "Lmat" %in% growth_fit$metadata()$stan_variables
+  gf_has_tmat <- has_growth && "tmat" %in% growth_fit$metadata()$stan_variables
+
+  # Determine source for each parameter
+  # Priority: growth_fit > specialized fit > manual
+
+  # Linf
+  if (gf_has_Linf) {
+    sources$Linf <- "growth_fit"
+  } else if (!is.null(Linf) && length(Linf) == 2) {
+    sources$Linf <- "manual"
+  } else {
+    stop("Linf must be provided via growth_fit or as c(mean, sd).", call. = FALSE)
+  }
+
+  # L0
+  if (gf_has_L0) {
+    sources$L0 <- "growth_fit"
+  } else if (has_birth && "b50" %in% birth_fit$metadata()$stan_variables) {
+    sources$L0 <- "birth_fit"
+  } else if (!is.null(L0) && length(L0) == 2) {
+    sources$L0 <- "manual"
+  } else {
+    stop("L0 must be provided via growth_fit, birth_fit, or as c(mean, sd).", call. = FALSE)
+  }
+
+  # Lmat
+  if (gf_has_Lmat) {
+    sources$Lmat <- "growth_fit"
+  } else if (has_Lmat_fit && "L50" %in% length_maturity_fit$metadata()$stan_variables) {
+    sources$Lmat <- "length_maturity_fit"
+  } else if (!is.null(Lmat) && length(Lmat) == 2) {
+    sources$Lmat <- "manual"
+  } else {
+    stop("Lmat must be provided via growth_fit, length_maturity_fit, or as c(mean, sd).", call. = FALSE)
+  }
+
+  # tmat
+  if (gf_has_tmat) {
+    sources$tmat <- "growth_fit"
+  } else if (has_tmat_fit && "t50" %in% age_maturity_fit$metadata()$stan_variables) {
+    sources$tmat <- "age_maturity_fit"
+  } else if (!is.null(tmat) && length(tmat) == 2) {
+    sources$tmat <- "manual"
+  } else {
+    stop("tmat must be provided via growth_fit, age_maturity_fit, or as c(mean, sd).", call. = FALSE)
+  }
+
+  # ---------------------------------------------------------------------------
+  # Report sources
+  # ---------------------------------------------------------------------------
+
+  if (show_progress) {
+    posterior_params <- names(sources)[sources != "manual"]
+    manual_params <- names(sources)[sources == "manual"]
+
+    if (length(posterior_params) > 0) {
+      message(sprintf("Parameters from posterior draws: %s",
+                      paste(posterior_params, collapse = ", ")))
+    }
+    if (length(manual_params) > 0) {
+      message(sprintf("Parameters from manual specification: %s",
+                      paste(manual_params, collapse = ", ")))
+    }
+  }
+
+  # ---------------------------------------------------------------------------
+  # Extract draws with correlation preservation
+  # ---------------------------------------------------------------------------
+
+  # Case 1: All four parameters from growth_fit (full correlation preservation)
+  if (all(sapply(sources, function(x) x == "growth_fit"))) {
+
+    if (show_progress) message("All parameters from growth_fit - correlations fully preserved.")
+
+    all_draws <- growth_fit$draws(format = "draws_df")
+    n_draws <- nrow(all_draws)
+
+    # Sample indices
+    if (n_draws >= iter) {
+      idx <- sample.int(n_draws, iter, replace = FALSE)
+    } else {
+      idx <- sample.int(n_draws, iter, replace = TRUE)
+    }
+
+    # Extract with sex handling
+    get_col <- function(param) {
+      col_1 <- paste0(param, "[1]")
+      col_2 <- paste0(param, "[2]")
+      if (sex == 2 && col_2 %in% names(all_draws)) {
+        return(all_draws[[col_2]][idx])
+      } else if (col_1 %in% names(all_draws)) {
+        return(all_draws[[col_1]][idx])
+      } else if (param %in% names(all_draws)) {
+        return(all_draws[[param]][idx])
+      } else {
+        stop(sprintf("Could not find %s in growth_fit.", param), call. = FALSE)
+      }
+    }
+
+    par_draws <- data.table::data.table(
+      set_id = seq_len(iter),
+      Linf   = get_col("Linf"),
+      L0     = get_col("L0"),
+      Lmat   = get_col("Lmat"),
+      tmat   = get_col("tmat")
+    )
+
+    attr(par_draws, "sources") <- sources
+    attr(par_draws, "correlation_status") <- "full"
+
+    return(.enforce_constraints(par_draws))
+  }
+
+  # Case 2: Mixed sources - extract/generate each parameter
+  draws_list <- list()
+
+  # --- Linf ---
+  if (sources$Linf == "growth_fit") {
+    draws_list$Linf <- extract_param_draws(growth_fit, "Linf", sex)
+  } else {
+    draws_list$Linf <- stats::rnorm(iter, Linf[1], Linf[2])
+  }
+
+  # --- L0 ---
+  if (sources$L0 == "growth_fit") {
+    draws_list$L0 <- extract_param_draws(growth_fit, "L0", sex)
+  } else if (sources$L0 == "birth_fit") {
+    draws_list$L0 <- extract_param_draws(birth_fit, "b50", NULL)
+  } else {
+    draws_list$L0 <- stats::rnorm(iter, L0[1], L0[2])
+  }
+
+  # --- Lmat and tmat (handle correlation) ---
+
+  # Check if Lmat and tmat come from the same fit (correlation preserved)
+  lmat_tmat_same_source <- sources$Lmat == sources$tmat &&
+    sources$Lmat %in% c("growth_fit", "length_maturity_fit", "age_maturity_fit")
+
+  # Special case: both from separate maturity fits - check if they can be aligned
+  lmat_tmat_separate_fits <- sources$Lmat == "length_maturity_fit" &&
+    sources$tmat == "age_maturity_fit"
+
+  if (lmat_tmat_same_source && sources$Lmat == "growth_fit") {
+    # Already handled above in full correlation case, but for partial cases:
+    draws_list$Lmat <- extract_param_draws(growth_fit, "Lmat", sex)
+    draws_list$tmat <- extract_param_draws(growth_fit, "tmat", sex)
+
+    if (show_progress) message("Lmat and tmat from same growth_fit - correlation preserved.")
+
+  } else if (lmat_tmat_separate_fits) {
+    # Both from maturity fits - sample with assumed correlation
+
+    # Get marginal posteriors
+    Lmat_draws_raw <- extract_param_draws(length_maturity_fit, "L50", sex)
+    tmat_draws_raw <- extract_param_draws(age_maturity_fit, "t50", sex)
+
+    if (is.na(maturity_cor)) {
+      # Attempt to estimate correlation from raw draws (if same length)
+      if (length(Lmat_draws_raw) == length(tmat_draws_raw)) {
+        maturity_cor <- stats::cor(Lmat_draws_raw, tmat_draws_raw)
+        if (show_progress) {
+          message(sprintf("Estimated Lmat-tmat correlation from aligned draws: %.3f", maturity_cor))
+        }
+      } else {
+        maturity_cor <- 0.5
+        if (show_progress) {
+          message("Could not estimate correlation; using default rho = 0.5")
+        }
+      }
+    }
+
+    # Generate correlated samples matching marginal statistics
+    mu_Lmat <- mean(Lmat_draws_raw)
+    sd_Lmat <- stats::sd(Lmat_draws_raw)
+    mu_tmat <- mean(tmat_draws_raw)
+    sd_tmat <- stats::sd(tmat_draws_raw)
+
+    corr_samples <- sample_bivariate_normal(
+      n = iter,
+      mu1 = mu_Lmat, sd1 = sd_Lmat,
+      mu2 = mu_tmat, sd2 = sd_tmat,
+      rho = maturity_cor,
+      seed = seed + 1
+    )
+
+    draws_list$Lmat <- corr_samples$x1
+    draws_list$tmat <- corr_samples$x2
+
+    if (show_progress) {
+      message(sprintf("Lmat and tmat from separate fits - using specified correlation (rho = %.2f).",
+                      maturity_cor))
+    }
+
+  } else {
+    # Handle Lmat and tmat independently or with specified correlation
+
+    # Extract/generate Lmat
+    if (sources$Lmat == "growth_fit") {
+      draws_list$Lmat <- extract_param_draws(growth_fit, "Lmat", sex)
+    } else if (sources$Lmat == "length_maturity_fit") {
+      draws_list$Lmat <- extract_param_draws(length_maturity_fit, "L50", sex)
+    } else {
+      # Manual - will handle correlation below
+      draws_list$Lmat <- NULL
+    }
+
+    # Extract/generate tmat
+    if (sources$tmat == "growth_fit") {
+      draws_list$tmat <- extract_param_draws(growth_fit, "tmat", sex)
+    } else if (sources$tmat == "age_maturity_fit") {
+      draws_list$tmat <- extract_param_draws(age_maturity_fit, "t50", sex)
+    } else {
+      # Manual - will handle correlation below
+      draws_list$tmat <- NULL
+    }
+
+    # If both are manual, generate with correlation
+    if (sources$Lmat == "manual" && sources$tmat == "manual") {
+
+      if (abs(maturity_cor) > 0.001) {
+        corr_samples <- sample_bivariate_normal(
+          n = iter,
+          mu1 = Lmat[1], sd1 = Lmat[2],
+          mu2 = tmat[1], sd2 = tmat[2],
+          rho = maturity_cor,
+          seed = seed + 1
+        )
+        draws_list$Lmat <- corr_samples$x1
+        draws_list$tmat <- corr_samples$x2
+
+        if (show_progress) {
+          message(sprintf("Lmat and tmat manual - sampled with correlation (rho = %.2f).", maturity_cor))
+        }
+      } else {
+        draws_list$Lmat <- stats::rnorm(iter, Lmat[1], Lmat[2])
+        draws_list$tmat <- stats::rnorm(iter, tmat[1], tmat[2])
+
+        if (show_progress) {
+          message("Lmat and tmat manual - sampled independently (rho = 0).")
+        }
+      }
+
+    } else {
+      # One from posterior, one manual - sample independently
+      if (is.null(draws_list$Lmat)) {
+        draws_list$Lmat <- stats::rnorm(iter, Lmat[1], Lmat[2])
+      }
+      if (is.null(draws_list$tmat)) {
+        draws_list$tmat <- stats::rnorm(iter, tmat[1], tmat[2])
+      }
+
+      if (show_progress) {
+        message("Mixed Lmat/tmat sources - correlation not preserved.")
+      }
+    }
+  }
+
+  # ---------------------------------------------------------------------------
+  # Align lengths and build output
+  # ---------------------------------------------------------------------------
+
+  # Ensure all draws have same length
+  target_n <- iter
+  for (nm in names(draws_list)) {
+    n_i <- length(draws_list[[nm]])
+    if (n_i > target_n) {
+      idx <- sample.int(n_i, target_n, replace = FALSE)
+      draws_list[[nm]] <- draws_list[[nm]][idx]
+    } else if (n_i < target_n) {
+      idx <- sample.int(n_i, target_n, replace = TRUE)
+      draws_list[[nm]] <- draws_list[[nm]][idx]
+    }
+  }
+
+  par_draws <- data.table::data.table(
+    set_id = seq_len(iter),
+    Linf   = draws_list$Linf,
+    L0     = draws_list$L0,
+    Lmat   = draws_list$Lmat,
+    tmat   = draws_list$tmat
+  )
+
+  attr(par_draws, "sources") <- sources
+  attr(par_draws, "correlation_status") <- "partial"
+  attr(par_draws, "maturity_cor") <- maturity_cor
+
+  .enforce_constraints(par_draws)
+}
+
+
+#' Enforce Biological Constraints on Parameter Draws
+#'
+#' @param par_draws data.table with Linf, L0, Lmat, tmat columns.
+#' @return data.table with constraints enforced.
+#' @keywords internal
+.enforce_constraints <- function(par_draws) {
+  par_draws[, Linf := pmax(Linf, Lmat + 1)]
+  par_draws[, Lmat := pmax(Lmat, L0 + 1)]
+  par_draws[, L0 := pmax(L0, 0.1)]
+  par_draws[, tmat := pmax(tmat, 0.1)]
+  par_draws
+}
+
+
+# =============================================================================
+# SECTION 3: MORTALITY MODELS
+# =============================================================================
 
 #' Chen-Watanabe Natural Mortality (Model-Dependent)
 #'
@@ -293,21 +690,12 @@ compute_tmax <- function(Linf, L0, k,
 #' Computes age-specific natural mortality using a generalized Chen-Watanabe
 #' framework where G(t) is derived from the native growth model trajectory.
 #'
-#' @details
-#' The mortality model is:
-#' \deqn{M(t) = \frac{M_\infty}{G(t)}}
-#'
-#' where M_inf is VB-derived and G(t) uses the native growth model trajectory.
-#' This formulation provides a unified mortality anchor while capturing
-#' model-specific growth dynamics.
-#'
 #' @param age Numeric vector of ages.
 #' @param Linf Asymptotic length.
 #' @param L0 Length at birth.
 #' @param Lmat Length at maturity.
 #' @param tmat Age at maturity.
-#' @param growth_model Character. Growth model for G(t): \code{"vb"},
-#'   \code{"gompertz"}, or \code{"logistic"}.
+#' @param growth_model Character. Growth model for G(t).
 #' @param tmax Maximum age (computed if NULL).
 #' @param Linf_factor Fraction of Linf for tmax estimation.
 #' @param two_phase Use two-phase senescence model?
@@ -317,16 +705,6 @@ compute_tmax <- function(Linf, L0, k,
 #' @param smooth_factor Transition smoothness.
 #'
 #' @return Numeric vector of instantaneous mortality rates.
-#'
-#' @references
-#' Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
-#' coefficient in fish population dynamics. \emph{Nippon Suisan Gakkaishi},
-#' 55(2), 205-208.
-#'
-#' @examples
-#' ages <- seq(0.1, 150, by = 1)
-#' M_vb <- M_chen_watanabe(ages, Linf = 126, L0 = 35, Lmat = 83, tmat = 47,
-#'                         growth_model = "vb")
 #'
 #' @export
 M_chen_watanabe <- function(
@@ -394,29 +772,15 @@ M_chen_watanabe <- function(
 
 #' Peterson-Wroblewski Natural Mortality Model
 #'
-#' @description
-#' Computes weight-based natural mortality following Peterson & Wroblewski (1984).
-#'
-#' @details
-#' \deqn{M(W) = 1.92 \cdot W^{-0.25}}
-#'
-#' \strong{Warning}: This model was calibrated on teleost fishes and may
-#' produce biologically implausible mortality rates for elasmobranchs.
-#'
 #' @param age Numeric vector of ages.
 #' @param Linf Asymptotic length.
 #' @param L0 Length at birth.
 #' @param Lmat Length at maturity.
 #' @param tmat Age at maturity.
-#' @param lw_fun Length-weight function: \code{lw_fun(L)} returns weight in grams.
+#' @param lw_fun Length-weight function.
 #' @param growth_model Character. Growth model for L(t).
 #'
 #' @return Numeric vector of instantaneous mortality rates.
-#'
-#' @references
-#' Peterson, I., & Wroblewski, J. S. (1984). Mortality rate of fishes in the
-#' pelagic ecosystem. \emph{Canadian Journal of Fisheries and Aquatic Sciences},
-#' 41(7), 1117-1120.
 #'
 #' @export
 M_peterson_wroblewski <- function(
@@ -446,21 +810,6 @@ M_peterson_wroblewski <- function(
 
 #' Lorenzen Natural Mortality Model
 #'
-#' @description
-#' Computes size-dependent natural mortality following Lorenzen (1996, 2022).
-#'
-#' @details
-#' Two formulations are available:
-#'
-#' \strong{Weight-based} (Lorenzen 1996):
-#' \deqn{M(W) = \alpha \cdot W^{\beta}}
-#'
-#' \strong{Growth-based} (Lorenzen 2022):
-#' \deqn{\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)}
-#'
-#' For the growth-based formulation, M_inf (VB-derived) is used as k for
-#' consistency with the Chen-Watanabe framework.
-#'
 #' @param age Numeric vector of ages.
 #' @param Linf Asymptotic length.
 #' @param L0 Length at birth.
@@ -472,14 +821,6 @@ M_peterson_wroblewski <- function(
 #' @param sample_params Sample parameters from their distributions?
 #'
 #' @return Numeric vector of instantaneous mortality rates.
-#'
-#' @references
-#' Lorenzen, K. (1996). The relationship between body weight and natural
-#' mortality in juvenile and adult fish. \emph{Journal of Fish Biology},
-#' 49(4), 627-642.
-#'
-#' Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish
-#' populations. \emph{Fisheries Research}, 255, 106454.
 #'
 #' @export
 M_lorenzen <- function(
@@ -541,10 +882,6 @@ M_lorenzen <- function(
 
 #' Scale Mortality Schedule to Target Mean
 #'
-#' @description
-#' Rescales an age-specific mortality schedule so its mean equals a target
-#' value derived from empirical relationships or survival probability.
-#'
 #' @param M Numeric vector of mortality rates.
 #' @param M_target Target mean mortality. Can be scalar, function of tmax, or NULL.
 #' @param tmax Maximum age (required if M_target is function or NULL).
@@ -574,7 +911,7 @@ scale_mortality <- function(M, M_target = NULL, tmax = NULL, p = 0.001) {
 
 
 # =============================================================================
-# SECTION 3: STOCHASTIC MORTALITY ESTIMATION
+# SECTION 4: STOCHASTIC MORTALITY ESTIMATION
 # =============================================================================
 
 
@@ -582,81 +919,139 @@ scale_mortality <- function(M, M_target = NULL, tmax = NULL, p = 0.001) {
 #'
 #' @description
 #' Monte Carlo simulation of age-specific natural mortality schedules with
-#' uncertainty propagation from growth and maturity parameters.
+#' uncertainty propagation from growth and maturity parameters. Accepts either
+#' vitalBayes stanfit objects (preserving posterior correlations) or manual
+#' \code{c(mean, sd)} specifications.
 #'
 #' @details
-#' This function samples life history parameters from specified distributions
-#' and computes mortality schedules using the chosen method. The output format
-#' is compatible with \code{\link{simulate_survivorship}}.
+#' This function samples life history parameters and computes mortality
+#' schedules using the chosen method. When vitalBayes fit objects are provided,
+#' posterior correlations between parameters are preserved, yielding more
+#' realistic uncertainty bounds than independent sampling.
 #'
-#' Three mortality models are available:
-#' \itemize{
-#'   \item \strong{CW}: Chen-Watanabe (1989) with model-dependent G(t)
-#'   \item \strong{PW}: Peterson-Wroblewski (1984) weight-based
-#'   \item \strong{L}: Lorenzen (1996/2022) weight- or growth-based
+#' When maturity parameters (Lmat, tmat) come from separate model fits, the
+#' \code{maturity_cor} argument allows specification of assumed correlation
+#' between these parameters. Larger individuals typically mature at older ages,
+#' so a positive correlation (default 0.5) is biologically reasonable.
+#'
+#' @section Parameter Sources:
+#' Parameters can be supplied from multiple sources with the following priority:
+#' \describe{
+#'   \item{Linf}{growth_fit > manual}
+#'   \item{L0}{growth_fit > birth_fit > manual}
+#'   \item{Lmat}{growth_fit > length_maturity_fit > manual}
+#'   \item{tmat}{growth_fit > age_maturity_fit > manual}
 #' }
 #'
 #' @param method Character. Mortality model: \code{"CW"}, \code{"PW"}, or \code{"L"}.
-#' @param Linf,L0,Lmat,tmat Numeric vectors of length 2: \code{c(mean, sd)}.
-#' @param growth_model Character. Growth model for G(t) and L(t): \code{"vb"},
-#'   \code{"gompertz"}, or \code{"logistic"}.
-#' @param Linf_factor Fraction of Linf used to estimate tmax. Default 0.99.
-#' @param age_seq Function or numeric vector for age grid. Default creates
-#'   500 points from 0.1 to tmax.
-#' @param iter Number of Monte Carlo iterations. Default 2000.
-#' @param scaled Scale mortality to M_target? Default TRUE.
-#' @param M_target Target mean mortality. Can be scalar, function of tmax, or NULL.
-#' @param p Survival probability for scaling if M_target NULL. Default 0.001.
-#' @param two_phase Use CW two-phase senescence? Default FALSE.
-#' @param late_model Senescence model: \code{"gompertz"} or \code{"logistic"}.
-#' @param tm_factor Transition age factor. Default 2/3.
-#' @param M_mult Mortality multiplier for senescence. Default 2.
-#' @param smooth_factor Transition smoothness. Default 1/3.
-#' @param weight_based For Lorenzen: use weight-based formulation? Default FALSE.
-#' @param lw_fun Length-weight function (required for PW and weight-based Lorenzen).
-#' @param seed Random seed. Default 1234.
-#' @param palette Color palette: \code{"synthwave"}, \code{"viridis"}, \code{"okabe"},
-#'   \code{"plasma"}, or \code{"inferno"}.
-#' @param print_plot Print plot? Default TRUE.
-#' @param show_progress Show progress messages? Default TRUE.
 #'
-#' @return A list with:
+#' @param growth_fit CmdStanMCMC object from \code{fit_bayesian_growth}. If provided,
+#'   extracts Linf, L0, and (for maturity-based fits) Lmat, tmat with preserved
+#'   correlations. Default NULL.
+#' @param birth_fit CmdStanMCMC object from \code{fit_bayesian_birth}. Provides
+#'   L0 (birth size) if not available from growth_fit. Default NULL.
+#' @param length_maturity_fit CmdStanMCMC object from \code{fit_bayesian_maturity}
+#'   for length-at-maturity. Provides Lmat if not in growth_fit. Default NULL.
+#' @param age_maturity_fit CmdStanMCMC object from \code{fit_bayesian_maturity}
+#'   for age-at-maturity. Provides tmat if not in growth_fit. Default NULL.
+#' @param sex Integer. Sex code (1 = female, 2 = male) for extracting from
+#'   two-sex model fits. Default 1.
+#'
+#' @param Linf,L0,Lmat,tmat Numeric vectors of length 2: \code{c(mean, sd)}.
+#'   Used when corresponding stanfit is not provided.
+#' @param maturity_cor Numeric. Correlation between Lmat and tmat when both
+#'   come from manual specification or separate fits. Default 0.5 (positive
+#'   correlation is biologically reasonable). Set to 0 for independent sampling.
+#'
+#' @param growth_model Character. Growth model for G(t) and L(t): \code{"vb"},
+#'   \code{"gompertz"}, or \code{"logistic"}. Default \code{"vb"}.
+#' @param Linf_factor Fraction of Linf used to estimate tmax. Default 0.99.
+#' @param age_seq Function or numeric vector for age grid.
+#' @param iter Number of Monte Carlo iterations. Default 2000.
+#'
+#' @param scaled Logical. Scale mortality to M_target? Default TRUE.
+#' @param M_target Target mean mortality. Can be scalar, function of tmax, or NULL.
+#' @param p Survival probability for scaling when M_target is NULL. Default 0.001.
+#'
+#' @param two_phase Logical. Use CW two-phase senescence? Default FALSE.
+#' @param late_model Character. Senescence model. Default \code{"gompertz"}.
+#' @param tm_factor Numeric. Transition age as fraction of tmat. Default 2/3.
+#' @param M_mult Numeric. Mortality multiplier for senescence. Default 2.
+#' @param smooth_factor Numeric. Transition smoothness. Default 1/3.
+#'
+#' @param weight_based Logical. For Lorenzen: use weight-based? Default FALSE.
+#' @param lw_fun Function. Length-weight relationship for PW and weight-based Lorenzen.
+#'
+#' @param seed Integer. Random seed. Default 1234.
+#' @param palette Character. Color palette for plot.
+#' @param print_plot Logical. Print the plot? Default TRUE.
+#' @param show_progress Logical. Show progress messages? Default TRUE.
+#'
+#' @return A list with components:
 #' \describe{
 #'   \item{Schedules}{data.table with columns: set_id, age, M}
-#'   \item{Parameters}{data.table with columns: set_id, Linf, L0, Lmat, tmat, Minf, k_native, tmax}
-#'   \item{Summary}{data.table with age-wise median and 95% CI}
+#'   \item{Parameters}{data.table with life history parameters and derived quantities}
+#'   \item{Summary}{data.table with age-wise summary statistics}
 #'   \item{Plot}{ggplot2 object}
 #' }
 #'
 #' @examples
 #' \dontrun{
+#' # Using vitalBayes fits (full correlation preservation)
 #' mort <- get_stochastic_mortality(
 #'   method = "CW",
-#'   Linf = c(108, 10),
-#'   L0 = c(35, 2),
-#'   Lmat = c(83, 5),
-#'   tmat = c(47, 3),
-#'   growth_model = "gompertz",
-#'   iter = 2000
+#'   growth_fit = growth_fit,  # From maturity-based fit_bayesian_growth
+#'   sex = 1,
+#'   growth_model = "vb"
 #' )
-#' mort$Plot
+#'
+#' # Using separate maturity fits with specified correlation
+#' mort <- get_stochastic_mortality(
+#'   method = "CW",
+#'   growth_fit = growth_fit,           # For Linf, L0
+#'   length_maturity_fit = L50_fit,     # For Lmat
+#'   age_maturity_fit = t50_fit,        # For tmat
+#'   maturity_cor = 0.6,                # Assumed Lmat-tmat correlation
+#'   sex = 1
+#' )
+#'
+#' # Using manual parameters with correlation
+#' mort <- get_stochastic_mortality(
+#'   method = "CW",
+#'   Linf = c(126, 10),
+#'   L0 = c(35, 3),
+#'   Lmat = c(83, 5),
+#'   tmat = c(47, 4),
+#'   maturity_cor = 0.5,
+#'   growth_model = "gompertz"
+#' )
 #' }
 #'
 #' @import data.table
-#' @importFrom stats rnorm quantile median
+#' @importFrom stats rnorm quantile median cor sd
 #' @importFrom ggplot2 ggplot aes geom_ribbon geom_line labs theme_bw theme
 #' @importFrom ggplot2 element_text scale_x_continuous scale_y_continuous expansion
 #' @export
 get_stochastic_mortality <- function(
     method = c("CW", "PW", "L"),
-    Linf,
-    L0,
-    Lmat,
-    tmat,
+    # vitalBayes fit objects
+    growth_fit = NULL,
+    birth_fit = NULL,
+    length_maturity_fit = NULL,
+    age_maturity_fit = NULL,
+    sex = 1L,
+    # Manual parameter specification
+    Linf = NULL,
+    L0 = NULL,
+    Lmat = NULL,
+    tmat = NULL,
+    maturity_cor = 0.5,
+    # Growth model
     growth_model = c("vb", "gompertz", "logistic"),
     Linf_factor = 0.99,
     age_seq = function(tmax) seq(0.1, ceiling(tmax), length.out = 500),
     iter = 2000,
+    # Scaling
     scaled = TRUE,
     M_target = NULL,
     p = 0.001,
@@ -669,8 +1064,8 @@ get_stochastic_mortality <- function(
     # Lorenzen parameters
     weight_based = FALSE,
     lw_fun = NULL,
+    # Other
     seed = 1234,
-    # Plot aesthetics
     palette = c("synthwave", "viridis", "okabe", "plasma", "inferno"),
     print_plot = TRUE,
     show_progress = TRUE
@@ -680,59 +1075,53 @@ get_stochastic_mortality <- function(
   growth_model <- match.arg(growth_model)
   late_model <- match.arg(late_model)
   palette <- match.arg(palette)
-
-  # Validate inputs
-  if (length(Linf) != 2L || length(L0) != 2L || length(Lmat) != 2L || length(tmat) != 2L) {
-    stop("Life-history parameters must each be c(mean, sd).", call. = FALSE)
-  }
-
-  set.seed(seed)
+  sex <- as.integer(sex)
 
   # -------------------------------------------------------------------------
-  # Parameter Sampling
+  # Parameter Extraction
   # -------------------------------------------------------------------------
 
-  if (show_progress) message("Sampling life-history parameters...")
+  if (show_progress) message("Extracting life history parameters...")
 
-  Linf_draws <- stats::rnorm(iter, Linf[1], Linf[2])
-  L0_draws   <- stats::rnorm(iter, L0[1], L0[2])
-  Lmat_draws <- stats::rnorm(iter, Lmat[1], Lmat[2])
-  tmat_draws <- stats::rnorm(iter, tmat[1], tmat[2])
+  par_draws <- extract_lh_params(
+    growth_fit = growth_fit,
+    birth_fit = birth_fit,
+    length_maturity_fit = length_maturity_fit,
+    age_maturity_fit = age_maturity_fit,
+    Linf = Linf,
+    L0 = L0,
+    Lmat = Lmat,
+    tmat = tmat,
+    maturity_cor = maturity_cor,
+    sex = sex,
+    iter = iter,
+    seed = seed,
+    show_progress = show_progress
+  )
 
-  # Ensure biological constraints
-  Linf_draws <- pmax(Linf_draws, Lmat_draws + 1)
-  Lmat_draws <- pmax(Lmat_draws, L0_draws + 1)
-  L0_draws   <- pmax(L0_draws, 0.1)
-  tmat_draws <- pmax(tmat_draws, 0.1)
+  # -------------------------------------------------------------------------
+  # Compute Derived Quantities
+  # -------------------------------------------------------------------------
 
-  # Compute M_inf for each draw (VB-derived)
-  Minf_draws <- compute_Minf(Linf_draws, L0_draws, Lmat_draws, tmat_draws, warn = FALSE)
+  if (show_progress) message("Computing derived quantities...")
 
-  # Compute native k for each draw
-  k_native_draws <- compute_k_native(Linf_draws, L0_draws, Lmat_draws, tmat_draws,
-                                     growth_model = growth_model, warn = FALSE)
+  par_draws[, Minf := compute_Minf(Linf, L0, Lmat, tmat, warn = FALSE)]
+  par_draws[, k_native := compute_k_native(Linf, L0, Lmat, tmat,
+                                           growth_model = growth_model,
+                                           warn = FALSE)]
 
-  # Compute tmax for each draw
-  tmax_draws <- mapply(
+  par_draws[, tmax := mapply(
     compute_tmax,
-    Linf = Linf_draws,
-    L0 = L0_draws,
-    k = k_native_draws,
+    Linf = Linf,
+    L0 = L0,
+    k = k_native,
     MoreArgs = list(growth_model = growth_model, Linf_factor = Linf_factor)
-  )
+  )]
 
-  par_draws <- data.table::data.table(
-    set_id   = seq_len(iter),
-    Linf     = Linf_draws,
-    L0       = L0_draws,
-    Lmat     = Lmat_draws,
-    tmat     = tmat_draws,
-    Minf     = Minf_draws,
-    k_native = k_native_draws,
-    tmax     = tmax_draws
-  )
+  # -------------------------------------------------------------------------
+  # Remove Invalid Draws
+  # -------------------------------------------------------------------------
 
-  # Remove invalid draws
   valid_mask <- !is.na(par_draws$Minf) &
     par_draws$Minf > 0 &
     !is.na(par_draws$k_native) &
@@ -744,7 +1133,7 @@ get_stochastic_mortality <- function(
   if (n_invalid > 0) {
     if (show_progress) {
       message(sprintf("Removing %d invalid parameter sets (%.1f%%)",
-                      n_invalid, 100 * n_invalid / iter))
+                      n_invalid, 100 * n_invalid / nrow(par_draws)))
     }
     par_draws <- par_draws[valid_mask]
   }
@@ -759,7 +1148,6 @@ get_stochastic_mortality <- function(
 
   if (show_progress) message(sprintf("Computing %s mortality schedules...", method))
 
-  # Determine common age grid (based on median tmax)
   median_tmax <- stats::median(par_draws$tmax)
   if (is.function(age_seq)) {
     ages <- age_seq(median_tmax)
@@ -778,7 +1166,6 @@ get_stochastic_mortality <- function(
 
     p_i <- par_draws[i]
 
-    # Compute mortality based on method
     M_raw <- switch(
       method,
 
@@ -846,7 +1233,6 @@ get_stochastic_mortality <- function(
       }
     )
 
-    # Scale if requested
     if (scaled) {
       if (is.null(M_target)) {
         M_target_i <- -log(p) / p_i$tmax
@@ -860,9 +1246,8 @@ get_stochastic_mortality <- function(
       M_final <- M_raw
     }
 
-    # Store with column name "M" for compatibility with simulate_survivorship
     schedules_list[[i]] <- data.table::data.table(
-      set_id = p_i$set_id,
+      set_id = par_draws$set_id[i],
       age    = ages,
       M      = M_final
     )
@@ -872,7 +1257,6 @@ get_stochastic_mortality <- function(
     }
   }
 
-  # Combine all schedules
   schedules <- data.table::rbindlist(schedules_list)
 
   # -------------------------------------------------------------------------
@@ -914,10 +1298,22 @@ get_stochastic_mortality <- function(
   fill_color <- pal[1]
   line_color <- pal[3]
 
+  # Determine correlation status for caption
+  cor_status <- attr(par_draws, "correlation_status")
+  cor_str <- if (!is.null(cor_status)) {
+    switch(cor_status,
+           "full" = "posterior (full correlation)",
+           "partial" = sprintf("mixed (maturity rho=%.2f)",
+                               attr(par_draws, "maturity_cor")),
+           "")
+  } else {
+    ""
+  }
+
   caption <- sprintf(
-    "Estimated tmax: %.1f yrs (95%% CI: %.1f - %.1f) | Method: %s | Growth: %s",
+    "tmax: %.1f yrs (95%% CI: %.1f-%.1f) | Method: %s | Growth: %s | %s",
     tmax_summary$mean, tmax_summary$lower, tmax_summary$upper,
-    method, growth_model
+    method, growth_model, cor_str
   )
 
   mort_plot <- ggplot2::ggplot(summary_dt, ggplot2::aes(x = age_round)) +
@@ -954,7 +1350,6 @@ get_stochastic_mortality <- function(
   # Return
   # -------------------------------------------------------------------------
 
-  # Remove temporary age_round column from schedules
   schedules[, age_round := NULL]
 
   list(
@@ -963,32 +1358,4 @@ get_stochastic_mortality <- function(
     Summary    = summary_dt,
     Plot       = mort_plot
   )
-}
-
-
-# =============================================================================
-# SECTION 4: HELPER FUNCTIONS
-# =============================================================================
-
-
-#' Approximate Standard Deviation from Confidence Interval
-#'
-#' @description
-#' Estimates standard deviation from reported confidence interval bounds
-#' assuming a normal distribution.
-#'
-#' @param lower Lower bound of confidence interval.
-#' @param upper Upper bound of confidence interval.
-#' @param level Confidence level (default 0.95).
-#'
-#' @return Estimated standard deviation.
-#'
-#' @examples
-#' # If 95% CI is (10, 20), approximate SD
-#' approx_sd(10, 20, 0.95)
-#'
-#' @export
-approx_sd <- function(lower, upper, level = 0.95) {
-  z <- stats::qnorm(1 - (1 - level) / 2)
-  (upper - lower) / (2 * z)
 }
