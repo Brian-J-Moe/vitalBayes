@@ -93,26 +93,19 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p>Understanding population survivorship is fundamental to conservation
-assessments, harvest management, and life history comparisons. While
-natural mortality rates describe instantaneous hazards, survivorship
-curves translate these into intuitive metrics: what proportion of a
-cohort survives to reproductive maturity? What is the expected lifespan?
-How does survival uncertainty propagate through to population-level
-predictions?</p>
-<p>The <code><a href="../reference/simulate_survivorship.html">simulate_survivorship()</a></code> function performs Monte
-Carlo simulation of cohort survival using age-specific mortality
-schedules from <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code>. By integrating
-over mortality schedules that themselves reflect uncertainty in growth
+assessments, harvest management, and life history comparisons. The
+<code><a href="../reference/simulate_survivorship.html">simulate_survivorship()</a></code> function performs Monte Carlo
+simulation of cohort survival using age-specific mortality schedules
+from <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code>. By integrating over
+mortality schedules that reflect uncertainty in growth and maturity
 parameters, the function provides fully propagated uncertainty bounds on
-survival metrics—bounds that honestly reflect our knowledge (or lack
-thereof) about the population.</p>
+survival metrics.</p>
 <p>This vignette covers:</p>
 <ul>
-<li>The mathematical framework for survival simulation</li>
+<li>Mathematical framework for survival simulation</li>
 <li>Integration with vitalBayes mortality estimation</li>
-<li>Key survival metrics and their interpretation</li>
-<li>Visualization options for publication</li>
-<li>Practical considerations for simulation design</li>
+<li>Key survival metrics and interpretation</li>
+<li>Visualization and customization</li>
 </ul>
 </div>
 <div class="section level2">
@@ -121,193 +114,168 @@ thereof) about the population.</p>
 <div class="section level3">
 <h3 id="from-mortality-to-survival">From Mortality to Survival<a class="anchor" aria-label="anchor" href="#from-mortality-to-survival"></a>
 </h3>
-<p>The relationship between instantaneous mortality rate <span class="math inline">\(M(t)\)</span> and cumulative survival <span class="math inline">\(S(t)\)</span> is fundamental to demographic
-analysis. For a cohort exposed to age-specific mortality, cumulative
-survival to age <span class="math inline">\(t\)</span> is:</p>
+<p>Cumulative survival to age <span class="math inline">\(t\)</span>
+given an age-specific mortality schedule <span class="math inline">\(M(a)\)</span> is:</p>
 <p><span class="math display">\[S(t) = \exp\left(-\int_0^t M(a) \,
 da\right)\]</span></p>
-<p>The function implements this relationship via trapezoidal numerical
-integration over the mortality schedule. For each simulation iteration,
-the integral is computed to yield a cumulative survival curve, and then
-discrete cohort transitions are simulated using binomial survival.</p>
+<p>The function evaluates this integral numerically via trapezoidal
+quadrature.</p>
 </div>
 <div class="section level3">
 <h3 id="discrete-cohort-simulation">Discrete Cohort Simulation<a class="anchor" aria-label="anchor" href="#discrete-cohort-simulation"></a>
 </h3>
-<p>While the cumulative survival curve is deterministic given a
-mortality schedule, actual populations experience demographic
-stochasticity—random variation in who survives each year. The function
-simulates this by treating each age transition as a binomial
-process:</p>
+<p>Demographic stochasticity is incorporated via binomial
+transitions:</p>
 <p><span class="math display">\[N_{t+1} \sim \text{Binomial}\left(N_t,
 \frac{S(t+1)}{S(t)}\right)\]</span></p>
-<p>where <span class="math inline">\(N_t\)</span> is the number of
-individuals alive at age <span class="math inline">\(t\)</span>, and
-<span class="math inline">\(S(t+1)/S(t)\)</span> is the conditional
-probability of surviving from age <span class="math inline">\(t\)</span>
-to age <span class="math inline">\(t+1\)</span>.</p>
-<p>This stochastic formulation means that even with identical mortality
-schedules, different simulation runs will produce slightly different
-survival trajectories. This variation is appropriate when projecting
-small populations where demographic stochasticity matters, but averaging
-over many iterations recovers the expected (deterministic) survival
-curve.</p>
 </div>
 <div class="section level3">
 <h3 id="derived-metrics">Derived Metrics<a class="anchor" aria-label="anchor" href="#derived-metrics"></a>
 </h3>
-<p>Several biologically meaningful metrics emerge from the survival
-simulations:</p>
-<p><strong>Mean age at death</strong> is computed by weighting ages by
-the number of deaths at each age: <span class="math display">\[\bar{t}_{death} = \frac{\sum_t t \cdot
-d_t}{\sum_t d_t}\]</span> where <span class="math inline">\(d_t\)</span>
-is the number of individuals dying at age <span class="math inline">\(t\)</span>.</p>
-<p><strong>Survival to maturity</strong> is the proportion of the birth
-cohort surviving to age <span class="math inline">\(t_{mat}\)</span>,
-interpolated from the survival curve: <span class="math display">\[S(t_{mat}) = \text{interpolate}(t_{mat}, \{t_i,
-S_i\})\]</span></p>
-<p><strong>Survival to maximum age</strong> is analogously computed at
-<span class="math inline">\(t_{max}\)</span>, representing the
-probability that any individual in the birth cohort reaches the
-estimated maximum lifespan.</p>
+<p><strong>Mean age at death:</strong> <span class="math display">\[\bar{t}_{death} = \frac{\sum_t t \cdot
+d_t}{\sum_t d_t}\]</span></p>
+<p><strong>Survival to maturity:</strong> <span class="math inline">\(S(t_{mat})\)</span></p>
+<p><strong>Survival to maximum age:</strong> <span class="math inline">\(S(t_{max})\)</span></p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
 <div class="section level3">
-<h3 id="standard-workflow">Standard Workflow<a class="anchor" aria-label="anchor" href="#standard-workflow"></a>
+<h3 id="with-stanfit-objects">With Stanfit Objects<a class="anchor" aria-label="anchor" href="#with-stanfit-objects"></a>
 </h3>
-<p>The typical workflow begins with mortality estimation, then feeds
-those schedules into survival simulation:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Step 1: Fit growth model (see fit_bayesian_growth vignette)</span></span>
-<span><span class="co"># growth_fit &lt;- fit_bayesian_growth(...)</span></span>
-<span><span class="co"># maturity_fit &lt;- fit_bayesian_maturity(...)</span></span>
+<span><span class="co"># Fit models in the vitalBayes workflow</span></span>
+<span><span class="co"># growth_fit &lt;- fit_bayesian_growth(..., k_based = FALSE)</span></span>
 <span></span>
-<span><span class="co"># Step 2: Generate mortality schedules</span></span>
+<span><span class="co"># Generate mortality schedules with full correlation preservation</span></span>
 <span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method       <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit   <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  maturity_fit <span class="op">=</span> <span class="va">maturity_fit</span>,</span>
-<span>  sex          <span class="op">=</span> <span class="fl">2</span>,  <span class="co"># Males</span></span>
-<span>  iter         <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  scaled       <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  p            <span class="op">=</span> <span class="fl">0.001</span>,</span>
-<span>  print_plot   <span class="op">=</span> <span class="cn">FALSE</span>  <span class="co"># Suppress plot for now</span></span>
+<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,</span>
+<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  iter       <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  scaled     <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  p          <span class="op">=</span> <span class="fl">0.001</span>,</span>
+<span>  print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Step 3: Simulate survivorship</span></span>
+<span><span class="co"># Simulate survivorship</span></span>
 <span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
 <span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
-<span>  n         <span class="op">=</span> <span class="fl">50000</span>,  <span class="co"># Starting cohort size</span></span>
-<span>  n_iter    <span class="op">=</span> <span class="fl">2000</span>,   <span class="co"># Number of simulation iterations</span></span>
+<span>  n         <span class="op">=</span> <span class="fl">50000</span>,</span>
+<span>  n_iter    <span class="op">=</span> <span class="fl">2000</span>,</span>
 <span>  mode      <span class="op">=</span> <span class="st">"random"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># View the plot (automatically printed by default)</span></span>
-<span><span class="co"># surv$Plot</span></span>
-<span></span>
-<span><span class="co"># Examine key metrics</span></span>
+<span><span class="co"># Examine results</span></span>
 <span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Age_of_Death</span></span>
-<span><span class="co">#&gt;     mean    sd  lower  upper</span></span>
-<span><span class="co">#&gt;    &lt;num&gt; &lt;num&gt;  &lt;num&gt;  &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:  8.42  2.31   4.89  13.21</span></span></code></pre></div>
+<span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmat</span></span>
+<span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmax</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="understanding-the-output-structure">Understanding the Output Structure<a class="anchor" aria-label="anchor" href="#understanding-the-output-structure"></a>
+<h3 id="with-manual-parameters">With Manual Parameters<a class="anchor" aria-label="anchor" href="#with-manual-parameters"></a>
 </h3>
-<p>The function returns a list with four components:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Aggregate summaries across all simulations</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Survival"         "Age_of_Death"     "Survival_to_tmat" "Survival_to_tmax"</span></span>
+<code class="sourceCode R"><span><span class="co"># Generate mortality with specified correlation</span></span>
+<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method       <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>  Linf         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">126</span>, <span class="fl">10</span><span class="op">)</span>,</span>
+<span>  L0           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">35</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  Lmat         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">83</span>, <span class="fl">5</span><span class="op">)</span>,</span>
+<span>  tmat         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">47</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  maturity_cor <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  growth_model <span class="op">=</span> <span class="st">"vb"</span>,</span>
+<span>  iter         <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  print_plot   <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Per-set summaries (one row per parameter set)</span></span>
+<span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
+<span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
+<span>  n         <span class="op">=</span> <span class="fl">50000</span>,</span>
+<span>  n_iter    <span class="op">=</span> <span class="fl">2000</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="output-structure">Output Structure<a class="anchor" aria-label="anchor" href="#output-structure"></a>
+</h2>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">surv</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Aggregate" "Per_Set"   "Raw"       "Plot"</span></span>
+<span></span>
+<span><span class="co"># Aggregate summaries</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Survival" "Age_of_Death" "Survival_to_tmat" "Survival_to_tmax"</span></span>
+<span></span>
+<span><span class="co"># Per-set summaries</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">surv</span><span class="op">$</span><span class="va">Per_Set</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Survival"         "Age_of_Death"     "Survival_to_tmat" "Survival_to_tmax"</span></span>
 <span></span>
 <span><span class="co"># Raw trajectory data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">surv</span><span class="op">$</span><span class="va">Raw</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      age survivors prop_surv  iter set_id</span></span>
-<span><span class="co">#&gt;    &lt;int&gt;     &lt;int&gt;     &lt;num&gt; &lt;int&gt;  &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:     0     50000    1.0000     1    847</span></span>
-<span><span class="co">#&gt; 2:     1     34218    0.6844     1    847</span></span>
-<span><span class="co">#&gt; 3:     2     27893    0.5579     1    847</span></span>
-<span><span class="co">#&gt; ...</span></span>
-<span></span>
-<span><span class="co"># The plot object</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">surv</span><span class="op">$</span><span class="va">Plot</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "gg" "ggplot"</span></span></code></pre></div>
-<p>The <code>Aggregate</code> component provides the metrics most
-commonly needed for reporting: population-level means and credible
-intervals. The <code>Per_Set</code> component is useful for examining
-how survival varies across different parameter combinations. The
-<code>Raw</code> data enables custom analyses and alternative
-visualizations.</p>
-</div>
+<span><span class="co">#&gt;    &lt;int&gt;     &lt;int&gt;     &lt;num&gt; &lt;int&gt;  &lt;int&gt;</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="simulation-modes">Simulation Modes<a class="anchor" aria-label="anchor" href="#simulation-modes"></a>
 </h2>
 <div class="section level3">
-<h3 id="random-sampling-mode">Random Sampling Mode<a class="anchor" aria-label="anchor" href="#random-sampling-mode"></a>
+<h3 id="random-sampling">Random Sampling<a class="anchor" aria-label="anchor" href="#random-sampling"></a>
 </h3>
-<p>In <code>mode = "random"</code>, each simulation iteration draws a
-random parameter set from those generated by
-<code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code>. This mode is appropriate when
-you want overall population estimates that integrate over parameter
-uncertainty:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">surv_random</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
 <span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
 <span>  n         <span class="op">=</span> <span class="fl">50000</span>,</span>
-<span>  n_iter    <span class="op">=</span> <span class="fl">5000</span>,  <span class="co"># More iterations for stable estimates</span></span>
+<span>  n_iter    <span class="op">=</span> <span class="fl">5000</span>,</span>
 <span>  mode      <span class="op">=</span> <span class="st">"random"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># The number of iterations controls how well we estimate</span></span>
-<span><span class="co"># the expectation over parameter uncertainty</span></span></code></pre></div>
-<p>The number of iterations (<code>n_iter</code>) controls how well you
-approximate the expected survival metrics under parameter uncertainty.
-For final analyses, 2000-5000 iterations typically provide stable
-estimates. For exploratory work, 500-1000 may suffice.</p>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="per-set-mode">Per-Set Mode<a class="anchor" aria-label="anchor" href="#per-set-mode"></a>
 </h3>
-<p>In <code>mode = "per_set"</code>, the function runs
-<code>n_iter</code> simulations for <em>each</em> parameter set,
-enabling examination of how survival varies across the parameter
-space:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Run multiple simulations per parameter set</span></span>
-<span><span class="co"># Warning: This produces n_iter × n_sets total simulations</span></span>
-<span><span class="va">surv_perset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">surv_perset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
 <span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
 <span>  n         <span class="op">=</span> <span class="fl">50000</span>,</span>
-<span>  n_iter    <span class="op">=</span> <span class="fl">100</span>,   <span class="co"># 100 simulations per parameter set</span></span>
+<span>  n_iter    <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  mode      <span class="op">=</span> <span class="st">"per_set"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Examine variation across parameter sets</span></span>
-<span><span class="va">surv_perset</span><span class="op">$</span><span class="va">Per_Set</span><span class="op">$</span><span class="va">Age_of_Death</span></span>
-<span><span class="co">#&gt;    set_id mean_age   sd_age  Linf      k     t0   tmat   tmax</span></span>
-<span><span class="co">#&gt;     &lt;int&gt;    &lt;num&gt;    &lt;num&gt; &lt;num&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:      1     7.89    0.234  95.2 0.0891  -1.42   8.44  32.45</span></span>
-<span><span class="co">#&gt; 2:      2     9.12    0.198  102.1 0.0754 -1.56   9.21  38.12</span></span>
-<span><span class="co">#&gt; ...</span></span></code></pre></div>
-<p>This mode is computationally expensive (total simulations =
-<code>n_iter</code> × number of parameter sets), but it’s valuable
-for:</p>
-<ul>
-<li>Understanding which parameters most strongly influence survival</li>
-<li>Identifying parameter regions with unusual behavior</li>
-<li>Building intuition about the model’s sensitivity</li>
-</ul>
+<span><span class="va">surv_perset</span><span class="op">$</span><span class="va">Per_Set</span><span class="op">$</span><span class="va">Age_of_Death</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="interpreting-metrics">Interpreting Metrics<a class="anchor" aria-label="anchor" href="#interpreting-metrics"></a>
+</h2>
+<div class="section level3">
+<h3 id="mean-age-at-death">Mean Age at Death<a class="anchor" aria-label="anchor" href="#mean-age-at-death"></a>
+</h3>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Age_of_Death</span></span>
+<span><span class="co">#&gt;     mean    sd  lower  upper</span></span>
+<span><span class="co">#&gt;    &lt;num&gt; &lt;num&gt;  &lt;num&gt;  &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:  42.1  8.92  26.4   58.3</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="survival-to-maturity">Survival to Maturity<a class="anchor" aria-label="anchor" href="#survival-to-maturity"></a>
+</h3>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmat</span></span>
+<span><span class="co">#&gt;     mean      sd   lower   upper</span></span>
+<span><span class="co">#&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;   &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 0.612  0.0891   0.448   0.782</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="survival-to-maximum-age">Survival to Maximum Age<a class="anchor" aria-label="anchor" href="#survival-to-maximum-age"></a>
+</h3>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmax</span></span>
+<span><span class="co">#&gt;       mean      sd    lower    upper</span></span>
+<span><span class="co">#&gt;      &lt;num&gt;   &lt;num&gt;    &lt;num&gt;    &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 0.00092 0.00041 0.000341 0.00172</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -316,247 +284,58 @@ for:</p>
 <div class="section level3">
 <h3 id="default-plot">Default Plot<a class="anchor" aria-label="anchor" href="#default-plot"></a>
 </h3>
-<p>The default plot shows a bar chart of mean survival by age with error
-bars representing 95% credible intervals. A vertical line and shaded
-band mark the mean age at death and its uncertainty. The caption reports
-key survival metrics:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
 <span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
 <span>  n         <span class="op">=</span> <span class="fl">50000</span>,</span>
 <span>  n_iter    <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  title     <span class="op">=</span> <span class="st">"Cohort Survivorship: Male Spiny Dogfish"</span>,</span>
-<span>  subtitle  <span class="op">=</span> <span class="st">"Chen-Watanabe mortality with Gompertz senescence"</span></span>
+<span>  palette   <span class="op">=</span> <span class="st">"synthwave"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="color-palette-options">Color Palette Options<a class="anchor" aria-label="anchor" href="#color-palette-options"></a>
+<h3 id="custom-aesthetics">Custom Aesthetics<a class="anchor" aria-label="anchor" href="#custom-aesthetics"></a>
 </h3>
-<p>Like other vitalBayes functions, <code><a href="../reference/simulate_survivorship.html">simulate_survivorship()</a></code>
-supports multiple color palettes:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Synthwave (default)</span></span>
-<span><span class="va">surv_synth</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, palette <span class="op">=</span> <span class="st">"synthwave"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Okabe-Ito (colorblind-friendly)</span></span>
-<span><span class="va">surv_okabe</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, palette <span class="op">=</span> <span class="st">"okabe"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Viridis family</span></span>
-<span><span class="va">surv_plasma</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, palette <span class="op">=</span> <span class="st">"plasma"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="custom-colors">Custom Colors<a class="anchor" aria-label="anchor" href="#custom-colors"></a>
-</h3>
-<p>For complete control, specify individual colors:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">surv_custom</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
-<span>  mc_object   <span class="op">=</span> <span class="va">mort</span>,</span>
-<span>  bar_fill    <span class="op">=</span> <span class="st">"#1B9E77"</span>,   <span class="co"># Teal bars</span></span>
-<span>  bar_color   <span class="op">=</span> <span class="st">"#117755"</span>,   <span class="co"># Darker teal outline</span></span>
-<span>  vline_color <span class="op">=</span> <span class="st">"#D95F02"</span>,   <span class="co"># Orange mean age line</span></span>
-<span>  rect_fill   <span class="op">=</span> <span class="st">"#D95F02"</span>,   <span class="co"># Orange uncertainty band</span></span>
-<span>  rect_alpha  <span class="op">=</span> <span class="fl">0.3</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="customizing-the-ggplot-object">Customizing the ggplot Object<a class="anchor" aria-label="anchor" href="#customizing-the-ggplot-object"></a>
-</h3>
-<p>The returned plot is a standard ggplot2 object, so you can modify
-it:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">surv</span><span class="op">$</span><span class="va">Plot</span> <span class="op">+</span></span>
-<span>  <span class="co"># Add reference lines</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">12</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"gray50"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/annotate.html" class="external-link">annotate</a></span><span class="op">(</span><span class="st">"text"</span>, x <span class="op">=</span> <span class="fl">8.2</span>, y <span class="op">=</span> <span class="fl">0.8</span>, label <span class="op">=</span> <span class="st">"Maturity"</span>, hjust <span class="op">=</span> <span class="fl">0</span>, size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/annotate.html" class="external-link">annotate</a></span><span class="op">(</span><span class="st">"text"</span>, x <span class="op">=</span> <span class="fl">12.2</span>, y <span class="op">=</span> <span class="fl">0.8</span>, label <span class="op">=</span> <span class="st">"Peak reproduction"</span>, hjust <span class="op">=</span> <span class="fl">0</span>, size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="co"># Customize labels</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    title <span class="op">=</span> <span class="st">"Predicted Survivorship Curve"</span>,</span>
-<span>    caption <span class="op">=</span> <span class="cn">NULL</span>  <span class="co"># Remove default caption if desired</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="co"># Modify theme</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
-<span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span>
-<span>    panel.grid.major.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_line</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"gray90"</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="alternative-visualization-survival-curves">Alternative Visualization: Survival Curves<a class="anchor" aria-label="anchor" href="#alternative-visualization-survival-curves"></a>
-</h3>
-<p>For some applications, a continuous survival curve is more
-appropriate than the discrete bar chart:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Use the aggregate survival data</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">lower</span>, ymax <span class="op">=</span> <span class="va">upper</span><span class="op">)</span>, </span>
-<span>              fill <span class="op">=</span> <span class="fu"><a href="../reference/vital_palette.html">vital_palette</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">mean_surv</span><span class="op">)</span>, color <span class="op">=</span> <span class="fu"><a href="../reference/vital_palette.html">vital_palette</a></span><span class="op">(</span><span class="fl">1</span>, <span class="st">"synthwave"</span><span class="op">)</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>,</span>
-<span>            linewidth <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="co"># Add key ages</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">8</span>, <span class="fl">12</span>, <span class="fl">30</span><span class="op">)</span>,</span>
-<span>    surv <span class="op">=</span> <span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival</span><span class="op">[</span><span class="va">age</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">8</span>, <span class="fl">12</span>, <span class="fl">30</span><span class="op">)</span>, <span class="va">mean_surv</span><span class="op">]</span></span>
-<span>  <span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">surv</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">3</span>, color <span class="op">=</span> <span class="fu"><a href="../reference/vital_palette.html">vital_palette</a></span><span class="op">(</span><span class="fl">1</span>, <span class="st">"synthwave"</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    x <span class="op">=</span> <span class="st">"Age (years)"</span>,</span>
-<span>    y <span class="op">=</span> <span class="st">"Cumulative Survival"</span>,</span>
-<span>    title <span class="op">=</span> <span class="st">"Type I Survivorship Curve"</span></span>
-<span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, expand <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.01</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level2">
-<h2 id="interpreting-survival-metrics">Interpreting Survival Metrics<a class="anchor" aria-label="anchor" href="#interpreting-survival-metrics"></a>
-</h2>
-<div class="section level3">
-<h3 id="mean-age-at-death">Mean Age at Death<a class="anchor" aria-label="anchor" href="#mean-age-at-death"></a>
-</h3>
-<p>The mean age at death represents the average lifespan of individuals
-in the cohort. For populations with high juvenile mortality (typical of
-elasmobranchs), this value will be substantially lower than the maximum
-age:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Age_of_Death</span></span>
-<span><span class="co">#&gt;     mean    sd  lower  upper</span></span>
-<span><span class="co">#&gt;    &lt;num&gt; &lt;num&gt;  &lt;num&gt;  &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:  8.42  2.31   4.89  13.21</span></span>
-<span></span>
-<span><span class="co"># Interpretation: On average, individuals live about 8.4 years,</span></span>
-<span><span class="co"># with 95% of simulation runs producing mean lifespans between</span></span>
-<span><span class="co"># 4.9 and 13.2 years</span></span></code></pre></div>
-<p>The uncertainty here reflects both parameter uncertainty (from the
-growth model posterior) and the scaling relationship for mortality. Wide
-credible intervals suggest that survival metrics are sensitive to
-uncertainty in growth parameters.</p>
-</div>
-<div class="section level3">
-<h3 id="survival-to-maturity">Survival to Maturity<a class="anchor" aria-label="anchor" href="#survival-to-maturity"></a>
-</h3>
-<p>This metric directly addresses a key conservation question: what
-proportion of individuals survive long enough to reproduce?</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmat</span></span>
-<span><span class="co">#&gt;     mean      sd   lower   upper</span></span>
-<span><span class="co">#&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;   &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.312  0.0891   0.168   0.512</span></span>
-<span></span>
-<span><span class="co"># Interpretation: About 31% of individuals survive to maturity,</span></span>
-<span><span class="co"># with substantial uncertainty (95% CI: 17% - 51%)</span></span></code></pre></div>
-<p>For populations where maturity occurs late relative to early
-mortality, this proportion can be surprisingly low. Values below ~20%
-may indicate populations vulnerable to recruitment failure under
-increased mortality pressure.</p>
-</div>
-<div class="section level3">
-<h3 id="survival-to-maximum-age">Survival to Maximum Age<a class="anchor" aria-label="anchor" href="#survival-to-maximum-age"></a>
-</h3>
-<p>This metric typically yields very small probabilities, as
-expected:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmax</span></span>
-<span><span class="co">#&gt;       mean      sd    lower    upper</span></span>
-<span><span class="co">#&gt;      &lt;num&gt;   &lt;num&gt;    &lt;num&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.00089 0.00041 0.000312 0.00178</span></span>
-<span></span>
-<span><span class="co"># Interpretation: About 0.09% (roughly 1 in 1,100) individuals </span></span>
-<span><span class="co"># survive to estimated maximum age</span></span></code></pre></div>
-<p>This metric is primarily useful as a sanity check. If <code>p</code>
-was set to 0.001 in <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code>, you’d
-expect survival to tmax to be near 0.001—substantial deviation suggests
-the mortality schedule shape is inconsistent with the scaling
-assumption.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="practical-considerations">Practical Considerations<a class="anchor" aria-label="anchor" href="#practical-considerations"></a>
-</h2>
-<div class="section level3">
-<h3 id="cohort-size-selection">Cohort Size Selection<a class="anchor" aria-label="anchor" href="#cohort-size-selection"></a>
-</h3>
-<p>The <code>n</code> parameter controls the starting cohort size for
-each simulation. Larger cohorts reduce demographic stochasticity:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Small cohort: More demographic stochasticity</span></span>
-<span><span class="va">surv_small</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n <span class="op">=</span> <span class="fl">1000</span>, n_iter <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Large cohort: Nearly deterministic given the mortality schedule</span></span>
-<span><span class="va">surv_large</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n <span class="op">=</span> <span class="fl">100000</span>, n_iter <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Compare SD of mean survival at age 10</span></span>
-<span><span class="va">surv_small</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival</span><span class="op">[</span><span class="va">age</span> <span class="op">==</span> <span class="fl">10</span>, <span class="va">se_surv</span><span class="op">]</span>  <span class="co"># Larger SE</span></span>
-<span><span class="va">surv_large</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival</span><span class="op">[</span><span class="va">age</span> <span class="op">==</span> <span class="fl">10</span>, <span class="va">se_surv</span><span class="op">]</span>  <span class="co"># Smaller SE</span></span></code></pre></div>
-<p>For most applications, <code>n = 50000</code> provides a good
-balance. Use larger values when you want to minimize demographic noise
-and isolate parameter uncertainty. Use smaller values when demographic
-stochasticity is itself of interest (e.g., for small population
-projections).</p>
-</div>
-<div class="section level3">
-<h3 id="iteration-count">Iteration Count<a class="anchor" aria-label="anchor" href="#iteration-count"></a>
-</h3>
-<p>The number of iterations affects how well you characterize the
-uncertainty distribution:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Quick exploratory analysis</span></span>
-<span><span class="va">surv_quick</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n_iter <span class="op">=</span> <span class="fl">500</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Final analysis for publication</span></span>
-<span><span class="va">surv_final</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n_iter <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span></code></pre></div>
-<p>As a rule of thumb, credible interval bounds stabilize faster than
-means, and survival probabilities at extreme ages require more
-iterations to estimate precisely.</p>
-</div>
-<div class="section level3">
-<h3 id="computational-efficiency">Computational Efficiency<a class="anchor" aria-label="anchor" href="#computational-efficiency"></a>
-</h3>
-<p>Survival simulation is computationally intensive because it involves
-numerical integration for each parameter set. Some strategies for
-managing computation time:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Reduce parameter sets in mortality estimation</span></span>
-<span><span class="va">mort_fast</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  sex        <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  iter       <span class="op">=</span> <span class="fl">500</span>,  <span class="co"># Fewer parameter draws</span></span>
-<span>  print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Fewer survival iterations</span></span>
-<span><span class="va">surv_fast</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
-<span>  mc_object <span class="op">=</span> <span class="va">mort_fast</span>,</span>
-<span>  n         <span class="op">=</span> <span class="fl">20000</span>,  <span class="co"># Smaller cohort</span></span>
-<span>  n_iter    <span class="op">=</span> <span class="fl">500</span>     <span class="co"># Fewer iterations</span></span>
+<code class="sourceCode R"><span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
+<span>  mc_object    <span class="op">=</span> <span class="va">mort</span>,</span>
+<span>  n            <span class="op">=</span> <span class="fl">50000</span>,</span>
+<span>  n_iter       <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  palette      <span class="op">=</span> <span class="st">"viridis"</span>,</span>
+<span>  bar_alpha    <span class="op">=</span> <span class="fl">0.7</span>,</span>
+<span>  vline_color  <span class="op">=</span> <span class="st">"#C0392B"</span>,</span>
+<span>  title        <span class="op">=</span> <span class="st">"Cohort Survivorship"</span>,</span>
+<span>  base_size    <span class="op">=</span> <span class="fl">12</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>For exploratory work, 500-1000 parameter sets and survival iterations
-are usually sufficient to identify qualitative patterns.</p>
+</div>
+<div class="section level3">
+<h3 id="custom-x-axis-breaks">Custom X-Axis Breaks<a class="anchor" aria-label="anchor" href="#custom-x-axis-breaks"></a>
+</h3>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
+<span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
+<span>  n_iter    <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  x_breaks  <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">tmax</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">ceiling</a></span><span class="op">(</span><span class="va">tmax</span><span class="op">)</span>, by <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="sex-specific-comparisons">Sex-Specific Comparisons<a class="anchor" aria-label="anchor" href="#sex-specific-comparisons"></a>
 </h2>
-<p>To compare survival between sexes, run the workflow separately for
-each:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Females</span></span>
 <span><span class="va">mort_f</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, maturity_fit <span class="op">=</span> <span class="va">maturity_fit</span>,</span>
-<span>  sex <span class="op">=</span> <span class="fl">1</span>, iter <span class="op">=</span> <span class="fl">2000</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  iter <span class="op">=</span> <span class="fl">2000</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">surv_f</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span><span class="va">mort_f</span>, n <span class="op">=</span> <span class="fl">50000</span>, n_iter <span class="op">=</span> <span class="fl">2000</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">surv_f</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span><span class="va">mort_f</span>, n_iter <span class="op">=</span> <span class="fl">2000</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">surv_f</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival</span><span class="op">[</span>, <span class="va">sex</span> <span class="op">:=</span> <span class="st">"Female"</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Males</span></span>
 <span><span class="va">mort_m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, maturity_fit <span class="op">=</span> <span class="va">maturity_fit</span>,</span>
-<span>  sex <span class="op">=</span> <span class="fl">2</span>, iter <span class="op">=</span> <span class="fl">2000</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  iter <span class="op">=</span> <span class="fl">2000</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">surv_m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span><span class="va">mort_m</span>, n <span class="op">=</span> <span class="fl">50000</span>, n_iter <span class="op">=</span> <span class="fl">2000</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">surv_m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span><span class="va">mort_m</span>, n_iter <span class="op">=</span> <span class="fl">2000</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">surv_m</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival</span><span class="op">[</span>, <span class="va">sex</span> <span class="op">:=</span> <span class="st">"Male"</span><span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Combined plot</span></span>
@@ -566,79 +345,85 @@ each:</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">combined</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, y <span class="op">=</span> <span class="va">mean_surv</span>, color <span class="op">=</span> <span class="va">sex</span>, fill <span class="op">=</span> <span class="va">sex</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">lower</span>, ymax <span class="op">=</span> <span class="va">upper</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.2</span>, color <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_color_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="../reference/vital_palette.html">vital_palette</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="../reference/vital_palette.html">vital_palette</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Age (years)"</span>, y <span class="op">=</span> <span class="st">"Cumulative Survival"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"Sex-Specific Survivorship Curves"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="practical-considerations">Practical Considerations<a class="anchor" aria-label="anchor" href="#practical-considerations"></a>
+</h2>
+<div class="section level3">
+<h3 id="cohort-size">Cohort Size<a class="anchor" aria-label="anchor" href="#cohort-size"></a>
+</h3>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Small cohort: More demographic stochasticity</span></span>
+<span><span class="va">surv_small</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n <span class="op">=</span> <span class="fl">1000</span>, n_iter <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>                                    print_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Large cohort: Nearly deterministic</span></span>
+<span><span class="va">surv_large</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n <span class="op">=</span> <span class="fl">100000</span>, n_iter <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>                                    print_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>For most applications, <code>n = 50000</code> provides a good
+balance.</p>
+</div>
+<div class="section level3">
+<h3 id="iteration-count">Iteration Count<a class="anchor" aria-label="anchor" href="#iteration-count"></a>
+</h3>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Quick exploratory</span></span>
+<span><span class="va">surv_quick</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n_iter <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>                                    print_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Final analysis</span></span>
+<span><span class="va">surv_final</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n_iter <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>                                    print_plot <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="sensitivity-analysis">Sensitivity Analysis<a class="anchor" aria-label="anchor" href="#sensitivity-analysis"></a>
 </h2>
-<p>The <code>Per_Set</code> output enables informal sensitivity
-analysis:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Examine correlation between parameters and survival metrics</span></span>
-<span><span class="va">per_set_data</span> <span class="op">&lt;-</span> <span class="va">surv</span><span class="op">$</span><span class="va">Per_Set</span><span class="op">$</span><span class="va">Age_of_Death</span></span>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">per_set_data</span> <span class="op">&lt;-</span> <span class="va">surv</span><span class="op">$</span><span class="va">Per_Set</span><span class="op">$</span><span class="va">Age_of_Death</span></span>
+<span><span class="va">per_set_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">per_set_data</span>, <span class="va">mort</span><span class="op">$</span><span class="va">Parameters</span>, by <span class="op">=</span> <span class="st">"set_id"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Which parameters most strongly predict mean age at death?</span></span>
-<span><span class="va">cor_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">per_set_data</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">mean_age</span>, <span class="va">Linf</span>, <span class="va">k</span>, <span class="va">t0</span>, <span class="va">tmat</span>, <span class="va">tmax</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">cor_matrix</span><span class="op">[</span><span class="st">"mean_age"</span>, <span class="op">]</span></span>
-<span><span class="co">#&gt;   mean_age      Linf         k        t0      tmat      tmax </span></span>
-<span><span class="co">#&gt;     1.0000    0.3241   -0.5892    0.2134    0.4521    0.7823</span></span>
-<span></span>
-<span><span class="co"># Interpretation: tmax is the strongest predictor (positively correlated),</span></span>
-<span><span class="co"># followed by k (negatively correlated) and tmat (positively correlated)</span></span></code></pre></div>
-<p>For formal sensitivity analysis, consider varying individual
-parameters while holding others fixed, or using variance-based methods
-like Sobol indices.</p>
+<span><span class="va">cor_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">per_set_merged</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">mean_age</span>, <span class="va">Linf</span>, <span class="va">L0</span>, <span class="va">Lmat</span>, <span class="va">tmat</span>, <span class="va">tmax</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>                  use <span class="op">=</span> <span class="st">"complete.obs"</span><span class="op">)</span></span>
+<span><span class="va">cor_matrix</span><span class="op">[</span><span class="st">"mean_age"</span>, <span class="op">]</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
 </h2>
 <table class="table">
 <colgroup>
-<col width="21%">
-<col width="48%">
-<col width="30%">
+<col width="29%">
+<col width="29%">
+<col width="41%">
 </colgroup>
 <thead><tr class="header">
 <th>Issue</th>
-<th>Possible Cause</th>
+<th>Cause</th>
 <th>Solution</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Very slow computation</td>
-<td>Too many iterations or large cohort</td>
-<td>Reduce <code>n_iter</code> or <code>n</code> for exploratory
-work</td>
+<td>Slow computation</td>
+<td>Too many iterations</td>
+<td>Reduce n_iter for exploration</td>
 </tr>
 <tr class="even">
-<td>Survival probabilities of exactly 0 or 1</td>
-<td>Age beyond mortality schedule range</td>
-<td>Extend <code>age_seq</code> in
-<code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code>
-</td>
+<td>Survival = 0 or 1</td>
+<td>Age beyond schedule</td>
+<td>Extend age_seq in mortality</td>
 </tr>
 <tr class="odd">
 <td>Missing Survival_to_tmat</td>
 <td>No tmat in Parameters</td>
-<td>Provide <code>maturity_fit</code> to
-<code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code>
-</td>
+<td>Ensure tmat provided</td>
 </tr>
 <tr class="even">
-<td>NaN values in survival</td>
-<td>Negative mortality values</td>
-<td>Check mortality schedules for numerical issues</td>
-</tr>
-<tr class="odd">
-<td>Unrealistic survival rates</td>
-<td>Mortality scaling mismatch</td>
-<td>Verify <code>p</code> or <code>M_target</code> in mortality
-estimation</td>
+<td>NaN values</td>
+<td>Negative mortality</td>
+<td>Check mortality schedules</td>
 </tr>
 </tbody>
 </table>
@@ -648,31 +433,20 @@ estimation</td>
 </h2>
 <ul>
 <li>
-<code><a href="../articles/mortality_estimation.html">vignette("mortality_estimation")</a></code> — Generating mortality
-schedules for survival simulation</li>
+<code><a href="../articles/mortality_estimation.html">vignette("mortality_estimation")</a></code> - Generating mortality
+schedules</li>
 <li>
-<code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> — Growth model fitting
-that feeds the workflow</li>
-<li>
-<code><a href="../articles/fit_bayesian_maturity.html">vignette("fit_bayesian_maturity")</a></code> — Maturity estimation
-for tmat and Lmat</li>
-<li>
-<a href="Understanding_vitalBayes.html#survival">Statistical
-Background</a> — Mathematical foundations</li>
+<code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> - Growth model
+fitting</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<p>Caswell, H. (2001). <em>Matrix Population Models: Construction,
-Analysis, and Interpretation</em> (2nd ed.). Sinauer Associates.</p>
+<p>Caswell, H. (2001). <em>Matrix Population Models</em> (2nd ed.).
+Sinauer Associates.</p>
 <p>Cortes, E. (2002). Incorporating uncertainty into demographic
-modeling: Application to shark populations and their conservation.
-<em>Conservation Biology</em>, 16(4), 1048-1062.</p>
-<p>Simpfendorfer, C. A. (1999). Mortality estimates and demographic
-analysis for the Australian sharpnose shark, <em>Rhizoprionodon
-taylori</em>, from northern Australia. <em>Fishery Bulletin</em>, 97(4),
-978-986.</p>
+modeling. <em>Conservation Biology</em>, 16(4), 1048-1062.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

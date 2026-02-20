@@ -8,8 +8,6 @@
   : Lorenzen Natural Mortality Model
 - [`M_peterson_wroblewski()`](https://brian-j-moe.github.io/vitalBayes/reference/M_peterson_wroblewski.md)
   : Peterson-Wroblewski Natural Mortality Model
-- [`approx_sd()`](https://brian-j-moe.github.io/vitalBayes/reference/approx_sd.md)
-  : Approximate Standard Deviation from Confidence Interval
 - [`compare_growth_models()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_growth_models.md)
   : Compare Multiple Growth Models
 - [`compare_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_loo.md)

@@ -1,7 +1,6 @@
 # Scale Mortality Schedule to Target Mean
 
-Rescales an age-specific mortality schedule so its mean equals a target
-value derived from empirical relationships or survival probability.
+Scale Mortality Schedule to Target Mean
 
 ## Usage
 

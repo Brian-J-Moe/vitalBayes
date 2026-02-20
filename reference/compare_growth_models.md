@@ -40,8 +40,7 @@ compare_growth_models(
 - sex_labels:
 
   Named character vector. Labels for sex in plot legend and facets.
-  Default `c("1" = "Female", "2" = "Male")`. Can be customized for other
-  languages, e.g., `c("1" = "Femelle", "2" = "Mâle")` (French).
+  Default `c("1" = "Female", "2" = "Male")`.
 
 - age_range:
 
@@ -81,7 +80,7 @@ for comprehensive plotting examples.
 for model comparison via LOO-CV.
 
 [Statistical Methods: Model
-Assessment](https://brian-j-moe.github.io/vitalBayes/doc/vitalBayes_stats_explained.html#assessment)
+Assessment](https://brian-j-moe.github.io/vitalBayes/doc/Understanding_vitalBayes.html#assessment)
 for LOO-CV theory.
 
 [`plot_growth_curve`](https://brian-j-moe.github.io/vitalBayes/reference/plot_growth_curve.md),

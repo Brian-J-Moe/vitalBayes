@@ -48,8 +48,7 @@ M_chen_watanabe(
 
 - growth_model:
 
-  Character. Growth model for G(t): `"vb"`, `"gompertz"`, or
-  `"logistic"`.
+  Character. Growth model for G(t).
 
 - tmax:
 
@@ -82,25 +81,3 @@ M_chen_watanabe(
 ## Value
 
 Numeric vector of instantaneous mortality rates.
-
-## Details
-
-The mortality model is: \$\$M(t) = \frac{M\_\infty}{G(t)}\$\$
-
-where M_inf is VB-derived and G(t) uses the native growth model
-trajectory. This formulation provides a unified mortality anchor while
-capturing model-specific growth dynamics.
-
-## References
-
-Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
-coefficient in fish population dynamics. *Nippon Suisan Gakkaishi*,
-55(2), 205-208.
-
-## Examples
-
-``` r
-ages <- seq(0.1, 150, by = 1)
-M_vb <- M_chen_watanabe(ages, Linf = 126, L0 = 35, Lmat = 83, tmat = 47,
-                        growth_model = "vb")
-```

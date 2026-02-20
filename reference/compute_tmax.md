@@ -1,6 +1,6 @@
 # Compute Maximum Age from Growth Parameters
 
-Estimates tmax as age when L(t) reaches a specified fraction of Linf.
+Compute Maximum Age from Growth Parameters
 
 ## Usage
 
@@ -39,10 +39,3 @@ compute_tmax(
 ## Value
 
 Numeric tmax value.
-
-## Examples
-
-``` r
-tmax <- compute_tmax(Linf = 126, L0 = 35, k = 0.016,
-                     growth_model = "vb", Linf_factor = 0.99)
-```

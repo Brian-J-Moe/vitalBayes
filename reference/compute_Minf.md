@@ -35,18 +35,3 @@ compute_Minf(Linf, L0, Lmat, tmat, warn = TRUE)
 ## Value
 
 Numeric vector of asymptotic mortality rates.
-
-## Details
-
-\$\$M\_\infty = \frac{1}{t\_{mat}} \ln\left(\frac{L\_\infty -
-L_0}{L\_\infty - L\_{mat}}\right)\$\$
-
-This formula is used regardless of growth model, providing a consistent
-mortality anchor that prevents the ~10-fold survival differences arising
-from model-native k formulas.
-
-## Examples
-
-``` r
-Minf <- compute_Minf(Linf = 126, L0 = 35, Lmat = 83, tmat = 47)
-```

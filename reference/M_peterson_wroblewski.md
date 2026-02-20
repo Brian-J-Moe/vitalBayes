@@ -1,7 +1,6 @@
 # Peterson-Wroblewski Natural Mortality Model
 
-Computes weight-based natural mortality following Peterson & Wroblewski
-(1984).
+Peterson-Wroblewski Natural Mortality Model
 
 ## Usage
 
@@ -41,7 +40,7 @@ M_peterson_wroblewski(
 
 - lw_fun:
 
-  Length-weight function: `lw_fun(L)` returns weight in grams.
+  Length-weight function.
 
 - growth_model:
 
@@ -50,16 +49,3 @@ M_peterson_wroblewski(
 ## Value
 
 Numeric vector of instantaneous mortality rates.
-
-## Details
-
-\$\$M(W) = 1.92 \cdot W^{-0.25}\$\$
-
-**Warning**: This model was calibrated on teleost fishes and may produce
-biologically implausible mortality rates for elasmobranchs.
-
-## References
-
-Peterson, I., & Wroblewski, J. S. (1984). Mortality rate of fishes in
-the pelagic ecosystem. *Canadian Journal of Fisheries and Aquatic
-Sciences*, 41(7), 1117-1120.

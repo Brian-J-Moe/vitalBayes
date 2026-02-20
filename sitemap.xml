@@ -18,7 +18,6 @@
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/M_lorenzen.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/M_peterson_wroblewski.html</loc></url>
-<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/approx_sd.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compare_growth_models.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compare_loo.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compare_pooling.html</loc></url>
@@ -30,12 +29,16 @@
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/compute_tmax.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/create_loo_table.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/create_parameter_table.html</loc></url>
+<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/dot-enforce_constraints.html</loc></url>
+<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/extract_lh_params.html</loc></url>
+<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/extract_param_draws.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_birth.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/index.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/is_colorblind_safe.html</loc></url>
+<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/is_stanfit.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/list_vital_palettes.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/plot_birth_ogive.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/plot_growth_curve.html</loc></url>
@@ -43,6 +46,7 @@
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/plot_residuals.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/ppc_summary.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/print.vitalBayes_ppc.html</loc></url>
+<url><loc>https://brian-j-moe.github.io/vitalBayes/reference/sample_bivariate_normal.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/scale_mortality.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/simulate_survivorship.html</loc></url>
 <url><loc>https://brian-j-moe.github.io/vitalBayes/reference/simulate_vb_growth_data.html</loc></url>

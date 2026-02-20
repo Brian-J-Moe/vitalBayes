@@ -1,6 +1,6 @@
 # Compute Length at Age L(t)
 
-Computes predicted length at age using a specified growth model.
+Compute Length at Age L(t)
 
 ## Usage
 
@@ -33,9 +33,3 @@ compute_L(age, Linf, L0, k, growth_model = c("vb", "gompertz", "logistic"))
 ## Value
 
 Numeric vector of predicted lengths.
-
-## Examples
-
-``` r
-L_vb <- compute_L(0:50, Linf = 126, L0 = 35, k = 0.016, growth_model = "vb")
-```

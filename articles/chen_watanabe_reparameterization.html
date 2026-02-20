@@ -94,8 +94,8 @@ Natural Mortality Estimation</h3>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>This vignette documents two methodological innovations in
-vitalBayes’s approach to natural mortality estimation:</p>
+<p>This vignette documents two methodological advances in vitalBayes’s
+approach to natural mortality estimation:</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>L₀ parameterization of Chen-Watanabe</strong>: Replacing
 the theoretical parameter <span class="math inline">\(t_0\)</span> with
@@ -106,7 +106,7 @@ VB-equivalent growth coefficient from biological milestones, enabling
 Chen-Watanabe mortality estimation from <em>any</em> growth model fit
 (von Bertalanffy, Gompertz, or Logistic)</p></li>
 </ol>
-<p>These innovations align mortality estimation with vitalBayes’s core
+<p>These developments align mortality estimation with vitalBayes’s core
 philosophy: parameterize models using biologically meaningful,
 observable quantities rather than abstract mathematical constructs.</p>
 </div>
@@ -217,7 +217,7 @@ mortality approaches a baseline rate related to senescence and
 physiological constraints.</p>
 </div>
 <div class="section level3">
-<h3 id="growth-model-agnostic-k-the-key-insight">Growth-Model-Agnostic k: The Key Insight<a class="anchor" aria-label="anchor" href="#growth-model-agnostic-k-the-key-insight"></a>
+<h3 id="growth-model-agnostic-k-the-central-insight">Growth-Model-Agnostic k: The Central Insight<a class="anchor" aria-label="anchor" href="#growth-model-agnostic-k-the-central-insight"></a>
 </h3>
 <p>The L₀-parameterized CW model still requires a von Bertalanffy <span class="math inline">\(k\)</span>. But here’s the crucial observation:
 <strong>all three growth models estimate the same biological
@@ -244,24 +244,35 @@ to describe growth.</p>
 <p>Given these biological milestones, we can ask: <strong>what von
 Bertalanffy <span class="math inline">\(k\)</span> would produce a
 growth curve passing through these points?</strong></p>
-<p>The VB model with <span class="math inline">\(L_0\)</span>
-parameterization is:</p>
-<p><span class="math display">\[L(t) = L_\infty - (L_\infty -
-L_0)e^{-kt}\]</span></p>
+<p>The derivation differs by growth model:</p>
+<p><strong>Von Bertalanffy:</strong></p>
 <p>At maturity (<span class="math inline">\(t = t_{mat}\)</span>, <span class="math inline">\(L = L_{mat}\)</span>):</p>
 <p><span class="math display">\[L_{mat} = L_\infty - (L_\infty -
 L_0)e^{-k \cdot t_{mat}}\]</span></p>
 <p>Solving for <span class="math inline">\(k\)</span>:</p>
-<p><span class="math display">\[e^{-k \cdot t_{mat}} = \frac{L_\infty -
-L_{mat}}{L_\infty - L_0}\]</span></p>
-<p><span class="math display">\[-k \cdot t_{mat} =
-\ln\left(\frac{L_\infty - L_{mat}}{L_\infty - L_0}\right)\]</span></p>
 <p><span class="math display">\[\boxed{k_{VB}^{equiv} =
 \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty -
 L_{mat}}\right)}\]</span></p>
-<p>This <strong>VB-equivalent <span class="math inline">\(k\)</span></strong> can be computed from the
-posterior of <em>any</em> growth model, as long as that model provides
-<span class="math inline">\((L_\infty, L_0, L_{mat},
+<p><strong>Gompertz:</strong></p>
+<p>At maturity:</p>
+<p><span class="math display">\[L_{mat} = L_\infty
+\exp\left[-\ln\left(\frac{L_\infty}{L_0}\right) e^{-k \cdot
+t_{mat}}\right]\]</span></p>
+<p>Solving for <span class="math inline">\(k\)</span>:</p>
+<p><span class="math display">\[\boxed{k_{VB}^{equiv} =
+\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_0)}{\ln(L_\infty /
+L_{mat})}\right)}\]</span></p>
+<p><strong>Logistic:</strong></p>
+<p>At maturity:</p>
+<p><span class="math display">\[L_{mat} = \frac{L_\infty}{1 +
+\left(\frac{L_\infty}{L_0} - 1\right) e^{-k \cdot t_{mat}}}\]</span></p>
+<p>Solving for <span class="math inline">\(k\)</span>:</p>
+<p><span class="math display">\[\boxed{k_{VB}^{equiv} =
+\frac{1}{t_{mat}} \ln\left(\frac{L_{mat}(L_\infty - L_0)}{L_0(L_\infty -
+L_{mat})}\right)}\]</span></p>
+<p>These <strong>VB-equivalent <span class="math inline">\(k\)</span></strong> values can be computed from
+the posterior of <em>any</em> growth model, as long as that model
+provides <span class="math inline">\((L_\infty, L_0, L_{mat},
 t_{mat})\)</span>.</p>
 </div>
 <div class="section level3">

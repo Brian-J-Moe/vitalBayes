@@ -177,7 +177,9 @@ Default 1.05 (i.e., 5% larger than observed max).</p></dd>
 
 
 <dt id="arg-cv-linf">CV_Linf<a class="anchor" aria-label="anchor" href="#arg-cv-linf"></a></dt>
-<dd><p>Coefficient of variation for Linf prior. Default 0.2.</p></dd>
+<dd><p>Coefficient of variation for Linf delta-gamma prior. Controls
+the shape of the Gamma distribution on \(\delta = L_\infty - L_{max}\).
+Default 0.2.</p></dd>
 
 
 <dt id="arg-cv-k">CV_k<a class="anchor" aria-label="anchor" href="#arg-cv-k"></a></dt>
@@ -338,7 +340,8 @@ pooling enabled, the function implements <strong>selective pooling</strong> to a
 double-pooling maturity parameters that already carry information from
 upstream maturity model fits.</p>
 <p>The <code>pool_maturity</code> argument controls this behavior:</p><ul><li><p><code>pool_maturity = FALSE</code> (default when vitalBayes maturity fits provided):
-Only \(L_\infty\) and \(L_0\) are pooled hierarchically. Maturity
+\(L_\infty\) uses soft pairwise shrinkage on the log scale and
+\(L_0\) is pooled hierarchically. Maturity
 parameters (\(L_{mat}\), \(t_{mat}\)) use direct sex-specific priors
 from the upstream fits, preserving biological signal without risk of
 double-pooling.</p></li>
@@ -358,9 +361,14 @@ in the maturity models.</p>
 
 
 <p>Priors are constructed using coefficient of variation (CV) arguments:</p>
-<p><strong>Linf:</strong> Prior mean defaults to <code>1.05 * Lmax</code>, where Lmax is the maximum
-observed length (including incomplete cases without age data). The prior SD
-is <code>mean * CV_Linf</code>. Users can override Lmax via the <code>Lmax</code> argument.</p>
+<p><strong>Linf:</strong> Uses a delta-gamma parameterization to avoid boundary pile-up
+near Lmax. Internally, \(\delta = L_\infty - L_{max}\) is estimated with
+\(\delta \sim \text{Gamma}(\alpha, \beta)\), where
+\(\alpha = 1/\text{CV}^2\) and \(\beta = 1/(\mu_\delta \cdot \text{CV}^2)\).
+The prior mean for \(\delta\) defaults to <code>Lmax * (Linf_multiplier - 1)</code>.
+For two-sex models with pooling, between-sex shrinkage is applied via a soft
+penalty on \(\log(L_\infty)\), preserving the proportional interpretation
+of <code>prior_tau</code>.</p>
 <p><strong>k:</strong> Prior mean is estimated from the data by solving the growth equation
 for k at each observation and averaging. Prior SD is <code>mean * CV_k</code>.</p>
 <p><strong>L0, Lmat, tmat:</strong> Can be informed by prior birth/maturity model fits, or

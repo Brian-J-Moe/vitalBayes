@@ -93,9 +93,9 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p>The <code><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth()</a></code> function fits von Bertalanffy,
-Gompertz, or Logistic growth models using Bayesian methods. A key
-innovation is the <strong>maturity-based parameterization</strong>,
-which derives the growth coefficient <span class="math inline">\(k\)</span> from observable maturity metrics rather
+Gompertz, or Logistic growth models using Bayesian methods. A central
+methodological feature is the <strong>maturity-based
+parameterization</strong>, which derives the growth coefficient <span class="math inline">\(k\)</span> from observable maturity metrics rather
 than estimating it directly.</p>
 </div>
 <div class="section level2">
@@ -145,9 +145,19 @@ e^{-kt}\right]\]</span></p>
 </h3>
 <p>Derives <span class="math inline">\(k\)</span> from maturity
 parameters (<span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span>), ensuring biological
-consistency:</p>
-<p><span class="math display">\[k = \frac{1}{t_{mat}}
-\ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
+consistency. The derivation differs by growth model:</p>
+<p><strong>von Bertalanffy:</strong> <span class="math display">\[k =
+\frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty -
+L_{mat}}\right)\]</span></p>
+<p><strong>Gompertz:</strong> <span class="math display">\[k =
+\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_0)}{\ln(L_\infty /
+L_{mat})}\right)\]</span></p>
+<p><strong>Logistic:</strong> <span class="math display">\[k =
+\frac{1}{t_{mat}} \ln\left(\frac{L_{mat}(L_\infty - L_0)}{L_0(L_\infty -
+L_{mat})}\right)\]</span></p>
+<p>Each derivation ensures the growth curve passes exactly through the
+point <span class="math inline">\((t_{mat}, L_{mat})\)</span>, anchoring
+the model to an observable biological milestone.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># First, fit maturity models</span></span>
 <span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
@@ -288,22 +298,22 @@ parameters enter the hierarchical structure:</p>
 <tbody>
 <tr class="odd">
 <td><span class="math inline">\(L_\infty\)</span></td>
-<td>✅ Yes</td>
+<td>Yes</td>
 <td>Data-derived (needs regularization)</td>
 </tr>
 <tr class="even">
 <td><span class="math inline">\(L_0\)</span></td>
-<td>✅ Yes</td>
+<td>Yes</td>
 <td>Birth model or default</td>
 </tr>
 <tr class="odd">
 <td><span class="math inline">\(L_{mat}\)</span></td>
-<td>❌ No</td>
+<td>No</td>
 <td>Direct from maturity fit</td>
 </tr>
 <tr class="even">
 <td><span class="math inline">\(t_{mat}\)</span></td>
-<td>❌ No</td>
+<td>No</td>
 <td>Direct from maturity fit</td>
 </tr>
 </tbody>
@@ -317,7 +327,7 @@ shrinkage.</p>
 <h3 id="full-pooling-with-anchoring">Full Pooling with Anchoring<a class="anchor" aria-label="anchor" href="#full-pooling-with-anchoring"></a>
 </h3>
 <p>If you prefer full pooling (or must use it with manual priors), the
-function uses <strong>widened anchoring priors</strong> (3× original SD)
+function uses <strong>widened anchoring priors</strong> (3x original SD)
 to prevent over-constraint:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Force full pooling explicitly</span></span>
@@ -573,7 +583,7 @@ scaling:</p>
 <tbody>
 <tr class="odd">
 <td>Divergent transitions</td>
-<td>Increase <code>adapt_delta</code> (0.95 → 0.99)</td>
+<td>Increase <code>adapt_delta</code> (0.95 to 0.99)</td>
 </tr>
 <tr class="even">
 <td>
@@ -619,7 +629,8 @@ hierarchical structure for imbalanced sex ratios</li>
 Growth Models</a> — Full mathematical derivation</li>
 <li>
 <a href="Understanding_vitalBayes.html#maturity-param">Statistical
-Methods: Maturity-Based Parameterization</a> — The key innovation</li>
+Methods: Maturity-Based Parameterization</a> — Methodological
+foundation</li>
 <li>
 <a href="Understanding_vitalBayes.html#cv-priors">Statistical
 Methods: CV-Based Priors</a> — How priors are specified</li>

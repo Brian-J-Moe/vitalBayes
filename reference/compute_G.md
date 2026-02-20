@@ -1,7 +1,6 @@
 # Compute Relative Size G(t) = L(t)/Linf
 
 Computes the relative size at specified ages using a given growth model.
-This is the denominator in the mortality formula M(t) = M_inf / G(t).
 
 ## Usage
 
@@ -34,10 +33,3 @@ compute_G(age, Linf, L0, k, growth_model = c("vb", "gompertz", "logistic"))
 ## Value
 
 Numeric vector of G(t) values bounded in (0, 1\].
-
-## Examples
-
-``` r
-ages <- seq(0, 100, by = 1)
-G_vb <- compute_G(ages, Linf = 126, L0 = 35, k = 0.016, growth_model = "vb")
-```

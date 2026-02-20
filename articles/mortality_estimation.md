@@ -15,567 +15,359 @@ The
 [`get_stochastic_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
 function addresses this challenge by implementing three established
 life-history-based mortality models within a Monte Carlo framework that
-properly propagates uncertainty in von Bertalanffy growth parameters.
-When integrated with vitalBayes growth model outputs, the function
-preserves the joint posterior distribution of life history parameters,
-yielding mortality schedules with realistic, honest uncertainty bounds.
+properly propagates uncertainty. The function accepts either vitalBayes
+stanfit objects (preserving posterior correlations) or manual
+`c(mean, sd)` specifications, with explicit handling of covariance
+between maturity parameters.
 
 This vignette covers:
 
-- The biological and mathematical foundations of each mortality model
-- Integration with vitalBayes growth model outputs
-- Scaling mortality schedules to match empirical relationships
-- Visualization with the vitalBayes color system
-- Best practices for model selection and interpretation
+- The unified mortality framework: \\M(t) = M\_\infty / G(t)\\
+- Parameter input options: stanfit objects vs. manual specification
+- Covariance handling for maturity parameters
+- The three supported mortality models
+- Integration with survivorship simulation
 
-## Mathematical Foundations
+## The Unified Mortality Framework
 
-### Chen-Watanabe Model (1989)
+### Core Formulation
 
-The Chen-Watanabe model derives age-specific mortality from von
-Bertalanffy growth parameters under the biological reasoning that
-metabolic demands—and thus vulnerability to mortality—scale with growth
-rate. The core equation expresses instantaneous mortality as:
+The vitalBayes mortality framework expresses age-specific Chen-Watanabe
+mortality as:
 
-\\M(t) = \frac{k}{1 - e^{-k(t - t_0)}}\\
+\\M(t) = \frac{M\_\infty}{G(t)}\\
 
-where \\k\\ is the von Bertalanffy growth coefficient and \\t_0\\ is the
-theoretical age at length zero. This formulation produces high juvenile
-mortality that declines rapidly during the growth phase, stabilizing as
-individuals approach asymptotic size.
+where \\M\_\infty\\ is the asymptotic mortality rate and \\G(t) =
+L(t)/L\_\infty\\ is the relative size at age \\t\\.
 
-For long-lived species like elasmobranchs, the single-phase model may
-underestimate senescence mortality. The optional two-phase extension
-adds a late-life component that increases mortality after a transition
-age \\t_m\\. vitalBayes implements both Gompertz and logistic senescence
-functions, with smooth blending to avoid discontinuities:
+### The Unified \\M\_\infty\\ Anchor
 
-**Gompertz senescence:** \\M\_{late}(t) = A \cdot e^{B \cdot t}\\
+The asymptotic mortality rate is computed using the von Bertalanffy
+formula regardless of which growth model is used:
 
-**Logistic senescence:** \\M\_{late}(t) = \frac{K}{1 + e^{-r(t -
-t\_{max})}}\\
+\\M\_\infty = \frac{1}{t\_{mat}} \ln\left(\frac{L\_\infty -
+L_0}{L\_\infty - L\_{mat}}\right)\\
 
-The transition is smoothed using a sigmoid weight function: \\w(t) =
-\frac{1}{1 + e^{-2(t - t_m)/\sigma_w}}\\
+This provides a consistent mortality anchor across growth models.
 
-where \\\sigma_w\\ controls the width of the transition zone.
+### Model-Specific Native \\k\\ Derivations
 
-### Peterson-Wroblewski Model (1984)
+Each growth model requires its own \\k\\ derivation:
 
-The Peterson-Wroblewski model takes a purely allometric approach,
-expressing mortality as a power function of body weight:
+**Von Bertalanffy:** \\k\_{VB} = \frac{1}{t\_{mat}}
+\ln\left(\frac{L\_\infty - L_0}{L\_\infty - L\_{mat}}\right)\\
 
-\\M(W) = 1.92 \cdot W^{-0.25}\\
+**Gompertz:** \\k\_{Gomp} = -\frac{1}{t\_{mat}}
+\ln\left(\frac{\ln(L\_\infty / L\_{mat})}{\ln(L\_\infty / L_0)}\right)\\
 
-where \\W\\ is body weight in grams. This model captures the
-well-documented pattern that smaller individuals experience higher
-mortality across taxa, though it does not explicitly incorporate
-age-dependent processes beyond the weight-age relationship implied by
-growth.
+**Logistic:** \\k\_{Log} = -\frac{1}{t\_{mat}}
+\ln\left(\frac{L\_\infty/L\_{mat} - 1}{L\_\infty/L_0 - 1}\right)\\
 
-To apply this model, you must provide a length-weight function that
-converts von Bertalanffy predicted lengths to body mass. The exponent
-(-0.25) represents the metabolic scaling relationship and is remarkably
-consistent across fish species.
+## Parameter Input Options
 
-### Lorenzen Model (1996, 2022)
+### Option 1: vitalBayes Stanfit Objects (Recommended)
 
-Lorenzen’s framework offers two formulations that capture size-dependent
-mortality:
-
-**Weight-based formulation:** \\M(W) = \alpha \cdot W^{\beta}\\
-
-where \\\alpha \sim \mathcal{N}(3.69, 0.502)\\ and \\\beta \sim
-\mathcal{N}(-0.305, 0.029)\\. The parameter distributions incorporate
-uncertainty from the meta-analysis underlying the model.
-
-**Growth-based formulation (Lorenzen 2022):** \\\ln M = 0.28 - 1.30
-\ln\left(\frac{L}{L\_\infty}\right) + 1.08 \ln(k)\\
-
-This newer formulation directly incorporates von Bertalanffy parameters
-without requiring a length-weight relationship, making it particularly
-useful when allometric parameters are uncertain or unavailable. The
-coefficients include uncertainty: \\0.28 \pm 0.105\\, \\-1.30 \pm
-0.059\\, and \\1.08 \pm 0.082\\.
-
-## Integration with vitalBayes
-
-### Why Joint Posterior Sampling Matters
-
-When growth parameters are estimated via Bayesian methods, the posterior
-distribution typically exhibits substantial correlations. In von
-Bertalanffy models, \\L\_\infty\\ and \\k\\ are almost always negatively
-correlated—high asymptotic size tends to associate with slower growth,
-and vice versa. The correlation between \\k\\ and \\t_0\\ is often
-positive.
-
-The traditional approach of specifying parameters as independent
-`c(mean, sd)` vectors ignores these correlations, occasionally
-generating biologically implausible combinations (e.g., high
-\\L\_\infty\\ with high \\k\\) that never appeared in the original
-posterior. Since Chen-Watanabe mortality is directly proportional to
-\\k\\, and all models depend on the growth trajectory, these implausible
-combinations propagate into the mortality schedules, potentially
-inflating uncertainty bounds.
-
-[`get_stochastic_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
-addresses this by accepting vitalBayes fit objects directly, drawing
-correlated parameter samples from the joint posterior. This yields
-mortality schedules with *narrower but more honest* uncertainty
-intervals that reflect genuine biological uncertainty rather than
-sampling artifacts.
-
-### Extracting Parameters from vitalBayes Fits
-
-The workhorse function for parameter extraction is
-`extract_lh_params()`, which pulls posterior draws while preserving
-correlations:
+When vitalBayes fit objects are provided, posterior correlations between
+parameters are preserved:
 
 ``` r
 library(vitalBayes)
 library(data.table)
 
-# After fitting growth and maturity models
-# growth_fit <- fit_bayesian_growth(...)
-# maturity_fit <- fit_bayesian_maturity(...)
+# After fitting models in the vitalBayes workflow:
+# birth_fit <- fit_bayesian_birth(...)
+# L50_fit <- fit_bayesian_maturity(maturity = "mat", lt = "fl", ...)
+# t50_fit <- fit_bayesian_maturity(maturity = "mat", age = "age", ...)
+# growth_fit <- fit_bayesian_growth(..., k_based = FALSE)  # Maturity-based
 
-# Extract full posterior draws for males
-params_male <- extract_lh_params(
-  growth_fit   = growth_fit,
-  maturity_fit = maturity_fit,
-  sex          = 2,  # 1 = female, 2 = male
-  format       = "draws",
-  n_draws      = 2000
+# Full correlation preservation (all from growth_fit)
+mort <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = growth_fit,   # Provides Linf, L0, Lmat, tmat
+  sex        = 1,            # Female
+  growth_model = "vb",
+  iter       = 2000
 )
-
-# View structure
-head(params_male)
-#>     Linf      k      L0       t0    tmat .draw sex
-#>    <num>  <num>   <num>    <num>   <num> <int> <char>
-#> 1:  98.2 0.0823  33.1    -1.42     8.92     1     M
-#> 2:  95.8 0.0891  34.0    -1.35     8.44     2     M
-#> ...
-
-# Check correlations are preserved
-cor(params_male[, .(Linf, k, t0)])
-#>        Linf      k     t0
-#> Linf  1.000 -0.712  0.234
-#> k    -0.712  1.000 -0.456
-#> t0    0.234 -0.456  1.000
 ```
 
-The correlation structure you see here should match what you’d compute
-from the original `growth_fit` posterior—that’s the key benefit of joint
-sampling.
+### Option 2: Multiple Stanfit Objects
 
-## Basic Usage
-
-### Using vitalBayes Fits (Recommended)
-
-The most statistically rigorous approach passes fit objects directly:
+When parameters come from different model fits:
 
 ``` r
-# Chen-Watanabe with two-phase senescence
-mort_cw <- get_stochastic_mortality(
+# Linf and L0 from growth fit, maturity from separate fits
+mort <- get_stochastic_mortality(
+  method              = "CW",
+  growth_fit          = growth_fit,           # Provides Linf, L0
+  length_maturity_fit = L50_fit,              # Provides Lmat
+  age_maturity_fit    = t50_fit,              # Provides tmat
+  maturity_cor        = 0.5,                  # Assumed Lmat-tmat correlation
+  sex                 = 1,
+  growth_model        = "vb",
+  iter                = 2000
+)
+```
+
+### Option 3: Manual Parameter Specification
+
+When stanfit objects aren’t available:
+
+``` r
+mort <- get_stochastic_mortality(
   method       = "CW",
-  growth_fit   = growth_fit,
-  maturity_fit = maturity_fit,
-  sex          = 2,  # Males
-  iter         = 2000,
-  scaled       = TRUE,
-  M_target     = NULL,  # Derive from survival probability
-  p            = 0.001, # 0.1% survive to tmax
-  two_phase    = TRUE,
-  late_model   = "gompertz"
-)
-
-# Examine output
-mort_cw$Summary
-#>    age_round M_median   M_mean  M_lower  M_upper
-#>        <num>    <num>    <num>    <num>    <num>
-#> 1:      0.00   0.4521   0.4892   0.2891   0.7124
-#> 2:      0.02   0.3982   0.4245   0.2654   0.6234
-#> ...
-
-# View the plot
-mort_cw$Plot
-```
-
-### Manual Parameter Specification
-
-When vitalBayes fits aren’t available (e.g., working from published
-literature values), you can specify parameters as `c(mean, sd)` vectors:
-
-``` r
-# Parameters from published growth study
-# Note: This approach ignores correlations
-
-mort_manual <- get_stochastic_mortality(
-  method = "CW",
-  Linf   = c(120, 8),     # cm, mean and SD
-  k      = c(0.08, 0.015),
-  t0     = c(-1.5, 0.3),
-  tmat   = c(12, 1.5),    # Age at maturity for CW transition
-  iter   = 2000,
-  scaled = TRUE,
-  p      = 0.001
+  Linf         = c(126, 10),   # c(mean, sd)
+  L0           = c(35, 3),
+  Lmat         = c(83, 5),
+  tmat         = c(47, 4),
+  maturity_cor = 0.5,          # Lmat-tmat correlation
+  growth_model = "vb",
+  iter         = 2000
 )
 ```
 
-## Scaling Mortality Schedules
+### Option 4: Mixed Sources
 
-### The Scaling Problem
-
-Life-history-based mortality models produce *relative* schedules that
-capture age-dependent patterns but may not match the overall mortality
-level expected for a population. Scaling adjusts the mean mortality to
-match an external target while preserving the age-specific shape.
-
-The scaling transformation is: \\M\_{scaled}(t) =
-\frac{M\_{raw}(t)}{\bar{M}\_{raw}} \times M\_{target}\\
-
-### Scaling Options
-
-**1. Survival probability to maximum age:**
-
-When no external mortality information is available, you can derive
-\\M\_{target}\\ from an assumed probability of surviving to maximum age:
-
-\\M\_{target} = \frac{-\ln(p)}{t\_{max}}\\
+You can combine stanfit objects with manual specifications:
 
 ``` r
-mort_scaled <- get_stochastic_mortality(
-  method   = "CW",
-  growth_fit = growth_fit,
-  sex      = 2,
-  scaled   = TRUE,
-  M_target = NULL,  # Triggers survival-based scaling
-  p        = 0.001  # 0.1% survive to tmax
+# Growth parameters from fit, maturity manual
+mort <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = growth_fit,     # Provides Linf, L0
+  Lmat       = c(83, 5),       # Manual
+  tmat       = c(47, 4),       # Manual
+  maturity_cor = 0.5,
+  sex        = 1
+)
+
+# Or use birth_fit for L0
+mort <- get_stochastic_mortality(
+  method    = "CW",
+  Linf      = c(126, 10),
+  birth_fit = birth_fit,       # Provides L0 from b50
+  Lmat      = c(83, 5),
+  tmat      = c(47, 4)
 )
 ```
 
-A common choice is \\p = 0.001\\ (0.1%), which implies that the
-instantaneous mortality rate, averaged over the lifespan, equals
-approximately \\-\ln(0.001)/t\_{max}\\. This is a conservative
-assumption for many elasmobranchs.
+### Parameter Priority
 
-**2. Hoenig-type empirical relationships:**
+When multiple sources are available:
 
-Hoenig (1983) and Then et al. (2015) provide regression relationships
-between maximum age and natural mortality. You can pass these as
-functions:
+| Parameter | Priority                                    |
+|-----------|---------------------------------------------|
+| Linf      | growth_fit \> manual                        |
+| L0        | growth_fit \> birth_fit \> manual           |
+| Lmat      | growth_fit \> length_maturity_fit \> manual |
+| tmat      | growth_fit \> age_maturity_fit \> manual    |
+
+## Covariance Handling
+
+### Why Covariance Matters
+
+Life history parameters are typically correlated. For maturity
+parameters, \\L\_{mat}\\ and \\t\_{mat}\\ are positively
+correlated—larger individuals tend to mature at older ages. Ignoring
+these correlations can generate biologically implausible parameter
+combinations and artificially inflate uncertainty bounds.
+
+### Correlation Scenarios
+
+**1. Full Correlation Preservation**
+
+When all parameters come from the same `growth_fit`:
 
 ``` r
-# Hoenig (1983) for fish
-hoenig_fish <- function(tmax) exp(1.46 - 1.01 * log(tmax))
+mort <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = growth_fit,  # Has Linf, L0, Lmat, tmat
+  sex        = 1
+)
+# Message: "All parameters from growth_fit - correlations fully preserved."
+```
 
-# Then et al. (2015) updated relationship
-then_2015 <- function(tmax) 4.899 * tmax^(-0.916)
+**2. Bivariate Normal Sampling**
 
-# With uncertainty in the relationship itself
-then_stochastic <- function(tmax) {
-  rnorm(1, 4.899, 0.327) * tmax^rnorm(1, -0.916, 0.043)
-}
+When \\L\_{mat}\\ and \\t\_{mat}\\ come from separate sources:
 
-mort_hoenig <- get_stochastic_mortality(
-  method   = "CW",
-  growth_fit = growth_fit,
-  sex      = 2,
-  scaled   = TRUE,
-  M_target = then_stochastic  # Function evaluated per iteration
+``` r
+mort <- get_stochastic_mortality(
+  method              = "CW",
+  growth_fit          = growth_fit,
+  length_maturity_fit = L50_fit,
+  age_maturity_fit    = t50_fit,
+  maturity_cor        = 0.6,
+  sex                 = 1
+)
+# Message: "Lmat and tmat from separate fits - using specified correlation (rho = 0.60)."
+```
+
+**3. Independent Sampling**
+
+Set `maturity_cor = 0` for independent sampling:
+
+``` r
+mort <- get_stochastic_mortality(
+  method       = "CW",
+  Linf         = c(126, 10),
+  L0           = c(35, 3),
+  Lmat         = c(83, 5),
+  tmat         = c(47, 4),
+  maturity_cor = 0,
+  growth_model = "vb"
 )
 ```
 
-**3. Fixed target value:**
+### Choosing `maturity_cor`
 
-If you have an independent mortality estimate (e.g., from catch curves
-or tagging), you can scale directly to that value:
+The default `maturity_cor = 0.5` reflects the biological expectation
+that larger individuals mature later. Alternatives:
 
-``` r
-mort_fixed <- get_stochastic_mortality(
-  method   = "L",
-  growth_fit = growth_fit,
-  sex      = 1,  # Females
-  scaled   = TRUE,
-  M_target = 0.15  # Fixed value from catch-curve analysis
-)
-```
+- **Estimate from data**: If you have paired observations
+- **Literature values**: Species-specific correlations from published
+  studies
+- **Set to NA**: Function attempts to estimate from aligned posterior
+  draws
 
-## Model Selection Guidelines
+## Mortality Models
 
-### When to Use Each Model
-
-**Chen-Watanabe** is typically preferred for elasmobranchs because:
-
-- It explicitly incorporates age-dependent processes through the growth
-  function
-- The two-phase extension captures senescence patterns observed in
-  long-lived species
-- The transition age can be informed by maturity data
-- It requires only von Bertalanffy parameters (no length-weight
-  relationship needed)
-
-**Peterson-Wroblewski** is useful when:
-
-- You want pure size-based mortality without age assumptions
-- Reliable length-weight parameters are available
-- You’re comparing across species with different growth patterns
-
-**Lorenzen** is advantageous when:
-
-- You want to incorporate uncertainty in the allometric relationship
-  itself
-- The growth-based formulation (2022) is attractive when length-weight
-  data are unavailable
-- Meta-analytic uncertainty is important for your application
-
-### Practical Decision Framework
-
-| Scenario                                   | Recommended Model       | Rationale                                       |
-|--------------------------------------------|-------------------------|-------------------------------------------------|
-| Long-lived elasmobranch with maturity data | CW two-phase            | Captures both juvenile and senescence mortality |
-| Unknown age structure, good size data      | Lorenzen (weight-based) | Size-dependent without age assumptions          |
-| Limited data, literature growth params     | CW single-phase         | Minimal parameter requirements                  |
-| Comparing across diverse taxa              | Peterson-Wroblewski     | Standardized allometric approach                |
-| No length-weight relationship              | Lorenzen (growth-based) | Uses only VB parameters                         |
-
-## Visualization
-
-### Color Palette Options
-
-vitalBayes provides several color palettes through
-[`vital_palette()`](https://brian-j-moe.github.io/vitalBayes/reference/vital_palette.md):
+### Chen-Watanabe (CW)
 
 ``` r
-# Synthwave (default) - vitalBayes hex sticker colors
-mort_synth <- get_stochastic_mortality(
-  method = "CW", growth_fit = growth_fit, sex = 2,
-  palette = "synthwave"
-)
-
-# Colorblind-friendly: Okabe-Ito palette
-mort_okabe <- get_stochastic_mortality(
-  method = "CW", growth_fit = growth_fit, sex = 2,
-  palette = "okabe"
-)
-
-# Viridis family
-mort_viridis <- get_stochastic_mortality(
-  method = "CW", growth_fit = growth_fit, sex = 2,
-  palette = "viridis"
-)
-
-# Custom colors
-mort_custom <- get_stochastic_mortality(
-  method = "CW", growth_fit = growth_fit, sex = 2,
-  fill_color = "#2E86AB",
-  line_color = "#A23B72"
-)
-```
-
-### Customizing Plots
-
-The returned plot is a ggplot2 object, so you can modify it further:
-
-``` r
-library(ggplot2)
-
-# Add annotations
-mort_cw$Plot +
-  geom_vline(xintercept = 12, linetype = "dashed", color = "gray40") +
-  annotate("text", x = 12.5, y = 0.4, label = "Age at maturity",
-           hjust = 0, size = 3) +
-  labs(title = "Spiny Dogfish Natural Mortality",
-       subtitle = "Chen-Watanabe model with Gompertz senescence")
-```
-
-### Comparing Models
-
-``` r
-# Fit all three models
 mort_cw <- get_stochastic_mortality(
-  method = "CW", growth_fit = growth_fit, sex = 2,
-  print_plot = FALSE
+  method     = "CW",
+  growth_fit = growth_fit,
+  sex        = 1,
+  scaled     = TRUE,
+  p          = 0.001
 )
+
+# With two-phase senescence
+mort_cw_2p <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = growth_fit,
+  sex        = 1,
+  two_phase  = TRUE,
+  late_model = "gompertz"
+)
+```
+
+### Peterson-Wroblewski (PW)
+
+``` r
+lw_func <- function(L) 0.0001 * L^3.1
 
 mort_pw <- get_stochastic_mortality(
-  method = "PW", growth_fit = growth_fit, sex = 2,
-  lw_fun = function(L) 0.0001 * L^3.1,  # Example L-W function
-  print_plot = FALSE
+  method     = "PW",
+  growth_fit = growth_fit,
+  sex        = 1,
+  lw_fun     = lw_func
 )
+```
 
+### Lorenzen (L)
+
+``` r
+# Growth-based
 mort_lor <- get_stochastic_mortality(
-  method = "L", growth_fit = growth_fit, sex = 2,
-  weight_based = FALSE,
-  print_plot = FALSE
+  method       = "L",
+  growth_fit   = growth_fit,
+  sex          = 1,
+  weight_based = FALSE
 )
 
-# Combine for comparison plot
-library(ggplot2)
-
-combined <- rbind(
-  mort_cw$Summary[, model := "Chen-Watanabe"],
-  mort_pw$Summary[, model := "Peterson-Wroblewski"],
-  mort_lor$Summary[, model := "Lorenzen"]
+# Weight-based
+mort_lor_wt <- get_stochastic_mortality(
+  method       = "L",
+  growth_fit   = growth_fit,
+  sex          = 1,
+  weight_based = TRUE,
+  lw_fun       = lw_func
 )
-
-ggplot(combined, aes(x = age_round)) +
-  geom_ribbon(aes(ymin = M_lower, ymax = M_upper, fill = model),
-              alpha = 0.3) +
-  geom_line(aes(y = M_median, color = model), linewidth = 1) +
-  scale_color_manual(values = vital_palette(3)) +
-  scale_fill_manual(values = vital_palette(3)) +
-  labs(x = "Age (years)", y = "Instantaneous Mortality (M)",
-       title = "Comparison of Mortality Models") +
-  theme_bw() +
-  theme(legend.position = "top")
 ```
 
-## Modular Mortality Functions
-
-For applications where you need mortality at specific ages without the
-full Monte Carlo machinery, vitalBayes exports the individual model
-functions:
+## Output Structure
 
 ``` r
-# Chen-Watanabe at specific ages
-ages <- c(0, 1, 5, 10, 20, 30)
-M_cw <- M_chen_watanabe(
-  age   = ages,
-  Linf  = 100,
-  k     = 0.08,
-  t0    = -1.5,
-  tmax  = 35,
-  tmat  = 12,
-  two_phase   = TRUE,
-  late_model  = "gompertz"
-)
+names(mort)
+#> [1] "Schedules"  "Parameters" "Summary"    "Plot"
 
-# Peterson-Wroblewski
-lw_func <- function(L) 0.0001 * L^3.1
-M_pw <- M_peterson_wroblewski(
-  age    = ages,
-  Linf   = 100,
-  k      = 0.08,
-  t0     = -1.5,
-  lw_fun = lw_func
-)
+# Schedules: age-specific M for each parameter set
+head(mort$Schedules)
 
-# Lorenzen (growth-based)
-M_lor <- M_lorenzen(
-  age          = ages,
-  Linf         = 100,
-  k            = 0.08,
-  t0           = -1.5,
-  weight_based = FALSE,
-  sample_params = FALSE  # Use mean values, not sampled
-)
+# Parameters: sampled values with derived quantities
+head(mort$Parameters)
 
-# View results
-data.table(age = ages, CW = M_cw, PW = M_pw, Lorenzen = M_lor)
+# Summary: age-wise statistics
+head(mort$Summary)
 ```
 
-The
-[`scale_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/scale_mortality.md)
-helper applies the scaling transformation:
+The plot caption indicates the correlation status and key model choices.
+
+## Scaling Mortality
 
 ``` r
-M_raw <- M_chen_watanabe(ages, Linf = 100, k = 0.08, t0 = -1.5, tmax = 35)
+# Survival probability (default)
+mort <- get_stochastic_mortality(
+  method = "CW", growth_fit = growth_fit, sex = 1,
+  scaled = TRUE, p = 0.001
+)
 
-# Scale to Hoenig target
-M_scaled <- scale_mortality(M_raw, M_target = then_2015, tmax = 35)
+# Empirical relationship
+then_2015 <- function(tmax) 4.899 * tmax^(-0.916)
+mort <- get_stochastic_mortality(
+  method = "CW", growth_fit = growth_fit, sex = 1,
+  scaled = TRUE, M_target = then_2015
+)
+
+# Fixed target
+mort <- get_stochastic_mortality(
+  method = "CW", growth_fit = growth_fit, sex = 1,
+  scaled = TRUE, M_target = 0.15
+)
 ```
 
-## Downstream Integration: Survival Simulation
-
-The mortality schedules from
-[`get_stochastic_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
-feed directly into
-[`simulate_survivorship()`](https://brian-j-moe.github.io/vitalBayes/reference/simulate_survivorship.md)
-for population projections:
+## Integration with Survivorship
 
 ``` r
-# Generate mortality schedules
 mort <- get_stochastic_mortality(
   method     = "CW",
   growth_fit = growth_fit,
-  maturity_fit = maturity_fit,
-  sex        = 2,
+  sex        = 1,
   iter       = 2000,
-  scaled     = TRUE,
-  p          = 0.001,
   print_plot = FALSE
 )
 
-# Simulate cohort survival
 surv <- simulate_survivorship(
   mc_object = mort,
-  n         = 50000,   # Cohort size
-  n_iter    = 2000,    # Simulation iterations
-  mode      = "random" # Sample parameter sets randomly
+  n         = 50000,
+  n_iter    = 2000
 )
 
-# View results
 surv$Aggregate$Age_of_Death
-#>     mean    sd  lower  upper
-#>    <num> <num>  <num>  <num>
-#> 1:  8.42  2.31   4.89  13.21
-
-surv$Aggregate$Survival_to_tmax
-#>       mean      sd    lower    upper
-#>      <num>   <num>    <num>    <num>
-#> 1: 0.00089 0.00041 0.000312 0.00178
+surv$Aggregate$Survival_to_tmat
 ```
-
-See
-[`vignette("survivorship_simulation")`](https://brian-j-moe.github.io/vitalBayes/articles/survivorship_simulation.md)
-for comprehensive coverage of survival analysis.
-
-## Troubleshooting
-
-| Issue                       | Possible Cause                               | Solution                                                                   |
-|-----------------------------|----------------------------------------------|----------------------------------------------------------------------------|
-| Negative mortality values   | CW two-phase Taylor expansion breakdown      | Function automatically caps; consider single-phase or different late_model |
-| Very wide uncertainty bands | Low correlation in posterior                 | Check growth model convergence; correlations should be substantial         |
-| Unrealistic tmax estimates  | Linf_factor too extreme                      | Reduce from 0.999 to 0.99 or 0.95                                          |
-| Missing tmat error          | CW needs age-at-maturity                     | Provide maturity_fit or manual tmat parameter                              |
-| lw_fun error                | PW/Lorenzen weight-based needs length-weight | Provide function: `lw_fun = function(L) a * L^b`                           |
 
 ## Reporting Results
 
-When reporting mortality estimates in publications, include:
+Document parameter sources, correlation handling, and model choices:
 
-1.  **Model specification**: Which model(s), scaling approach, parameter
-    sources
-2.  **Growth parameter source**: vitalBayes fit or literature values
-3.  **Key metrics**: Mean M, age-specific M at key life stages, tmax
-    estimate
-4.  **Uncertainty**: 95% credible intervals throughout
-
-Example methods text:
-
-> “Natural mortality was estimated using the Chen-Watanabe model (Chen &
-> Watanabe 1989) with Gompertz senescence, implemented via the
-> vitalBayes package (v1.0.0; Author Year). Von Bertalanffy growth
-> parameters were drawn from the joint posterior distribution of our
-> Bayesian growth model (n = 2,000 draws), preserving correlations
-> between \\L\_\infty\\, \\k\\, and \\t_0\\. Mortality schedules were
-> scaled to match the Then et al. (2015) empirical relationship,
-> yielding mean \\M = 0.18\\ yr\\^{-1}\\ (95% CI: 0.14–0.23) across all
-> ages, with juvenile mortality declining from \\M_0 = 0.45\\
-> yr\\^{-1}\\ at birth to \\M\_{10} = 0.12\\ yr\\^{-1}\\ at age 10.”
+> “Natural mortality was estimated using the Chen-Watanabe model within
+> the vitalBayes unified framework. Growth parameters (\\L\_\infty\\,
+> \\L_0\\) were drawn from the joint posterior of a von Bertalanffy
+> growth model, while maturity parameters (\\L\_{mat}\\, \\t\_{mat}\\)
+> were obtained from separate maturity ogive fits with assumed
+> correlation \\\rho = 0.5\\. Mortality schedules were scaled to achieve
+> 0.1% survival to maximum age (n = 2,000 Monte Carlo iterations).”
 
 ## See Also
 
-- [`vignette("survivorship_simulation")`](https://brian-j-moe.github.io/vitalBayes/articles/survivorship_simulation.md)
-  — Cohort survival analysis using mortality schedules
-- [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)
-  — Growth model fitting that feeds mortality estimation
-- [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
-  — Hierarchical models for sex-specific parameters
-- [Statistical
-  Background](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#mortality)
-  — Full mathematical derivations
+- [`vignette("survivorship_simulation")`](https://brian-j-moe.github.io/vitalBayes/articles/survivorship_simulation.md) -
+  Cohort survival analysis
+- [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md) -
+  Growth model fitting
+- [`vignette("chen_watanabe_reparameterization")`](https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.md) -
+  Mathematical framework
 
 ## References
 
@@ -583,22 +375,13 @@ Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
 coefficient in fish population dynamics. *Nippon Suisan Gakkaishi*,
 55(2), 205-208.
 
-Hoenig, J. M. (1983). Empirical use of longevity data to estimate
-mortality rates. *Fishery Bulletin*, 82(1), 898-903.
-
-Lorenzen, K. (1996). The relationship between body weight and natural
-mortality in juvenile and adult fish: a comparison of natural ecosystems
-and aquaculture. *Journal of Fish Biology*, 49(4), 627-642.
-
 Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish
-populations: Biology, models, implications, and a generalized
-length-inverse model. *Fisheries Research*, 255, 106454.
+populations. *Fisheries Research*, 255, 106454.
 
 Peterson, I., & Wroblewski, J. S. (1984). Mortality rate of fishes in
 the pelagic ecosystem. *Canadian Journal of Fisheries and Aquatic
 Sciences*, 41(7), 1117-1120.
 
-Then, A. Y., Hoenig, J. M., Hall, N. G., & Hewitt, D. A. (2015).
-Evaluating the predictive performance of empirical estimators of natural
-mortality rate using information on over 200 fish species. *ICES Journal
-of Marine Science*, 72(1), 82-92.
+Then, A. Y., et al. (2015). Evaluating the predictive performance of
+empirical estimators of natural mortality rate. *ICES Journal of Marine
+Science*, 72(1), 82-92.

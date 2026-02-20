@@ -84,656 +84,235 @@
 </h1>
 </div>
 <div class="section level2">
-<h2 id="from-birth-to-mortality-bayesian-vital-rates-for-elasmobranchs">From Birth to Mortality:<br>Bayesian Vital Rates for Elasmobranchs<a class="anchor" aria-label="anchor" href="#from-birth-to-mortality-bayesian-vital-rates-for-elasmobranchs"></a>
+<h2 id="bayesian-vital-rates-for-elasmobranchs">Bayesian Vital Rates for Elasmobranchs<a class="anchor" aria-label="anchor" href="#bayesian-vital-rates-for-elasmobranchs"></a>
 </h2>
 <!-- badges: start -->
 
-<p><code>vitalBayes</code> provides a coherent Bayesian framework for estimating population vital rates in elasmobranchs — from birth and maturity through growth to natural mortality and survival. The package implements hierarchical models via <a href="https://mc-stan.org/" class="external-link">Stan</a> with precompiled models for fast, reliable inference.</p>
-<p>The package addresses critical methodological challenges in elasmobranch research: sparse datasets, imbalanced sex ratios, strong parameter correlations, and the need for biologically coherent estimates that propagate uncertainty across life stages.</p>
-</div>
-<div class="section level2">
-<h2 id="why-vitalbayes">Why vitalBayes?<a class="anchor" aria-label="anchor" href="#why-vitalbayes"></a>
-</h2>
-<p>Elasmobranch vital rate estimation presents unique challenges:</p>
-<ul>
-<li>
-<strong>Sparse embryo samples</strong> make birth size estimation uncertain</li>
-<li>
-<strong>Imbalanced sex ratios</strong> lead to unreliable parameter estimates for the undersampled sex</li>
-<li>
-<strong>Strong parameter correlations</strong> (especially <span class="math inline">\(L_\infty\)</span> and <span class="math inline">\(k\)</span>) complicate growth model inference</li>
-<li>
-<strong>Mortality is rarely measured directly</strong> — it must be derived from life history parameters with appropriate uncertainty propagation</li>
-</ul>
-<p>vitalBayes addresses these challenges through:</p>
-<table class="table">
-<colgroup>
-<col width="52%">
-<col width="47%">
-</colgroup>
-<thead><tr class="header">
-<th>Challenge</th>
-<th>Solution</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Sparse data</td>
-<td>
-<strong>Partial pooling</strong> borrows strength across sexes without forcing identical parameters</td>
-</tr>
-<tr class="even">
-<td>Parameter correlation</td>
-<td>
-<strong>Maturity-based parameterization</strong> derives <span class="math inline">\(k\)</span> from observable maturity milestones</td>
-</tr>
-<tr class="odd">
-<td>Threshold estimation</td>
-<td>
-<strong>Probit link</strong> provides biologically intuitive interpretation for birth and maturity</td>
-</tr>
-<tr class="even">
-<td>Prior specification</td>
-<td>
-<strong>CV-based priors</strong> offer scale-invariant, intuitive parameter uncertainty</td>
-</tr>
-<tr class="odd">
-<td>Mortality uncertainty</td>
-<td>
-<strong>Joint posterior sampling</strong> preserves correlations when deriving mortality schedules</td>
-</tr>
-<tr class="even">
-<td>Reproducibility</td>
-<td>
-<strong>Precompiled Stan models</strong> ensure consistent, fast inference</td>
-</tr>
-</tbody>
-</table>
-<!--
-## Interactive Demo
-
-Explore how the three growth models (von Bertalanffy, Gompertz, Logistic) respond to changes in life history parameters.
-All curves pass through the same maturity point ($t_{mat}$, $L_{mat}$) — the growth coefficient $k$ is derived from these observable milestones rather than estimated directly.
-
-<div align="center">
-<iframe
-  src="growth_explorer.html"
-  width="100%"
-  height="650"
-  style="border: 2px solid #3D4466; border-radius: 12px; max-width: 1000px;"
-  loading="lazy">
-</iframe>
-</div>
-<p align="center"><em>First load may take 10-20 seconds while WebR initializes</em></p>
--->
+<p><code>vitalBayes</code> provides a coherent Bayesian framework for estimating vital rates in elasmobranchs—from birth and maturity through growth to natural mortality and survival. The package implements hierarchical models via <a href="https://mc-stan.org/" class="external-link">Stan</a> with precompiled models for fast, reliable inference.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>vitalBayes requires a working C++ toolchain for Stan. See the <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html" class="external-link">Getting started with CmdStanR</a> for setup instructions.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install dependencies</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, <span class="st">"instantiate"</span>, <span class="st">"data.table"</span>, <span class="st">"ggplot2"</span>, <span class="st">"loo"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, <span class="st">"instantiate"</span>, <span class="st">"data.table"</span>, <span class="st">"ggplot2"</span>, <span class="st">"loo"</span>, <span class="st">"pracma"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Install cmdstan (if not already installed)</span></span>
 <span><span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html" class="external-link">install_cmdstan</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Install vitalBayes from GitHub</span></span>
-<span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"Brian-J-Moe/vitalBayes"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="the-four-stage-workflow">The Four-Stage Workflow<a class="anchor" aria-label="anchor" href="#the-four-stage-workflow"></a>
+<h2 id="the-workflow">The Workflow<a class="anchor" aria-label="anchor" href="#the-workflow"></a>
 </h2>
-<p>vitalBayes implements an integrated workflow where information flows forward through life stages — from individual-level parameters to population-level vital rates:</p>
-<pre><code>  Birth      ───▶      Maturity      ───▶      Growth      ───▶    Mortality/Survival
-  (b₅₀)               (L₅₀, t₅₀)              (L∞, k, L₀)              (M, S(t))
-
-    │                     │                       │                       │
-    │                     │                       │                       │
-    ▼                     ▼                       ▼                       ▼
- Informs L₀            Informs               Derived from           Derived from
-  prior              Lmat, tmat             maturity params        growth posterior</code></pre>
-<p>Each stage produces posterior distributions that inform the next, creating a biologically coherent analysis with fully propagated uncertainty.</p>
-</div>
-<div class="section level2">
-<h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
-</h2>
+<p>vitalBayes implements an integrated four-stage workflow where posterior distributions flow forward through life stages:</p>
+<pre><code>Birth  ──▶  Maturity  ──▶  Growth  ──▶  Mortality/Survival
+(L₀)       (L₅₀, t₅₀)    (L∞, k)         (M, S(t))</code></pre>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Load example data (simulated von Bertalanffy growth data)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">growth_data</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
-<span><span class="co"># Stage 1: Birth Size</span></span>
-<span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
+<span><span class="co"># Stage 1: Birth size ─────────────────────────────────────────</span></span>
 <span><span class="va">birth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_birth.html">fit_bayesian_birth</a></span><span class="op">(</span></span>
 <span>  embryo_lts        <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">TRUE</span>, <span class="va">fl</span><span class="op">]</span>,</span>
 <span>  free_swimming_lts <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span>, <span class="va">fl</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">birth_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"b50"</span>, <span class="st">"transition_width"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
-<span><span class="co"># Stage 2: Maturity</span></span>
-<span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
+<span><span class="co"># Stage 2: Maturity ───────────────────────────────────────────</span></span>
 <span><span class="va">mat_data</span> <span class="op">&lt;-</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
-<span><span class="co"># Length-at-maturity with partial pooling for imbalanced sexes</span></span>
 <span><span class="va">L50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
-<span>  maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
-<span>  lt          <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data        <span class="op">=</span> <span class="va">mat_data</span>,</span>
-<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, lt <span class="op">=</span> <span class="st">"fl"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">mat_data</span>, use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">L50_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"L50"</span>, <span class="st">"L50_diff"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Age-at-maturity</span></span>
 <span><span class="va">t50_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
-<span>  maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
-<span>  age         <span class="op">=</span> <span class="st">"age"</span>,</span>
-<span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data        <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  maturity <span class="op">=</span> <span class="st">"mat"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">mat_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>, use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
-<span><span class="co"># Stage 3: Growth (maturity-based parameterization)</span></span>
-<span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
+<span><span class="co"># Stage 3: Growth ─────────────────────────────────────────────</span></span>
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt        <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age       <span class="op">=</span> <span class="st">"age"</span>,</span>
-<span>  sex       <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data      <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  model     <span class="op">=</span> <span class="st">"vb"</span>,</span>
-<span>  k_based   <span class="op">=</span> <span class="cn">FALSE</span>,        <span class="co"># Use maturity-based parameterization</span></span>
-<span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>,    <span class="co"># L₀ prior from birth model</span></span>
-<span>  L50_fit   <span class="op">=</span> <span class="va">L50_fit</span>,      <span class="co"># Lmat prior</span></span>
-<span>  t50_fit   <span class="op">=</span> <span class="va">t50_fit</span>,      <span class="co"># tmat prior</span></span>
+<span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>  model   <span class="op">=</span> <span class="st">"vb"</span>,</span>
+<span>  k_based <span class="op">=</span> <span class="cn">FALSE</span>,      <span class="co"># Maturity-based parameterization</span></span>
+<span>  birth_stanfit         <span class="op">=</span> <span class="va">birth_fit</span>,</span>
+<span>  length.mature_stanfit <span class="op">=</span> <span class="va">L50_fit</span>,</span>
+<span>  age.mature_stanfit    <span class="op">=</span> <span class="va">t50_fit</span>,</span>
 <span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">growth_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Linf"</span>, <span class="st">"L0"</span>, <span class="st">"k"</span>, <span class="st">"Lmat"</span>, <span class="st">"tmat"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
-<span><span class="co"># Stage 4: Mortality &amp; Survival</span></span>
-<span><span class="co"># ─────────────────────────────────────────────────────────────</span></span>
-<span><span class="co"># Generate age-specific mortality schedules with uncertainty</span></span>
+<span><span class="co"># Stage 4: Mortality &amp; Survival ───────────────────────────────</span></span>
 <span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method       <span class="op">=</span> <span class="st">"CW"</span>,           <span class="co"># Chen-Watanabe model</span></span>
-<span>  growth_fit   <span class="op">=</span> <span class="va">growth_fit</span>,     <span class="co"># Joint posterior sampling</span></span>
-<span>  maturity_fit <span class="op">=</span> <span class="va">t50_fit</span>,        <span class="co"># Age-at-maturity for two-phase CW</span></span>
-<span>  sex          <span class="op">=</span> <span class="fl">2</span>,              <span class="co"># Males</span></span>
-<span>  iter         <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  scaled       <span class="op">=</span> <span class="cn">TRUE</span>,           <span class="co"># Scale to survival probability</span></span>
-<span>  p            <span class="op">=</span> <span class="fl">0.001</span>           <span class="co"># 0.1% survive to tmax</span></span>
+<span>  method       <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>  Linf <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">8</span><span class="op">)</span>, L0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">3</span><span class="op">)</span>, Lmat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">5</span><span class="op">)</span>, tmat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  growth_model <span class="op">=</span> <span class="st">"vb"</span>,</span>
+<span>  iter <span class="op">=</span> <span class="fl">2000</span>, scaled <span class="op">=</span> <span class="cn">TRUE</span>, p <span class="op">=</span> <span class="fl">0.001</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Simulate cohort survival</span></span>
-<span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
-<span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
-<span>  n         <span class="op">=</span> <span class="fl">50000</span>,             <span class="co"># Cohort size</span></span>
-<span>  n_iter    <span class="op">=</span> <span class="fl">2000</span>               <span class="co"># Simulation iterations</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Key demographic metrics</span></span>
-<span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Age_of_Death</span>      <span class="co"># Mean lifespan with 95% CI</span></span>
-<span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmat</span>  <span class="co"># Probability of reaching maturity</span></span></code></pre></div>
+<span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span>mc_object <span class="op">=</span> <span class="va">mort</span>, n <span class="op">=</span> <span class="fl">50000</span>, n_iter <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
+<span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Age_of_Death</span></span>
+<span><span class="va">surv</span><span class="op">$</span><span class="va">Aggregate</span><span class="op">$</span><span class="va">Survival_to_tmat</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="key-methodological-features">Key Methodological Features<a class="anchor" aria-label="anchor" href="#key-methodological-features"></a>
+</h2>
+<div class="section level3">
+<h3 id="maturity-based-growth-parameterization">Maturity-Based Growth Parameterization<a class="anchor" aria-label="anchor" href="#maturity-based-growth-parameterization"></a>
+</h3>
+<p>The growth coefficient <em>k</em> is derived from observable maturity milestones (L₅₀, t₅₀) rather than estimated directly. This breaks the notorious L∞–k correlation and anchors the growth curve to data within the observed range. Supports von Bertalanffy, Gompertz, and Logistic models.</p>
+</div>
+<div class="section level3">
+<h3 id="partial-pooling-for-imbalanced-data">Partial Pooling for Imbalanced Data<a class="anchor" aria-label="anchor" href="#partial-pooling-for-imbalanced-data"></a>
+</h3>
+<p>Hierarchical models borrow strength across sexes when sample sizes are unequal—common in elasmobranch research. The sparse sex gets regularized estimates without assuming identical parameters. Selective pooling prevents “double-pooling” when maturity priors are themselves pooled.</p>
+</div>
+<div class="section level3">
+<h3 id="unified-mortality-framework">Unified Mortality Framework<a class="anchor" aria-label="anchor" href="#unified-mortality-framework"></a>
+</h3>
+<p>Natural mortality uses a consistent formulation across growth models: M(t) = M∞ / G(t), where M∞ is computed from biological milestones and G(t) uses the native growth trajectory. This ensures comparable survival predictions regardless of which growth model best fits your data.</p>
+</div>
+<div class="section level3">
+<h3 id="probit-link-for-thresholds">Probit Link for Thresholds<a class="anchor" aria-label="anchor" href="#probit-link-for-thresholds"></a>
+</h3>
+<p>Birth size and maturity ogives use probit rather than logit links, providing direct interpretation as cumulative normal distributions of developmental thresholds.</p>
+</div>
+<div class="section level3">
+<h3 id="cv-based-priors">CV-Based Priors<a class="anchor" aria-label="anchor" href="#cv-based-priors"></a>
+</h3>
+<p>Prior uncertainty is specified via coefficient of variation—intuitive, scale-invariant, and easily communicated (e.g., “20% uncertainty on L∞”).</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="supported-models">Supported Models<a class="anchor" aria-label="anchor" href="#supported-models"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="55%">
+<col width="45%">
+</colgroup>
+<thead><tr class="header">
+<th>Component</th>
+<th>Options</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><strong>Growth</strong></td>
+<td>von Bertalanffy, Gompertz, Logistic</td>
+</tr>
+<tr class="even">
+<td><strong>Mortality</strong></td>
+<td>Chen-Watanabe (with optional two-phase senescence), Peterson-Wroblewski, Lorenzen</td>
+</tr>
+<tr class="odd">
+<td><strong>Pooling</strong></td>
+<td>None, partial (hierarchical), or selective</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section level2">
 <h2 id="example-datasets">Example Datasets<a class="anchor" aria-label="anchor" href="#example-datasets"></a>
 </h2>
-<p>vitalBayes includes three simulated datasets for demonstrations and testing:</p>
 <table class="table">
-<colgroup>
-<col width="19%">
-<col width="28%">
-<col width="30%">
-<col width="21%">
-</colgroup>
 <thead><tr class="header">
 <th>Dataset</th>
-<th>Description</th>
-<th>Sample Sizes</th>
-<th>Best For</th>
+<th>Sex Ratio</th>
+<th>Use Case</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td><code>growth_data</code></td>
-<td>Balanced, comprehensive</td>
-<td>189F, 176M, 26 embryos</td>
-<td>Main workflow, documentation</td>
+<td>189F, 176M</td>
+<td>Main workflow examples</td>
 </tr>
 <tr class="even">
 <td><code>imbalanced_data</code></td>
-<td>Imbalanced sex ratio</td>
-<td>150F, 34M, 13 embryos</td>
+<td>150F, 34M</td>
 <td>Partial pooling demonstrations</td>
 </tr>
 <tr class="odd">
 <td><code>limited_data</code></td>
-<td>Small sample sizes</td>
-<td>24F, 18M, 5 embryos</td>
+<td>24F, 18M</td>
 <td>Prior sensitivity analysis</td>
 </tr>
 </tbody>
 </table>
-<p>All datasets share the same structure with columns: <code>sex</code>, <code>mat</code>, <code>fl</code>, <code>age</code>, <code>embryo</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
 </h2>
-<p>vitalBayes includes publication-ready plotting functions with its signature synthwave color palette:</p>
+<p>Publication-ready plots with a signature synthwave palette:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Growth curves with credible intervals</span></span>
-<span><span class="fu"><a href="reference/plot_growth_curve.html">plot_growth_curve</a></span><span class="op">(</span></span>
-<span>  fit        <span class="op">=</span> <span class="va">growth_fit</span>,</span>
-<span>  data       <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  age_col    <span class="op">=</span> <span class="st">"age"</span>,</span>
-<span>  length_col <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  sex_col    <span class="op">=</span> <span class="st">"sex"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Maturity ogives</span></span>
-<span><span class="fu"><a href="reference/plot_maturity_ogive.html">plot_maturity_ogive</a></span><span class="op">(</span></span>
-<span>  fit  <span class="op">=</span> <span class="va">L50_fit</span>,</span>
-<span>  type <span class="op">=</span> <span class="st">"length"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">mat_data</span>,</span>
-<span>  x_col <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  maturity_col <span class="op">=</span> <span class="st">"mat"</span>,</span>
-<span>  sex_col <span class="op">=</span> <span class="st">"sex"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Mortality schedules</span></span>
-<span><span class="va">mort</span><span class="op">$</span><span class="va">Plot</span>  <span class="co"># Auto-generated by get_stochastic_mortality()</span></span>
-<span></span>
-<span><span class="co"># Survivorship curves</span></span>
-<span><span class="va">surv</span><span class="op">$</span><span class="va">Plot</span>  <span class="co"># Auto-generated by simulate_survivorship()</span></span>
-<span></span>
-<span><span class="co"># Compare growth models</span></span>
-<span><span class="fu"><a href="reference/compare_growth_models.html">compare_growth_models</a></span><span class="op">(</span></span>
-<span>  <span class="st">"von Bertalanffy"</span> <span class="op">=</span> <span class="va">vb_fit</span>,</span>
-<span>  <span class="st">"Gompertz"</span>        <span class="op">=</span> <span class="va">gomp_fit</span>,</span>
-<span>  <span class="st">"Logistic"</span>        <span class="op">=</span> <span class="va">logis_fit</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="colorblind-safe-palettes">Colorblind-Safe Palettes<a class="anchor" aria-label="anchor" href="#colorblind-safe-palettes"></a>
-</h3>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Check available palettes</span></span>
-<span><span class="fu"><a href="reference/list_vital_palettes.html">list_vital_palettes</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Use colorblind-safe alternatives</span></span>
-<span><span class="fu"><a href="reference/plot_growth_curve.html">plot_growth_curve</a></span><span class="op">(</span><span class="va">growth_fit</span>, data <span class="op">=</span> <span class="va">growth_data</span>, palette <span class="op">=</span> <span class="st">"okabe"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Available palettes: synthwave (default), viridis, okabe, plasma, inferno</span></span>
-<span><span class="fu"><a href="reference/vital_palette.html">vital_palette</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">4</span>, type <span class="op">=</span> <span class="st">"okabe"</span><span class="op">)</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level2">
-<h2 id="model-comparison">Model Comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a>
-</h2>
-<p>Compare alternative models using leave-one-out cross-validation:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Compute LOO-CV</span></span>
-<span><span class="va">loo_vb</span>   <span class="op">&lt;-</span> <span class="fu"><a href="reference/compute_loo.html">compute_loo</a></span><span class="op">(</span><span class="va">vb_fit</span><span class="op">)</span></span>
-<span><span class="va">loo_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/compute_loo.html">compute_loo</a></span><span class="op">(</span><span class="va">gomp_fit</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Compare models</span></span>
-<span><span class="fu"><a href="reference/compare_loo.html">compare_loo</a></span><span class="op">(</span></span>
-<span>  <span class="st">"von Bertalanffy"</span> <span class="op">=</span> <span class="va">loo_vb</span>,</span>
-<span>  <span class="st">"Gompertz"</span>        <span class="op">=</span> <span class="va">loo_gomp</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Publication-ready table</span></span>
-<span><span class="fu"><a href="reference/create_loo_table.html">create_loo_table</a></span><span class="op">(</span></span>
-<span>  <span class="st">"von Bertalanffy"</span> <span class="op">=</span> <span class="va">loo_vb</span>,</span>
-<span>  <span class="st">"Gompertz"</span>        <span class="op">=</span> <span class="va">loo_gomp</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="key-innovations">Key Innovations<a class="anchor" aria-label="anchor" href="#key-innovations"></a>
-</h2>
-<div class="section level3">
-<h3 id="id_1-maturity-based-growth-parameterization">1. Maturity-Based Growth Parameterization<a class="anchor" aria-label="anchor" href="#id_1-maturity-based-growth-parameterization"></a>
-</h3>
-<p>Traditional growth models estimate <span class="math inline">\(k\)</span> directly, but <span class="math inline">\(k\)</span> and <span class="math inline">\(L_\infty\)</span> are strongly negatively correlated (often <em>r</em> &lt; −0.9), making both poorly identified when data don’t extend to near-asymptotic sizes.</p>
-<p><strong>Our solution:</strong> Derive <span class="math inline">\(k\)</span> from observable maturity milestones:</p>
-<p><span class="math display">\[k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
-<p>This parameterization uses quantities that fall within the data range (<span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span>), ensures biological consistency by forcing the growth curve through the maturity point, and propagates uncertainty from upstream maturity models.</p>
-</div>
-<div class="section level3">
-<h3 id="id_2-probit-link-for-threshold-models">2. Probit Link for Threshold Models<a class="anchor" aria-label="anchor" href="#id_2-probit-link-for-threshold-models"></a>
-</h3>
-<p>Both birth and maturity models use a probit link function rather than the more commonly used logit. The probit link assumes that underlying developmental readiness is normally distributed across individuals. An individual transitions (births or matures) when this latent readiness crosses a threshold.</p>
-<p><strong>Why probit?</strong> Normal variation in developmental readiness is biologically plausible, the transition width (<span class="math inline">\(x_{95}\)</span> − <span class="math inline">\(x_{05}\)</span>) has units of the predictor (cm or years), and derived quantities (<span class="math inline">\(L_{05}\)</span>, <span class="math inline">\(L_{95}\)</span>) have direct biological interpretation.</p>
-</div>
-<div class="section level3">
-<h3 id="id_3-partial-pooling-for-imbalanced-sex-ratios">3. Partial Pooling for Imbalanced Sex Ratios<a class="anchor" aria-label="anchor" href="#id_3-partial-pooling-for-imbalanced-sex-ratios"></a>
-</h3>
-<p><strong>The problem:</strong> Elasmobranch sampling frequently yields imbalanced sex ratios. A dataset might contain 150 females but only 34 males. Fitting separate models produces wide, unreliable credible intervals for the sparse sex, estimates driven by a few influential observations, and inefficient use of information (both sexes are the same species).</p>
-<p>Complete pooling (ignoring sex) is biologically unrealistic. No pooling (fully separate) wastes information.</p>
-<p><strong>Our solution:</strong> Partial pooling models sex-specific parameters as draws from a common distribution:</p>
-<p><span class="math display">\[\log(\theta_s) = \mu + \tau \cdot \eta_s, \quad \eta_s \sim \mathcal{N}(0, 1)\]</span></p>
-<p>where μ is the population mean, τ is between-sex standard deviation, and η<sub>s</sub> are standardized sex deviations. The model <strong>learns τ from the data</strong>: if sexes appear similar, estimates shrink together; if sexes appear different, estimates stay separated; sparse sex borrows strength from data-rich sex.</p>
-<p><strong>Non-centered parameterization:</strong> We use the non-centered form (estimating η rather than θ directly) because it dramatically improves MCMC sampling when τ is small.</p>
-<p><strong>Half-normal prior on τ:</strong> We place τ ~ Half-Normal(0, σ<sub>τ</sub>) rather than the commonly-used half-Cauchy. The half-Cauchy’s heavy tails can pull τ toward implausibly large values, especially with only two groups.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Enable partial pooling (especially useful for imbalanced data)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">imbalanced_data</span><span class="op">)</span>  <span class="co"># 150 females, 34 males</span></span>
-<span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_maturity.html">fit_bayesian_maturity</a></span><span class="op">(</span></span>
-<span>  maturity    <span class="op">=</span> <span class="st">"mat"</span>,</span>
-<span>  lt          <span class="op">=</span> <span class="st">"fl"</span>, </span>
-<span>  sex         <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data        <span class="op">=</span> <span class="va">imbalanced_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
-<span>  use_pooling <span class="op">=</span> <span class="cn">TRUE</span>,    <span class="co"># Hierarchical structure</span></span>
-<span>  prior_tau   <span class="op">=</span> <span class="fl">0.5</span>      <span class="co"># Half-normal scale (on log scale)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Sex-specific estimates with appropriate shrinkage</span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"L50"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Between-sex difference (still estimable!)</span></span>
-<span><span class="va">fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="st">"L50_diff"</span><span class="op">)</span></span></code></pre></div>
-<p>See <code><a href="articles/partial_pooling.html">vignette("partial_pooling")</a></code> for a comprehensive treatment.</p>
-</div>
-<div class="section level3">
-<h3 id="id_4-constrained-asymptotic-length-l_infty--l_max">4. Constrained Asymptotic Length (<span class="math inline">\(L_\infty\)</span> &gt; <span class="math inline">\(L_{max}\)</span>)<a class="anchor" aria-label="anchor" href="#id_4-constrained-asymptotic-length-l_infty--l_max"></a>
-</h3>
-<p><strong>The problem:</strong> Unconstrained growth models frequently converge on <span class="math inline">\(L_\infty\)</span> values <em>below</em> the largest observed individuals — biologically impossible, yet common when data don’t extend to ages near asymptotic size.</p>
-<p><strong>Our solution:</strong> vitalBayes enforces <span class="math inline">\(L_\infty\)</span> &gt; <span class="math inline">\(L_{max}\)</span> through a shifted lognormal prior:</p>
-<p><span class="math display">\[L_\infty = L_{max} + \exp(\nu), \quad \nu \sim \mathcal{N}(\mu_\nu, \sigma_\nu)\]</span></p>
-<p>This ensures <span class="math inline">\(L_\infty\)</span> always exceeds the maximum observed length while still allowing uncertainty about <em>how much</em> it exceeds it.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Lmax is auto-detected from data</span></span>
-<span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co"># Message: "Lmax from data: 98.5 cm (female), 87.2 cm (male)"</span></span>
-<span></span>
-<span><span class="co"># Or specify manually</span></span>
-<span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
-<span>  Lmax <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">90</span><span class="op">)</span>  <span class="co"># Female, Male</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="id_5-growth-model-agnostic-mortality-estimation">5. Growth-Model-Agnostic Mortality Estimation<a class="anchor" aria-label="anchor" href="#id_5-growth-model-agnostic-mortality-estimation"></a>
-</h3>
-<p><strong>The problem:</strong> The Chen-Watanabe mortality model was derived under von Bertalanffy growth assumptions, requiring specifically the VB growth coefficient <span class="math inline">\(k\)</span>. But the VB model often performs poorly on elasmobranch data — when adult observations are sparse, it tends to produce biologically implausible <span class="math inline">\(L_\infty\)</span> estimates (sometimes below observed maximum lengths). Gompertz and Logistic models frequently fit better, but traditionally couldn’t be used with Chen-Watanabe.</p>
-<p><strong>Our solution:</strong> vitalBayes computes a <strong>VB-equivalent <span class="math inline">\(k\)</span></strong> from biological milestones that all growth models estimate:</p>
-<p><span class="math display">\[k_{VB}^{equiv} = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
-<p>This is the growth coefficient that would produce a von Bertalanffy curve passing through the same biological milestones — regardless of which growth model generated them. Users can fit whichever model best describes their data and still use Chen-Watanabe mortality estimation.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Fit Gompertz (assume it fits your data better than VB)</span></span>
-<span><span class="va">gomp_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt      <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age     <span class="op">=</span> <span class="st">"age"</span>,</span>
-<span>  sex     <span class="op">=</span> <span class="st">"sex"</span>,</span>
-<span>  data    <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  model   <span class="op">=</span> <span class="st">"gompertz"</span>,    <span class="co"># Not VB!</span></span>
-<span>  k_based <span class="op">=</span> <span class="cn">FALSE</span>,         <span class="co"># Maturity-based parameterization required</span></span>
-<span>  birth_fit <span class="op">=</span> <span class="va">birth_fit</span>,</span>
-<span>  L50_fit   <span class="op">=</span> <span class="va">L50_fit</span>,</span>
-<span>  t50_fit   <span class="op">=</span> <span class="va">t50_fit</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Chen-Watanabe mortality from Gompertz fit — this works automatically</span></span>
-<span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>,   <span class="co"># Any growth model</span></span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  iter       <span class="op">=</span> <span class="fl">2000</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># The function extracts (Linf, L0, Lmat, tmat) from Gompertz posterior</span></span>
-<span><span class="co"># and computes VB-equivalent k internally</span></span></code></pre></div>
-<p>See <code><a href="articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code> for the full mathematical derivation.</p>
-</div>
-<div class="section level3">
-<h3 id="id_6-l₀-parameterized-chen-watanabe">6. L₀-Parameterized Chen-Watanabe<a class="anchor" aria-label="anchor" href="#id_6-l%E2%82%80-parameterized-chen-watanabe"></a>
-</h3>
-<p><strong>The problem:</strong> The traditional Chen-Watanabe formulation uses <span class="math inline">\(t_0\)</span> (theoretical age at length zero) — a mathematical artifact with no biological interpretation that can take implausible values when growth data are sparse.</p>
-<p><strong>Our solution:</strong> vitalBayes implements an <strong>L₀-parameterized</strong> Chen-Watanabe that eliminates <span class="math inline">\(t_0\)</span> entirely:</p>
-<p><span class="math display">\[M(t) = \frac{k \cdot L_\infty}{L(t)}\]</span></p>
-<p>where <span class="math inline">\(L(t)\)</span> is predicted length at age. This reveals the biological mechanism: mortality is inversely proportional to body size. The ratio <span class="math inline">\(L_\infty / L(t)\)</span> represents how far an organism is from its maximum size — smaller individuals experience higher mortality.</p>
-<p>This reformulation uses observable quantities (<span class="math inline">\(L_0\)</span>, birth length) rather than mathematical abstractions, aligning with vitalBayes’s philosophy of parameterizing with biology, not mathematics.</p>
-</div>
-<div class="section level3">
-<h3 id="id_7-joint-posterior-sampling-for-mortality">7. Joint Posterior Sampling for Mortality<a class="anchor" aria-label="anchor" href="#id_7-joint-posterior-sampling-for-mortality"></a>
-</h3>
-<p><strong>The problem:</strong> Mortality models require growth parameters as inputs. Traditional approaches specify these as independent point estimates with uncertainty — e.g., <span class="math inline">\(L_\infty \sim N(100, 5)\)</span> and <span class="math inline">\(k \sim N(0.1, 0.02)\)</span> — ignoring that these parameters are typically strongly correlated in the posterior.</p>
-<p>Independent sampling occasionally generates biologically implausible combinations (high <span class="math inline">\(L_\infty\)</span> with high <span class="math inline">\(k\)</span>) that never appeared in the original growth model posterior, artificially inflating mortality uncertainty.</p>
-<p><strong>Our solution:</strong> <code><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code> accepts vitalBayes growth fits directly, drawing from the <strong>joint posterior distribution</strong>. Parameter correlations are preserved, yielding mortality schedules with narrower but more honest uncertainty intervals.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Traditional approach (ignores correlations)</span></span>
-<span><span class="va">mort_naive</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  Linf   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">5</span><span class="op">)</span>,   <span class="co"># Specified as mean, sd</span></span>
-<span>  L0     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  k      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.02</span><span class="op">)</span>,</span>
-<span>  tmat   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># vitalBayes approach (preserves correlations)</span></span>
-<span><span class="va">mort_joint</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,  <span class="co"># Full posterior</span></span>
-<span>  sex        <span class="op">=</span> <span class="fl">2</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="id_8-multiple-mortality-models">8. Multiple Mortality Models<a class="anchor" aria-label="anchor" href="#id_8-multiple-mortality-models"></a>
-</h3>
-<p>vitalBayes implements three natural mortality models, each with distinct assumptions:</p>
-<table class="table">
-<colgroup>
-<col width="23%">
-<col width="33%">
-<col width="43%">
-</colgroup>
-<thead><tr class="header">
-<th>Model</th>
-<th>Best For</th>
-<th>Key Feature</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><strong>Chen-Watanabe</strong></td>
-<td>Species with distinct life phases</td>
-<td>L₀-parameterized, two-phase senescence option</td>
-</tr>
-<tr class="even">
-<td><strong>Peterson-Wroblewski</strong></td>
-<td>Weight-mortality relationships</td>
-<td>Allometric: <span class="math inline">\(M \propto W^{-0.25}\)</span>
-</td>
-</tr>
-<tr class="odd">
-<td><strong>Lorenzen</strong></td>
-<td>General applications</td>
-<td>Growth-based or weight-based formulations</td>
-</tr>
-</tbody>
-</table>
-<p>All models work with any growth model fit (VB, Gompertz, or Logistic) through the VB-equivalent <span class="math inline">\(k\)</span> derivation.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Chen-Watanabe with Gompertz senescence (from any growth model)</span></span>
-<span><span class="va">mort_cw</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"CW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>,   <span class="co"># Works with Gompertz, VB, or Logistic</span></span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  two_phase  <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  late_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Peterson-Wroblewski (requires length-weight function)</span></span>
-<span><span class="va">lw_fun</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span><span class="op">)</span> <span class="fl">0.0001</span> <span class="op">*</span> <span class="va">L</span><span class="op">^</span><span class="fl">3.1</span></span>
-<span><span class="va">mort_pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method     <span class="op">=</span> <span class="st">"PW"</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="va">gomp_fit</span>,</span>
-<span>  sex        <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  lw_fun     <span class="op">=</span> <span class="va">lw_fun</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Lorenzen growth-based (no L-W function needed)</span></span>
-<span><span class="va">mort_lor</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
-<span>  method       <span class="op">=</span> <span class="st">"L"</span>,</span>
-<span>  growth_fit   <span class="op">=</span> <span class="va">gomp_fit</span>,</span>
-<span>  sex          <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="id_9-cv-based-prior-elicitation">9. CV-Based Prior Elicitation<a class="anchor" aria-label="anchor" href="#id_9-cv-based-prior-elicitation"></a>
-</h3>
-<p><strong>The problem:</strong> Specifying priors on log-transformed parameters is unintuitive. What does σ = 0.5 on log(<span class="math inline">\(L_{50}\)</span>) mean in practical terms?</p>
-<p><strong>Our solution:</strong> vitalBayes uses <strong>coefficient of variation (CV)</strong> for prior specification. The CV expresses uncertainty as a proportion of the mean — a scale-invariant, intuitive quantity.</p>
-<p><strong>Example:</strong> Setting <code>CV_Linf = 0.2</code> for a species with expected <span class="math inline">\(L_\infty\)</span> ≈ 100 cm means prior SD ≈ 20 cm and 95% prior interval ≈ 60–140 cm.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
-<span>  lt   <span class="op">=</span> <span class="st">"fl"</span>,</span>
-<span>  age  <span class="op">=</span> <span class="st">"age"</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">]</span>,</span>
-<span>  </span>
-<span>  <span class="co"># Intuitive CV-based priors</span></span>
-<span>  CV_Linf <span class="op">=</span> <span class="fl">0.20</span>,    <span class="co"># 20% uncertainty on asymptotic length</span></span>
-<span>  CV_L0   <span class="op">=</span> <span class="fl">0.30</span>,    <span class="co"># 30% uncertainty on birth length</span></span>
-<span>  CV_Lmat <span class="op">=</span> <span class="fl">0.20</span>,    <span class="co"># 20% uncertainty on length-at-maturity</span></span>
-<span>  CV_tmat <span class="op">=</span> <span class="fl">0.30</span>     <span class="co"># 30% uncertainty on age-at-maturity</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="id_10-automatic-multilingual-sex-coding">10. Automatic Multilingual Sex Coding<a class="anchor" aria-label="anchor" href="#id_10-automatic-multilingual-sex-coding"></a>
-</h3>
-<p>vitalBayes automatically detects sex coding in multiple languages:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># All of these work automatically:</span></span>
-<span><span class="co"># English:    "F"/"M", "Female"/"Male"</span></span>
-<span><span class="co"># Spanish:    "H"/"M", "Hembra"/"Macho"</span></span>
-<span><span class="co"># Portuguese: "F"/"M", "Fêmea"/"Macho"</span></span>
-<span><span class="co"># French:     "F"/"M", "Femelle"/"Mâle"</span></span>
-<span><span class="co"># German:     "W"/"M", "Weibchen"/"Männchen"</span></span>
-<span><span class="co"># Japanese:   "メス"/"オス", "雌"/"雄"</span></span>
-<span><span class="co"># Chinese:    "母"/"公", "雌"/"雄"</span></span>
-<span><span class="co"># Russian:    "Ж"/"М", "Самка"/"Самец"</span></span>
-<span><span class="co"># Symbols:    "♀"/"♂"</span></span>
-<span><span class="co"># Numeric:    1/2 (female/male)</span></span></code></pre></div>
-</div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/plot_growth_curve.html">plot_growth_curve</a></span><span class="op">(</span><span class="va">growth_fit</span>, data <span class="op">=</span> <span class="va">gdata</span>, age_col <span class="op">=</span> <span class="st">"age"</span>, length_col <span class="op">=</span> <span class="st">"fl"</span>, sex_col <span class="op">=</span> <span class="st">"sex"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/plot_maturity_ogive.html">plot_maturity_ogive</a></span><span class="op">(</span><span class="va">L50_fit</span>, type <span class="op">=</span> <span class="st">"length"</span>, data <span class="op">=</span> <span class="va">mat_data</span><span class="op">)</span></span></code></pre></div>
+<p>Multilingual axis labels and automatic sex code detection (English, Spanish, Portuguese, French, German, Japanese, Chinese, Russian).</p>
 </div>
 <div class="section level2">
 <h2 id="vignettes">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"></a>
 </h2>
 <table class="table">
-<colgroup>
-<col width="43%">
-<col width="56%">
-</colgroup>
 <thead><tr class="header">
+<th>Topic</th>
 <th>Vignette</th>
-<th>Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
+<td>Birth size</td>
 <td><code><a href="articles/fit_bayesian_birth.html">vignette("fit_bayesian_birth")</a></code></td>
-<td>Birth size estimation</td>
 </tr>
 <tr class="even">
+<td>Maturity ogives</td>
 <td><code><a href="articles/fit_bayesian_maturity.html">vignette("fit_bayesian_maturity")</a></code></td>
-<td>L₅₀ and t₅₀ estimation</td>
 </tr>
 <tr class="odd">
+<td>Growth models</td>
 <td><code><a href="articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code></td>
-<td>Growth models with maturity-based parameterization</td>
 </tr>
 <tr class="even">
+<td>Partial pooling</td>
 <td><code><a href="articles/partial_pooling.html">vignette("partial_pooling")</a></code></td>
-<td>Hierarchical modeling for imbalanced data</td>
 </tr>
 <tr class="odd">
+<td>Mortality estimation</td>
 <td><code><a href="articles/mortality_estimation.html">vignette("mortality_estimation")</a></code></td>
-<td>Natural mortality models and uncertainty propagation</td>
 </tr>
 <tr class="even">
+<td>Mortality framework</td>
 <td><code><a href="articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code></td>
-<td>L₀ parameterization and growth-model-agnostic k derivation</td>
 </tr>
 <tr class="odd">
+<td>Survival simulation</td>
 <td><code><a href="articles/survivorship_simulation.html">vignette("survivorship_simulation")</a></code></td>
-<td>Cohort survival analysis</td>
 </tr>
 <tr class="even">
-<td><code><a href="articles/visualization.html">vignette("visualization")</a></code></td>
-<td>Plotting functions and color palettes</td>
-</tr>
-<tr class="odd">
+<td>Diagnostics</td>
 <td><code><a href="articles/model_diagnostics.html">vignette("model_diagnostics")</a></code></td>
-<td>Convergence, PPC, and LOO-CV</td>
 </tr>
 </tbody>
 </table>
-<p>For a comprehensive statistical background, see the <a href="articles/Understanding_vitalBayes.html">Statistical Methods Guide</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
-<p>If you use vitalBayes in your research, please cite:</p>
-<pre><code>@manual{,
-  title = {vitalBayes: Bayesian Vital Rate Estimation for Elasmobranchs},
-  author = {Brian J Moe},
-  year = {2025},
-  note = {R package version 0.4.0},
-  url = {https://github.com/Brian-J-Moe/vitalBayes}
-}</code></pre>
-</div>
-<div class="section level2">
-<h2 id="dependencies">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies"></a>
-</h2>
-<p><strong>Core:</strong></p>
-<ul>
-<li>
-<a href="https://mc-stan.org/cmdstanr/" class="external-link">cmdstanr</a> — CmdStan interface</li>
-<li>
-<a href="https://github.com/wlandau/instantiate" class="external-link">instantiate</a> — Precompiled Stan models</li>
-<li>
-<a href="https://rdatatable.gitlab.io/data.table/" class="external-link">data.table</a> — Fast data manipulation</li>
-</ul>
-<p><strong>Visualization:</strong></p>
-<ul>
-<li>
-<a href="https://ggplot2.tidyverse.org/" class="external-link">ggplot2</a> — Publication-quality graphics</li>
-</ul>
-<p><strong>Model Comparison:</strong></p>
-<ul>
-<li>
-<a href="https://mc-stan.org/loo/" class="external-link">loo</a> — Leave-one-out cross-validation</li>
-</ul>
-<p><strong>Numerical Integration:</strong></p>
-<ul>
-<li>
-<a href="https://CRAN.R-project.org/package=pracma" class="external-link">pracma</a> — Trapezoidal integration for survival curves</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
-</h2>
-<p>Contributions are welcome! Please open an issue to discuss proposed changes or submit a pull request.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="va">@manual</span>{<span class="ot">vitalBayes</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="dt">title</span> = {vitalBayes: Bayesian Vital Rate Estimation for Elasmobranchs},</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="dt">author</span> = {Brian J Moe},</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="dt">year</span> = {2025},</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="dt">note</span> = {R package version 0.4.0},</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="dt">url</span> = {https://github.com/Brian-J-Moe/vitalBayes}</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>}</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
-<p><a href="LICENSE.html">MIT License</a></p>
+<p><a href="LICENSE.html">MIT</a></p>
 <hr>
-<p><em>vitalBayes was developed for the elasmobranch research community to support robust, reproducible vital rate analyses — from birth to mortality.</em></p>
+<p><em>Developed for the elasmobranch research community to support robust, reproducible vital rate analyses.</em></p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

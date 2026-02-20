@@ -103,26 +103,7 @@ or <code>"logistic"</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Numeric vector of native k values. Invalid values returned as NA.</p>
     </div>
-    <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The native k formulas for each model are:</p>
-<p><strong>Von Bertalanffy:</strong>
-$$k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)$$</p>
-<p><strong>Gompertz:</strong>
-$$k = -\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_{mat})}{\ln(L_\infty / L_0)}\right)$$</p>
-<p><strong>Logistic:</strong>
-$$k = -\frac{1}{t_{mat}} \ln\left(\frac{L_\infty/L_{mat} - 1}{L_\infty/L_0 - 1}\right)$$</p>
-    </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">k_vb</span> <span class="op">&lt;-</span> <span class="fu">compute_k_native</span><span class="op">(</span>Linf <span class="op">=</span> <span class="fl">126</span>, L0 <span class="op">=</span> <span class="fl">35</span>, Lmat <span class="op">=</span> <span class="fl">83</span>, tmat <span class="op">=</span> <span class="fl">47</span>,</span></span>
-<span class="r-in"><span>                         growth_model <span class="op">=</span> <span class="st">"vb"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">k_gomp</span> <span class="op">&lt;-</span> <span class="fu">compute_k_native</span><span class="op">(</span>Linf <span class="op">=</span> <span class="fl">108</span>, L0 <span class="op">=</span> <span class="fl">35</span>, Lmat <span class="op">=</span> <span class="fl">83</span>, tmat <span class="op">=</span> <span class="fl">47</span>,</span></span>
-<span class="r-in"><span>                           growth_model <span class="op">=</span> <span class="st">"gompertz"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

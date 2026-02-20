@@ -2,7 +2,7 @@
 
 ## Overview
 
-This vignette documents two methodological innovations in vitalBayes’s
+This vignette documents two methodological advances in vitalBayes’s
 approach to natural mortality estimation:
 
 1.  **L₀ parameterization of Chen-Watanabe**: Replacing the theoretical
@@ -14,7 +14,7 @@ approach to natural mortality estimation:
     Chen-Watanabe mortality estimation from *any* growth model fit (von
     Bertalanffy, Gompertz, or Logistic)
 
-These innovations align mortality estimation with vitalBayes’s core
+These developments align mortality estimation with vitalBayes’s core
 philosophy: parameterize models using biologically meaningful,
 observable quantities rather than abstract mathematical constructs.
 
@@ -127,7 +127,7 @@ is dominated by predation (size-dependent), while adult mortality
 approaches a baseline rate related to senescence and physiological
 constraints.
 
-### Growth-Model-Agnostic k: The Key Insight
+### Growth-Model-Agnostic k: The Central Insight
 
 The L₀-parameterized CW model still requires a von Bertalanffy \\k\\.
 But here’s the crucial observation: **all three growth models estimate
@@ -149,9 +149,9 @@ to describe growth.
 Given these biological milestones, we can ask: **what von Bertalanffy
 \\k\\ would produce a growth curve passing through these points?**
 
-The VB model with \\L_0\\ parameterization is:
+The derivation differs by growth model:
 
-\\L(t) = L\_\infty - (L\_\infty - L_0)e^{-kt}\\
+**Von Bertalanffy:**
 
 At maturity (\\t = t\_{mat}\\, \\L = L\_{mat}\\):
 
@@ -159,16 +159,37 @@ At maturity (\\t = t\_{mat}\\, \\L = L\_{mat}\\):
 
 Solving for \\k\\:
 
-\\e^{-k \cdot t\_{mat}} = \frac{L\_\infty - L\_{mat}}{L\_\infty - L_0}\\
-
-\\-k \cdot t\_{mat} = \ln\left(\frac{L\_\infty - L\_{mat}}{L\_\infty -
-L_0}\right)\\
-
 \\\boxed{k\_{VB}^{equiv} = \frac{1}{t\_{mat}} \ln\left(\frac{L\_\infty -
 L_0}{L\_\infty - L\_{mat}}\right)}\\
 
-This **VB-equivalent \\k\\** can be computed from the posterior of *any*
-growth model, as long as that model provides \\(L\_\infty, L_0,
+**Gompertz:**
+
+At maturity:
+
+\\L\_{mat} = L\_\infty \exp\left\[-\ln\left(\frac{L\_\infty}{L_0}\right)
+e^{-k \cdot t\_{mat}}\right\]\\
+
+Solving for \\k\\:
+
+\\\boxed{k\_{VB}^{equiv} = \frac{1}{t\_{mat}}
+\ln\left(\frac{\ln(L\_\infty / L_0)}{\ln(L\_\infty /
+L\_{mat})}\right)}\\
+
+**Logistic:**
+
+At maturity:
+
+\\L\_{mat} = \frac{L\_\infty}{1 + \left(\frac{L\_\infty}{L_0} - 1\right)
+e^{-k \cdot t\_{mat}}}\\
+
+Solving for \\k\\:
+
+\\\boxed{k\_{VB}^{equiv} = \frac{1}{t\_{mat}}
+\ln\left(\frac{L\_{mat}(L\_\infty - L_0)}{L_0(L\_\infty -
+L\_{mat})}\right)}\\
+
+These **VB-equivalent \\k\\** values can be computed from the posterior
+of *any* growth model, as long as that model provides \\(L\_\infty, L_0,
 L\_{mat}, t\_{mat})\\.
 
 ### Verification: VB Consistency

@@ -5,9 +5,10 @@
 The
 [`fit_bayesian_growth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)
 function fits von Bertalanffy, Gompertz, or Logistic growth models using
-Bayesian methods. A key innovation is the **maturity-based
-parameterization**, which derives the growth coefficient \\k\\ from
-observable maturity metrics rather than estimating it directly.
+Bayesian methods. A central methodological feature is the
+**maturity-based parameterization**, which derives the growth
+coefficient \\k\\ from observable maturity metrics rather than
+estimating it directly.
 
 ## Growth Model Equations
 
@@ -54,10 +55,21 @@ growth_k$summary(c("Linf", "L0", "k", "sigma"))
 ### 2. Maturity-Based (Recommended)
 
 Derives \\k\\ from maturity parameters (\\L\_{mat}\\, \\t\_{mat}\\),
-ensuring biological consistency:
+ensuring biological consistency. The derivation differs by growth model:
 
-\\k = \frac{1}{t\_{mat}} \ln\left(\frac{L\_\infty - L_0}{L\_\infty -
-L\_{mat}}\right)\\
+**von Bertalanffy:** \\k = \frac{1}{t\_{mat}} \ln\left(\frac{L\_\infty -
+L_0}{L\_\infty - L\_{mat}}\right)\\
+
+**Gompertz:** \\k = \frac{1}{t\_{mat}} \ln\left(\frac{\ln(L\_\infty /
+L_0)}{\ln(L\_\infty / L\_{mat})}\right)\\
+
+**Logistic:** \\k = \frac{1}{t\_{mat}}
+\ln\left(\frac{L\_{mat}(L\_\infty - L_0)}{L_0(L\_\infty -
+L\_{mat})}\right)\\
+
+Each derivation ensures the growth curve passes exactly through the
+point \\(t\_{mat}, L\_{mat})\\, anchoring the model to an observable
+biological milestone.
 
 ``` r
 # First, fit maturity models
@@ -190,10 +202,10 @@ growth_2sex <- fit_bayesian_growth(
 
 | Parameter     | Pooled? | Prior Source                        |
 |---------------|---------|-------------------------------------|
-| \\L\_\infty\\ | ✅ Yes  | Data-derived (needs regularization) |
-| \\L_0\\       | ✅ Yes  | Birth model or default              |
-| \\L\_{mat}\\  | ❌ No   | Direct from maturity fit            |
-| \\t\_{mat}\\  | ❌ No   | Direct from maturity fit            |
+| \\L\_\infty\\ | Yes     | Data-derived (needs regularization) |
+| \\L_0\\       | Yes     | Birth model or default              |
+| \\L\_{mat}\\  | No      | Direct from maturity fit            |
+| \\t\_{mat}\\  | No      | Direct from maturity fit            |
 
 This ensures \\L\_{mat}\\ and \\t\_{mat}\\ preserve their sex-specific
 biological signal while \\L\_\infty\\ and \\L_0\\ benefit from
@@ -202,7 +214,7 @@ hierarchical shrinkage.
 ### Full Pooling with Anchoring
 
 If you prefer full pooling (or must use it with manual priors), the
-function uses **widened anchoring priors** (3× original SD) to prevent
+function uses **widened anchoring priors** (3x original SD) to prevent
 over-constraint:
 
 ``` r
@@ -414,7 +426,7 @@ create_parameter_table(
 
 | Issue                         | Solution                                                              |
 |-------------------------------|-----------------------------------------------------------------------|
-| Divergent transitions         | Increase `adapt_delta` (0.95 → 0.99)                                  |
+| Divergent transitions         | Increase `adapt_delta` (0.95 to 0.99)                                 |
 | \\k\\ hitting boundaries      | Check that \\L\_{mat} \< L\_\infty\\ and \\L_0 \< L\_{mat}\\          |
 | \\L\_\infty\\ too low         | Increase `Lmax` or `Linf_multiplier`                                  |
 | Poor fit at young ages        | Consider different growth model (Gompertz often better for juveniles) |
@@ -430,7 +442,7 @@ create_parameter_table(
   — Full mathematical derivation
 - [Statistical Methods: Maturity-Based
   Parameterization](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity-param)
-  — The key innovation
+  — Methodological foundation
 - [Statistical Methods: CV-Based
   Priors](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#cv-priors)
   — How priors are specified

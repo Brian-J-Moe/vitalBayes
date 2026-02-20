@@ -126,7 +126,9 @@ fit_bayesian_growth(
 
 - CV_Linf:
 
-  Coefficient of variation for Linf prior. Default 0.2.
+  Coefficient of variation for Linf delta-gamma prior. Controls the
+  shape of the Gamma distribution on \\\delta = L\_\infty - L\_{max}\\.
+  Default 0.2.
 
 - CV_k:
 
@@ -299,10 +301,11 @@ information from upstream maturity model fits.
 The `pool_maturity` argument controls this behavior:
 
 - `pool_maturity = FALSE` (default when vitalBayes maturity fits
-  provided): Only \\L\_\infty\\ and \\L_0\\ are pooled hierarchically.
-  Maturity parameters (\\L\_{mat}\\, \\t\_{mat}\\) use direct
-  sex-specific priors from the upstream fits, preserving biological
-  signal without risk of double-pooling.
+  provided): \\L\_\infty\\ uses soft pairwise shrinkage on the log scale
+  and \\L_0\\ is pooled hierarchically. Maturity parameters
+  (\\L\_{mat}\\, \\t\_{mat}\\) use direct sex-specific priors from the
+  upstream fits, preserving biological signal without risk of
+  double-pooling.
 
 - `pool_maturity = TRUE` (default when manual priors provided): All
   parameters are pooled, but maturity parameters use widened anchoring
@@ -319,10 +322,14 @@ maturity models.
 
 Priors are constructed using coefficient of variation (CV) arguments:
 
-**Linf:** Prior mean defaults to `1.05 * Lmax`, where Lmax is the
-maximum observed length (including incomplete cases without age data).
-The prior SD is `mean * CV_Linf`. Users can override Lmax via the `Lmax`
-argument.
+**Linf:** Uses a delta-gamma parameterization to avoid boundary pile-up
+near Lmax. Internally, \\\delta = L\_\infty - L\_{max}\\ is estimated
+with \\\delta \sim \text{Gamma}(\alpha, \beta)\\, where \\\alpha =
+1/\text{CV}^2\\ and \\\beta = 1/(\mu\_\delta \cdot \text{CV}^2)\\. The
+prior mean for \\\delta\\ defaults to `Lmax * (Linf_multiplier - 1)`.
+For two-sex models with pooling, between-sex shrinkage is applied via a
+soft penalty on \\\log(L\_\infty)\\, preserving the proportional
+interpretation of `prior_tau`.
 
 **k:** Prior mean is estimated from the data by solving the growth
 equation for k at each observation and averaging. Prior SD is
