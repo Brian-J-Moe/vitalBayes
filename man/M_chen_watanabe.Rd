@@ -31,8 +31,7 @@ M_chen_watanabe(
 
 \item{tmat}{Age at maturity.}
 
-\item{growth_model}{Character. Growth model for G(t): \code{"vb"},
-\code{"gompertz"}, or \code{"logistic"}.}
+\item{growth_model}{Character. Growth model for G(t).}
 
 \item{tmax}{Maximum age (computed if NULL).}
 
@@ -54,23 +53,4 @@ Numeric vector of instantaneous mortality rates.
 \description{
 Computes age-specific natural mortality using a generalized Chen-Watanabe
 framework where G(t) is derived from the native growth model trajectory.
-}
-\details{
-The mortality model is:
-\deqn{M(t) = \frac{M_\infty}{G(t)}}
-
-where M_inf is VB-derived and G(t) uses the native growth model trajectory.
-This formulation provides a unified mortality anchor while capturing
-model-specific growth dynamics.
-}
-\examples{
-ages <- seq(0.1, 150, by = 1)
-M_vb <- M_chen_watanabe(ages, Linf = 126, L0 = 35, Lmat = 83, tmat = 47,
-                        growth_model = "vb")
-
-}
-\references{
-Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
-coefficient in fish population dynamics. \emph{Nippon Suisan Gakkaishi},
-55(2), 205-208.
 }

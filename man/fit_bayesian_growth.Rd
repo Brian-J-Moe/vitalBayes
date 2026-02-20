@@ -84,7 +84,9 @@ or length-2 vector for sex-specific values c(female, male).}
 \item{Linf_multiplier}{Numeric. Multiplier for Lmax to get Linf prior mean.
 Default 1.05 (i.e., 5\% larger than observed max).}
 
-\item{CV_Linf}{Coefficient of variation for Linf prior. Default 0.2.}
+\item{CV_Linf}{Coefficient of variation for Linf delta-gamma prior. Controls
+the shape of the Gamma distribution on \eqn{\delta = L_\infty - L_{max}}.
+Default 0.2.}
 
 \item{CV_k}{Coefficient of variation for k prior. Default 0.5.}
 
@@ -196,7 +198,8 @@ upstream maturity model fits.
 The \code{pool_maturity} argument controls this behavior:
 \itemize{
 \item \code{pool_maturity = FALSE} (default when vitalBayes maturity fits provided):
-Only \eqn{L_\infty} and \eqn{L_0} are pooled hierarchically. Maturity
+\eqn{L_\infty} uses soft pairwise shrinkage on the log scale and
+\eqn{L_0} is pooled hierarchically. Maturity
 parameters (\eqn{L_{mat}}, \eqn{t_{mat}}) use direct sex-specific priors
 from the upstream fits, preserving biological signal without risk of
 double-pooling.
@@ -217,9 +220,14 @@ in the maturity models.
 
 Priors are constructed using coefficient of variation (CV) arguments:
 
-\strong{Linf:} Prior mean defaults to \code{1.05 * Lmax}, where Lmax is the maximum
-observed length (including incomplete cases without age data). The prior SD
-is \code{mean * CV_Linf}. Users can override Lmax via the \code{Lmax} argument.
+\strong{Linf:} Uses a delta-gamma parameterization to avoid boundary pile-up
+near Lmax. Internally, \eqn{\delta = L_\infty - L_{max}} is estimated with
+\eqn{\delta \sim \text{Gamma}(\alpha, \beta)}, where
+\eqn{\alpha = 1/\text{CV}^2} and \eqn{\beta = 1/(\mu_\delta \cdot \text{CV}^2)}.
+The prior mean for \eqn{\delta} defaults to \code{Lmax * (Linf_multiplier - 1)}.
+For two-sex models with pooling, between-sex shrinkage is applied via a soft
+penalty on \eqn{\log(L_\infty)}, preserving the proportional interpretation
+of \code{prior_tau}.
 
 \strong{k:} Prior mean is estimated from the data by solving the growth equation
 for k at each observation and averaging. Prior SD is \code{mean * CV_k}.

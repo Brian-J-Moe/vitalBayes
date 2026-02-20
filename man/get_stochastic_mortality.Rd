@@ -6,10 +6,16 @@
 \usage{
 get_stochastic_mortality(
   method = c("CW", "PW", "L"),
-  Linf,
-  L0,
-  Lmat,
-  tmat,
+  growth_fit = NULL,
+  birth_fit = NULL,
+  length_maturity_fit = NULL,
+  age_maturity_fit = NULL,
+  sex = 1L,
+  Linf = NULL,
+  L0 = NULL,
+  Lmat = NULL,
+  tmat = NULL,
+  maturity_cor = 0.5,
   growth_model = c("vb", "gompertz", "logistic"),
   Linf_factor = 0.99,
   age_seq = function(tmax) seq(0.1, ceiling(tmax), length.out = 500),
@@ -33,84 +39,133 @@ get_stochastic_mortality(
 \arguments{
 \item{method}{Character. Mortality model: \code{"CW"}, \code{"PW"}, or \code{"L"}.}
 
-\item{Linf, L0, Lmat, tmat}{Numeric vectors of length 2: \code{c(mean, sd)}.}
+\item{growth_fit}{CmdStanMCMC object from \code{fit_bayesian_growth}. If provided,
+extracts Linf, L0, and (for maturity-based fits) Lmat, tmat with preserved
+correlations. Default NULL.}
+
+\item{birth_fit}{CmdStanMCMC object from \code{fit_bayesian_birth}. Provides
+L0 (birth size) if not available from growth_fit. Default NULL.}
+
+\item{length_maturity_fit}{CmdStanMCMC object from \code{fit_bayesian_maturity}
+for length-at-maturity. Provides Lmat if not in growth_fit. Default NULL.}
+
+\item{age_maturity_fit}{CmdStanMCMC object from \code{fit_bayesian_maturity}
+for age-at-maturity. Provides tmat if not in growth_fit. Default NULL.}
+
+\item{sex}{Integer. Sex code (1 = female, 2 = male) for extracting from
+two-sex model fits. Default 1.}
+
+\item{Linf, L0, Lmat, tmat}{Numeric vectors of length 2: \code{c(mean, sd)}.
+Used when corresponding stanfit is not provided.}
+
+\item{maturity_cor}{Numeric. Correlation between Lmat and tmat when both
+come from manual specification or separate fits. Default 0.5 (positive
+correlation is biologically reasonable). Set to 0 for independent sampling.}
 
 \item{growth_model}{Character. Growth model for G(t) and L(t): \code{"vb"},
-\code{"gompertz"}, or \code{"logistic"}.}
+\code{"gompertz"}, or \code{"logistic"}. Default \code{"vb"}.}
 
 \item{Linf_factor}{Fraction of Linf used to estimate tmax. Default 0.99.}
 
-\item{age_seq}{Function or numeric vector for age grid. Default creates
-500 points from 0.1 to tmax.}
+\item{age_seq}{Function or numeric vector for age grid.}
 
 \item{iter}{Number of Monte Carlo iterations. Default 2000.}
 
-\item{scaled}{Scale mortality to M_target? Default TRUE.}
+\item{scaled}{Logical. Scale mortality to M_target? Default TRUE.}
 
 \item{M_target}{Target mean mortality. Can be scalar, function of tmax, or NULL.}
 
-\item{p}{Survival probability for scaling if M_target NULL. Default 0.001.}
+\item{p}{Survival probability for scaling when M_target is NULL. Default 0.001.}
 
-\item{two_phase}{Use CW two-phase senescence? Default FALSE.}
+\item{two_phase}{Logical. Use CW two-phase senescence? Default FALSE.}
 
-\item{late_model}{Senescence model: \code{"gompertz"} or \code{"logistic"}.}
+\item{late_model}{Character. Senescence model. Default \code{"gompertz"}.}
 
-\item{tm_factor}{Transition age factor. Default 2/3.}
+\item{tm_factor}{Numeric. Transition age as fraction of tmat. Default 2/3.}
 
-\item{M_mult}{Mortality multiplier for senescence. Default 2.}
+\item{M_mult}{Numeric. Mortality multiplier for senescence. Default 2.}
 
-\item{smooth_factor}{Transition smoothness. Default 1/3.}
+\item{smooth_factor}{Numeric. Transition smoothness. Default 1/3.}
 
-\item{weight_based}{For Lorenzen: use weight-based formulation? Default FALSE.}
+\item{weight_based}{Logical. For Lorenzen: use weight-based? Default FALSE.}
 
-\item{lw_fun}{Length-weight function (required for PW and weight-based Lorenzen).}
+\item{lw_fun}{Function. Length-weight relationship for PW and weight-based Lorenzen.}
 
-\item{seed}{Random seed. Default 1234.}
+\item{seed}{Integer. Random seed. Default 1234.}
 
-\item{palette}{Color palette: \code{"synthwave"}, \code{"viridis"}, \code{"okabe"},
-\code{"plasma"}, or \code{"inferno"}.}
+\item{palette}{Character. Color palette for plot.}
 
-\item{print_plot}{Print plot? Default TRUE.}
+\item{print_plot}{Logical. Print the plot? Default TRUE.}
 
-\item{show_progress}{Show progress messages? Default TRUE.}
+\item{show_progress}{Logical. Show progress messages? Default TRUE.}
 }
 \value{
-A list with:
+A list with components:
 \describe{
 \item{Schedules}{data.table with columns: set_id, age, M}
-\item{Parameters}{data.table with columns: set_id, Linf, L0, Lmat, tmat, Minf, k_native, tmax}
-\item{Summary}{data.table with age-wise median and 95\% CI}
+\item{Parameters}{data.table with life history parameters and derived quantities}
+\item{Summary}{data.table with age-wise summary statistics}
 \item{Plot}{ggplot2 object}
 }
 }
 \description{
 Monte Carlo simulation of age-specific natural mortality schedules with
-uncertainty propagation from growth and maturity parameters.
+uncertainty propagation from growth and maturity parameters. Accepts either
+vitalBayes stanfit objects (preserving posterior correlations) or manual
+\code{c(mean, sd)} specifications.
 }
 \details{
-This function samples life history parameters from specified distributions
-and computes mortality schedules using the chosen method. The output format
-is compatible with \code{\link{simulate_survivorship}}.
+This function samples life history parameters and computes mortality
+schedules using the chosen method. When vitalBayes fit objects are provided,
+posterior correlations between parameters are preserved, yielding more
+realistic uncertainty bounds than independent sampling.
 
-Three mortality models are available:
-\itemize{
-\item \strong{CW}: Chen-Watanabe (1989) with model-dependent G(t)
-\item \strong{PW}: Peterson-Wroblewski (1984) weight-based
-\item \strong{L}: Lorenzen (1996/2022) weight- or growth-based
+When maturity parameters (Lmat, tmat) come from separate model fits, the
+\code{maturity_cor} argument allows specification of assumed correlation
+between these parameters. Larger individuals typically mature at older ages,
+so a positive correlation (default 0.5) is biologically reasonable.
+}
+\section{Parameter Sources}{
+
+Parameters can be supplied from multiple sources with the following priority:
+\describe{
+\item{Linf}{growth_fit > manual}
+\item{L0}{growth_fit > birth_fit > manual}
+\item{Lmat}{growth_fit > length_maturity_fit > manual}
+\item{tmat}{growth_fit > age_maturity_fit > manual}
 }
 }
+
 \examples{
 \dontrun{
+# Using vitalBayes fits (full correlation preservation)
 mort <- get_stochastic_mortality(
   method = "CW",
-  Linf = c(108, 10),
-  L0 = c(35, 2),
-  Lmat = c(83, 5),
-  tmat = c(47, 3),
-  growth_model = "gompertz",
-  iter = 2000
+  growth_fit = growth_fit,  # From maturity-based fit_bayesian_growth
+  sex = 1,
+  growth_model = "vb"
 )
-mort$Plot
+
+# Using separate maturity fits with specified correlation
+mort <- get_stochastic_mortality(
+  method = "CW",
+  growth_fit = growth_fit,           # For Linf, L0
+  length_maturity_fit = L50_fit,     # For Lmat
+  age_maturity_fit = t50_fit,        # For tmat
+  maturity_cor = 0.6,                # Assumed Lmat-tmat correlation
+  sex = 1
+)
+
+# Using manual parameters with correlation
+mort <- get_stochastic_mortality(
+  method = "CW",
+  Linf = c(126, 10),
+  L0 = c(35, 3),
+  Lmat = c(83, 5),
+  tmat = c(47, 4),
+  maturity_cor = 0.5,
+  growth_model = "gompertz"
+)
 }
 
 }

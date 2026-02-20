@@ -39,25 +39,5 @@ M_lorenzen(
 Numeric vector of instantaneous mortality rates.
 }
 \description{
-Computes size-dependent natural mortality following Lorenzen (1996, 2022).
-}
-\details{
-Two formulations are available:
-
-\strong{Weight-based} (Lorenzen 1996):
-\deqn{M(W) = \alpha \cdot W^{\beta}}
-
-\strong{Growth-based} (Lorenzen 2022):
-\deqn{\ln M = 0.28 - 1.30 \ln(L/L_\infty) + 1.08 \ln(k)}
-
-For the growth-based formulation, M_inf (VB-derived) is used as k for
-consistency with the Chen-Watanabe framework.
-}
-\references{
-Lorenzen, K. (1996). The relationship between body weight and natural
-mortality in juvenile and adult fish. \emph{Journal of Fish Biology},
-49(4), 627-642.
-
-Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish
-populations. \emph{Fisheries Research}, 255, 106454.
+Lorenzen Natural Mortality Model
 }
