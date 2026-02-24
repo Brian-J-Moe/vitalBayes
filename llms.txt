@@ -260,7 +260,7 @@ reproducible vital rate analyses.*
   Reparameterization](https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.md):
 - [Estimating Birth Size with
   fit_bayesian_birth()](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_birth.md):
-- [Growth Modeling with
+- [Modeling Individual Growth with
   fit_bayesian_growth()](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md):
 - [Maturity Ogive Estimation with
   fit_bayesian_maturity()](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md):

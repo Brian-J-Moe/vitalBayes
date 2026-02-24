@@ -1,4 +1,4 @@
-# Growth Modeling with fit_bayesian_growth()
+# Modeling Individual Growth with fit_bayesian_growth()
 
 ## Overview
 
