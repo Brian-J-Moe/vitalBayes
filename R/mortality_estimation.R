@@ -670,7 +670,7 @@ extract_lh_params <- function(
 #'
 #' @param par_draws data.table with Linf, L0, Lmat, tmat columns.
 #' @return data.table with constraints enforced.
-#' @keywords internal
+#' @noRd
 .enforce_constraints <- function(par_draws) {
   par_draws[, Linf := pmax(Linf, Lmat + 1)]
   par_draws[, Lmat := pmax(Lmat, L0 + 1)]
