@@ -466,9 +466,6 @@ When reporting mortality estimates in publications, include:
 3. **Key metrics**: Mean $M$, age-specific $M$ at key life stages (e.g., neonate, sub-adult, adult), $t_{max}$ estimate.
 4. **Uncertainty**: 95% credible intervals throughout, noting whether these reflect joint posterior sampling or independent parameter variation.
 
-Example methods text:
-
-> "Natural mortality was estimated using the Chen-Watanabe model (Chen & Watanabe, 1989) with Gompertz senescence, implemented via the vitalBayes package (v1.0.0; Author, Year). Growth parameters were drawn from the joint posterior of a Gompertz growth model (selected by LOO-CV). Predicted length-at-age used the native Gompertz trajectory, while the asymptotic mortality rate ($M_\infty = k_{VB}$) was computed from a VB-equivalent growth coefficient derived from biological milestones $(L_\infty, L_0, L_{mat}, t_{mat})$. Mortality schedules were scaled to 0.1% survival at estimated $t_{max}$ and propagated through 2,000 Monte Carlo simulations. Median age-specific mortality with 95% credible intervals is reported."
 
 ## References
 
@@ -488,3 +485,7 @@ Then, A. Y., Hoenig, J. M., Hall, N. G., & Hewitt, D. A. (2015). Evaluating the 
 - `vignette("survivorship_simulation")` --- Cohort survival analysis using mortality schedules
 - `vignette("fit_bayesian_growth")` --- Growth model fitting that feeds the mortality workflow
 - `vignette("fit_bayesian_maturity")` --- Maturity estimation for $t_{mat}$ and $L_{mat}$
+
+---
+
+*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*
