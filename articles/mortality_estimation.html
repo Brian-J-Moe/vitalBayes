@@ -128,23 +128,30 @@ fitted via <code><a href="../reference/fit_bayesian_growth.html">fit_bayesian_gr
 relationship between body growth and mortality risk under von
 Bertalanffy dynamics. In the <span class="math inline">\(L_0\)</span>-parameterized form used by
 vitalBayes, the model is:</p>
-<p><span class="math display">\[M(t) = \frac{M_\infty \cdot
+<p><span class="math display">\[M(t) = \frac{k_{VB} \cdot
 L_\infty}{L(t)}\]</span></p>
-<p>where <span class="math inline">\(M_\infty \equiv k_{VB}\)</span> is
-the asymptotic mortality rate (equal to the von Bertalanffy growth
-coefficient), <span class="math inline">\(L_\infty\)</span> is
-asymptotic length, and <span class="math inline">\(L(t)\)</span> is the
-predicted length at age <span class="math inline">\(t\)</span>.
-Mortality is inversely proportional to body size: small, young
-individuals experience the highest mortality, which declines as the
-organism grows toward <span class="math inline">\(L_\infty\)</span>.</p>
-<p>When growth is fitted using a Gompertz or Logistic model rather than
-von Bertalanffy, the function automatically computes the VB-equivalent
-<span class="math inline">\(k\)</span> from the shared biological
-milestones <span class="math inline">\((L_\infty, L_0, L_{mat},
-t_{mat})\)</span>:</p>
+<p>where <span class="math inline">\(k_{VB}\)</span> is the von
+Bertalanffy growth coefficient serving as the asymptotic mortality rate
+(<span class="math inline">\(M_\infty\)</span>), <span class="math inline">\(L_\infty\)</span> is asymptotic length, and <span class="math inline">\(L(t)\)</span> is predicted length at age <span class="math inline">\(t\)</span>. Mortality is inversely proportional to
+body size: small, young individuals experience the highest mortality,
+which declines as the organism grows toward <span class="math inline">\(L_\infty\)</span>.</p>
+<p>This equation involves <span class="math inline">\(k\)</span> in two
+distinct roles. The <span class="math inline">\(k_{VB}\)</span> in the
+numerator is a <em>theoretical constant</em> derived from the CW
+formulation under von Bertalanffy assumptions — it must always be the VB
+growth coefficient, regardless of which growth model was actually
+fitted. The <span class="math inline">\(L(t)\)</span> in the denominator
+is a <em>growth trajectory prediction</em> — it should come from
+whatever model best describes the organism’s actual growth dynamics.
+When a Gompertz or Logistic model is fitted, vitalBayes uses the native
+growth equation with native <span class="math inline">\(k\)</span> for
+<span class="math inline">\(L(t)\)</span>, while computing a separate
+VB-equivalent <span class="math inline">\(k\)</span> for <span class="math inline">\(M_\infty\)</span>. The VB-equivalent is derived
+from the shared biological milestones <span class="math inline">\((L_\infty, L_0, L_{mat}, t_{mat})\)</span>:</p>
 <p><span class="math display">\[k_{VB}^{equiv} = \frac{1}{t_{mat}}
 \ln\!\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
+<p>For k-based fits without maturity milestones, a derivative-matching
+fallback is used (see <em>Derivative-Based Conversion</em> below).</p>
 <p>The Chen-Watanabe model also supports a two-phase extension for
 late-life senescence, in which mortality transitions from the declining
 CW trajectory to an increasing senescence function (Gompertz or
@@ -152,7 +159,7 @@ Logistic) at a fraction of the age at maturity. For the complete
 mathematical development of the CW reparameterization, the normalized
 growth coefficient <span class="math inline">\(G(t)\)</span>, and the
 senescence extensions, see
-<code><a href="../articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code>.</p>
+<code>vignette("chen_watanabe_reparameterization")</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="peterson-wroblewski-1984">Peterson-Wroblewski (1984)<a class="anchor" aria-label="anchor" href="#peterson-wroblewski-1984"></a>
@@ -190,17 +197,45 @@ W(t)^{\beta}\]</span></p>
 <p>where <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span> are allometric parameters estimated
 from a meta-analysis of marine and freshwater fishes (<span class="math inline">\(\alpha \sim \mathcal{N}(3.69, \, 0.502)\)</span>,
 <span class="math inline">\(\beta \sim \mathcal{N}(-0.305, \,
-0.029)\)</span>). Like the PW model, this requires a length-weight
-function and uses the native growth model’s <span class="math inline">\(k\)</span> and <span class="math inline">\(L(t)\)</span> predictions.</p>
+0.029)\)</span>). Like the PW model, this is purely weight-based: <span class="math inline">\(k\)</span> does not appear in the mortality
+equation and serves only to predict <span class="math inline">\(L(t)\)</span> via the native growth model. The
+native <span class="math inline">\(k\)</span> and native growth equation
+should always be used.</p>
 <p><strong>Growth-based</strong> (Lorenzen, 2022):</p>
 <p><span class="math display">\[\ln M = 0.28 - 1.30 \,
-\ln\!\left(\frac{L(t)}{L_\infty}\right) + 1.08 \, \ln(k)\]</span></p>
-<p>This formulation was calibrated using von Bertalanffy parameters, so
-<span class="math inline">\(k\)</span> should be the VB-equivalent
-growth coefficient when inputs come from Gompertz or Logistic model
-fits. The growth-based formulation has the advantage of not requiring a
+\ln\!\left(\frac{L(t)}{L_\infty}\right) + 1.08 \,
+\ln(k_{VB})\]</span></p>
+<p>This formulation has the same dual-<span class="math inline">\(k\)</span> structure as Chen-Watanabe. The <span class="math inline">\(\ln(k_{VB})\)</span> term was calibrated against
+von Bertalanffy parameters (Lorenzen, 2022), so it must be the VB growth
+coefficient. The <span class="math inline">\(L(t)/L_\infty\)</span>
+ratio represents relative body size at age and should use the native
+growth trajectory for the most accurate prediction. When inputs come
+from a Gompertz or Logistic fit, vitalBayes passes the native <span class="math inline">\(k\)</span> for <span class="math inline">\(L(t)\)</span> prediction and a separate <span class="math inline">\(k_{VB}^{equiv}\)</span> for the regression term.
+The growth-based formulation has the advantage of not requiring a
 length-weight relationship, making it useful when <span class="math inline">\(L\)</span>-<span class="math inline">\(W\)</span>
 data are unavailable.</p>
+</div>
+<div class="section level3">
+<h3 id="derivative-based-k_vb-conversion">Derivative-Based <span class="math inline">\(k_{VB}\)</span>
+Conversion<a class="anchor" aria-label="anchor" href="#derivative-based-k_vb-conversion"></a>
+</h3>
+<p>When a k-based Gompertz or Logistic fit is used without maturity
+milestones, the VB-equivalent <span class="math inline">\(k\)</span>
+cannot be derived from <span class="math inline">\((L_{mat},
+t_{mat})\)</span>. In this case, vitalBayes falls back to derivative
+matching at birth — computing the VB growth coefficient that produces
+the same instantaneous growth rate at age 0:</p>
+<p><span class="math display">\[k_{VB}^{equiv} = k_g \cdot \frac{L_0
+\cdot \ln(L_\infty / L_0)}{L_\infty - L_0} \quad
+\text{(Gompertz)}\]</span></p>
+<p><span class="math display">\[k_{VB}^{equiv} = k_l \cdot
+\frac{L_0}{L_\infty} \quad \text{(Logistic)}\]</span></p>
+<p>These closed-form expressions follow from equating the VB growth rate
+at birth, <span class="math inline">\(dL/dt|_{t=0} = k_{VB}(L_\infty -
+L_0)\)</span>, with the corresponding Gompertz or Logistic growth rate.
+The milestone-based derivation is preferred when maturity data are
+available, since it anchors the conversion at a biologically meaningful
+interior point of the growth trajectory.</p>
 </div>
 </div>
 <div class="section level2">
@@ -307,10 +342,18 @@ model fitting, then feeds posteriors into mortality estimation:</p>
 <span>  late_model   <span class="op">=</span> <span class="st">"gompertz"</span>,</span>
 <span>  print_plot   <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The function automatically extracts <span class="math inline">\((L_\infty, L_0, L_{mat}, t_{mat})\)</span> from
-the growth posterior and computes the VB-equivalent <span class="math inline">\(k\)</span> when the growth model is Gompertz or
-Logistic. Joint posterior sampling preserves parameter correlations —
-critically, the strong negative correlation between <span class="math inline">\(L_\infty\)</span> and <span class="math inline">\(k\)</span> that is typical of growth model
+<p>The function automatically detects the growth model type from the fit
+object and extracts <span class="math inline">\((L_\infty, L_0, L_{mat},
+t_{mat})\)</span> from the joint posterior. When the growth model is
+Gompertz or Logistic, two things happen: the native <span class="math inline">\(k\)</span> and growth equation are used for <span class="math inline">\(L(t)\)</span> prediction, and a separate
+VB-equivalent <span class="math inline">\(k\)</span> is computed for
+mortality models that require it (CW and growth-based Lorenzen). For
+maturity-based fits, <span class="math inline">\(k_{VB}^{equiv}\)</span>
+is derived from the biological milestones; for k-based fits, a
+derivative-matching conversion is applied. Joint posterior sampling
+preserves parameter correlations — critically, the strong negative
+correlation between <span class="math inline">\(L_\infty\)</span> and
+<span class="math inline">\(k\)</span> that is typical of growth model
 fits.</p>
 </div>
 <div class="section level3">
@@ -327,11 +370,11 @@ fits.</p>
 <span><span class="co">#&gt; 1:      1   0.5  0.42318  0.31204       0.5</span></span>
 <span><span class="co">#&gt; 2:      1   1.0  0.33721  0.24870       1.0</span></span>
 <span></span>
-<span><span class="co"># Parameter draws used (includes k_vb_equiv)</span></span>
+<span><span class="co"># Parameter draws used (includes both k values and growth model type)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Parameters</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    set_id   Linf     L0   Lmat  tmat k_original k_vb_equiv k_for_mort  tmax</span></span>
-<span><span class="co">#&gt;     &lt;int&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt; &lt;num&gt;      &lt;num&gt;      &lt;num&gt;      &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:      1  98.42  24.31  68.92  11.2     0.0823     0.0945     0.0945  34.2</span></span>
+<span><span class="co">#&gt;    set_id   Linf     L0   Lmat  tmat k_native k_vb_equiv growth_model  tmax</span></span>
+<span><span class="co">#&gt;     &lt;int&gt;  &lt;num&gt;  &lt;num&gt;  &lt;num&gt; &lt;num&gt;    &lt;num&gt;      &lt;num&gt;       &lt;char&gt; &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      1  98.42  24.31  68.92  11.2   0.1521     0.0945     gompertz  34.2</span></span>
 <span></span>
 <span><span class="co"># Summary statistics across posterior draws</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mort</span><span class="op">$</span><span class="va">Summary</span><span class="op">)</span></span>
@@ -343,22 +386,127 @@ fits.</p>
 <h3 id="manual-parameter-specification">Manual Parameter Specification<a class="anchor" aria-label="anchor" href="#manual-parameter-specification"></a>
 </h3>
 <p>For literature-based analyses where posterior draws are unavailable,
-parameters can be specified as mean-SD pairs:</p>
+parameters can be specified as mean-SD pairs. Two sampling modes are
+supported, mirroring the k-based and maturity-based parameterizations in
+<code><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth()</a></code>.</p>
+<div class="section level4">
+<h4 id="k-based-independent-sampling">k-Based (Independent Sampling)<a class="anchor" aria-label="anchor" href="#k-based-independent-sampling"></a>
+</h4>
+<p>When only <code>k</code> is provided without <code>Lmat</code>, all
+parameters are sampled independently from their specified normal
+distributions. The <code>k</code> value should be the native growth
+coefficient for the model specified by <code>growth_model</code>. For VB
+fits (the default), the native <span class="math inline">\(k\)</span> is
+already the VB growth coefficient. For Gompertz or Logistic fits, the
+function automatically derives <span class="math inline">\(k_{VB}^{equiv}\)</span> via derivative matching at
+birth and uses the native growth equation for <span class="math inline">\(L(t)\)</span> prediction.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mort_manual</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="co"># VB parameters (backward-compatible: k IS the VB k)</span></span>
+<span><span class="va">mort_vb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="st">"CW"</span>,</span>
 <span>  Linf   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">8</span><span class="op">)</span>,     <span class="co"># mean, sd</span></span>
 <span>  L0     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  k      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="fl">0.01</span><span class="op">)</span>,</span>
+<span>  k      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="fl">0.01</span><span class="op">)</span>, <span class="co"># VB k</span></span>
 <span>  tmat   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">1.5</span><span class="op">)</span>,</span>
 <span>  iter   <span class="op">=</span> <span class="fl">2000</span>,</span>
 <span>  scaled <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  p      <span class="op">=</span> <span class="fl">0.001</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Gompertz parameters (derivative matching for k_vb)</span></span>
+<span><span class="va">mort_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method       <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>  Linf         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">8</span><span class="op">)</span>,</span>
+<span>  L0           <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  k            <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.15</span>, <span class="fl">0.02</span><span class="op">)</span>,  <span class="co"># Gompertz k (NOT VB k)</span></span>
+<span>  tmat         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">1.5</span><span class="op">)</span>,</span>
+<span>  growth_model <span class="op">=</span> <span class="st">"gompertz"</span>,     <span class="co"># Must match source of k</span></span>
+<span>  iter         <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  scaled       <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  p            <span class="op">=</span> <span class="fl">0.001</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Note that manual specification samples parameters independently,
-destroying any correlations. This typically produces wider (less
-precise) uncertainty bands than joint posterior sampling from a fitted
-model.</p>
+<p>Independent sampling destroys any correlations between parameters.
+This typically produces wider (less precise) uncertainty bands than
+joint posterior sampling from a fitted model, and can occasionally
+generate parameter combinations that are individually plausible but
+jointly inconsistent.</p>
+</div>
+<div class="section level4">
+<h4 id="maturity-based-bivariate-sampling">Maturity-Based (Bivariate Sampling)<a class="anchor" aria-label="anchor" href="#maturity-based-bivariate-sampling"></a>
+</h4>
+<p>When both <code>Lmat</code> and <code>tmat</code> are provided, they
+are sampled jointly from a bivariate normal distribution via Cholesky
+factorization. This preserves the positive biological correlation
+between length- and age-at-maturity: larger individuals tend to mature
+at older ages. The VB-equivalent <span class="math inline">\(k\)</span>
+is then <em>derived</em> from the sampled milestones <span class="math inline">\((L_\infty, L_0, L_{mat}, t_{mat})\)</span> rather
+than taken from the user directly.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mort_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>  method        <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>  Linf          <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">8</span><span class="op">)</span>,</span>
+<span>  L0            <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  Lmat          <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">72</span>, <span class="fl">4</span><span class="op">)</span>,       <span class="co"># length-at-maturity: mean, sd</span></span>
+<span>  tmat          <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">1.5</span><span class="op">)</span>,     <span class="co"># age-at-maturity: mean, sd</span></span>
+<span>  k             <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.15</span>, <span class="fl">0.02</span><span class="op">)</span>,  <span class="co"># Native Gompertz k (for L(t) trajectory)</span></span>
+<span>  growth_model  <span class="op">=</span> <span class="st">"gompertz"</span>,</span>
+<span>  rho_Lmat_tmat <span class="op">=</span> <span class="fl">0.5</span>,            <span class="co"># Lmat-tmat correlation (default)</span></span>
+<span>  iter          <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  scaled        <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  p             <span class="op">=</span> <span class="fl">0.001</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The <code>rho_Lmat_tmat</code> argument controls the strength of the
+assumed correlation. The default of 0.5 reflects the broad biological
+expectation that larger individuals mature later. Alternative values can
+be obtained from paired individual-level data, from computing the
+empirical correlation between aligned posteriors of separate maturity
+model fits, from published species-specific estimates, or by running
+sensitivity analyses across a range of <span class="math inline">\(\rho\)</span> values.</p>
+<p>When both <code>Lmat</code>/<code>tmat</code> and <code>k</code> are
+provided, the milestone-derived <span class="math inline">\(k_{VB}^{equiv}\)</span> is used for CW and
+growth-based Lorenzen (as the <span class="math inline">\(M_\infty\)</span> constant), while the
+user-supplied <code>k</code> is retained as the native growth
+coefficient for <span class="math inline">\(L(t)\)</span> prediction
+under the specified <code>growth_model</code>. This is the preferred
+configuration for non-VB growth models: the maturity milestones anchor
+the VB-equivalent <span class="math inline">\(k\)</span> at a
+biologically meaningful point, and the native <span class="math inline">\(k\)</span> produces the most accurate growth
+trajectory.</p>
+<p>If <code>k</code> is omitted in this mode, the milestone-derived
+<span class="math inline">\(k_{VB}^{equiv}\)</span> is used for
+<em>both</em> roles, and <span class="math inline">\(L(t)\)</span>
+defaults to the VB equation regardless of <code>growth_model</code>.
+This is appropriate when only maturity data are available, but the
+function will issue a warning for non-VB <code>growth_model</code>
+settings.</p>
+</div>
+<div class="section level4">
+<h4 id="sensitivity-to-rho">Sensitivity to <span class="math inline">\(\rho\)</span><a class="anchor" aria-label="anchor" href="#sensitivity-to-rho"></a>
+</h4>
+<p>When the correlation between maturity parameters is unknown, running
+the analysis across a range of <span class="math inline">\(\rho\)</span>
+values quantifies how sensitive the mortality estimates are to this
+assumption:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rho_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.5</span>, <span class="fl">0.7</span><span class="op">)</span></span>
+<span><span class="va">mort_rho</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">rho_values</span>, <span class="kw">function</span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
+<span>    method        <span class="op">=</span> <span class="st">"CW"</span>,</span>
+<span>    Linf          <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">8</span><span class="op">)</span>,</span>
+<span>    L0            <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>    Lmat          <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">72</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>    tmat          <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">12</span>, <span class="fl">1.5</span><span class="op">)</span>,</span>
+<span>    rho_Lmat_tmat <span class="op">=</span> <span class="va">r</span>,</span>
+<span>    iter          <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>    print_plot    <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+<p>In practice, sensitivity to <span class="math inline">\(\rho\)</span>
+is usually modest when the marginal standard deviations of <span class="math inline">\(L_{mat}\)</span> and <span class="math inline">\(t_{mat}\)</span> are small relative to their
+means. The primary effect of higher <span class="math inline">\(\rho\)</span> is to tighten the uncertainty bands
+on derived <span class="math inline">\(k\)</span> (and therefore <span class="math inline">\(M\)</span>), because correlated sampling generates
+fewer extreme parameter combinations than independent sampling.</p>
+</div>
 </div>
 </div>
 <div class="section level2">
@@ -369,7 +517,7 @@ model.</p>
 </h3>
 <p>Comparing mortality estimates from different theoretical frameworks
 provides a measure of structural uncertainty:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Chen-Watanabe</span></span>
 <span><span class="va">mort_cw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">growth_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -418,13 +566,13 @@ conclusions are to the choice of theoretical framework.</p>
 </h3>
 <p>A complementary diagnostic tests whether mortality estimates are
 robust to the choice of growth model:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fit all three growth models</span></span>
 <span><span class="co"># vb_fit   &lt;- fit_bayesian_growth(..., model = "v")</span></span>
 <span><span class="co"># gomp_fit &lt;- fit_bayesian_growth(..., model = "g")</span></span>
 <span><span class="co"># logis_fit &lt;- fit_bayesian_growth(..., model = "l")</span></span>
 <span></span>
-<span><span class="co"># CW mortality from each growth model</span></span>
+<span><span class="co"># CW mortality from each growth model (auto-detects model type)</span></span>
 <span><span class="va">mort_from_vb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="st">"CW"</span>, growth_fit <span class="op">=</span> <span class="va">vb_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, print_plot <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
@@ -446,12 +594,21 @@ robust to the choice of growth model:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">M_median</span><span class="op">)</span>, linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Age (years)"</span>, y <span class="op">=</span> <span class="st">"Natural Mortality (M)"</span>,</span>
 <span>       title <span class="op">=</span> <span class="st">"CW Mortality by Growth Model"</span>,</span>
-<span>       subtitle <span class="op">=</span> <span class="st">"All derived from same biological milestones"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>       subtitle <span class="op">=</span> <span class="st">"Native L(t) trajectories with VB-equivalent M_inf"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
-<p>If the three curves are similar, mortality estimates are robust to
-growth model choice. Divergence indicates genuine model uncertainty that
-should be reported.</p>
+<p>Differences between growth models in CW mortality now arise from two
+sources: the VB-equivalent <span class="math inline">\(k\)</span> (which
+may differ across models if the milestone-based inversions produce
+slightly different values), and — more importantly — the native <span class="math inline">\(L(t)\)</span> trajectories, which have different
+curvatures between anchor points. Models with faster early growth (like
+Gompertz) predict larger <span class="math inline">\(L(t)\)</span> at
+young ages and therefore lower juvenile mortality, while models that
+approach <span class="math inline">\(L_\infty\)</span> less tightly
+(like Logistic) may produce slightly different late-age behavior. If the
+three curves are similar, mortality estimates are robust to growth model
+choice. Divergence indicates genuine model uncertainty that should be
+reported.</p>
 </div>
 </div>
 <div class="section level2">
@@ -461,35 +618,49 @@ should be reported.</p>
 calculations, integration into custom analyses, or pedagogical
 exploration — vitalBayes exports the individual mortality model
 functions:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">30</span>, by <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Chen-Watanabe (single-phase and two-phase)</span></span>
-<span><span class="va">M_cw_single</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
-<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
-<span>  two_phase <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">M_cw_senesc</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span><span class="co"># Chen-Watanabe with VB (k serves both roles)</span></span>
+<span><span class="va">M_cw_vb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_chen_watanabe_L0.html">M_chen_watanabe_L0</a></span><span class="op">(</span></span>
 <span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
 <span>  two_phase <span class="op">=</span> <span class="cn">TRUE</span>, tmat <span class="op">=</span> <span class="fl">12</span>, late_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Peterson-Wroblewski</span></span>
-<span><span class="va">lw_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span><span class="op">)</span> <span class="fl">0.0001</span> <span class="op">*</span> <span class="va">L</span><span class="op">^</span><span class="fl">3.1</span></span>
-<span><span class="va">M_pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_peterson_wroblewski.html">M_peterson_wroblewski</a></span><span class="op">(</span></span>
-<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
-<span>  lw_fun <span class="op">=</span> <span class="va">lw_func</span>, growth_model <span class="op">=</span> <span class="st">"vb"</span></span>
+<span><span class="co"># Chen-Watanabe with Gompertz (separated k roles)</span></span>
+<span><span class="va">M_cw_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_chen_watanabe_L0.html">M_chen_watanabe_L0</a></span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  k <span class="op">=</span> <span class="fl">0.08</span>,              <span class="co"># VB-equivalent k (for M_inf)</span></span>
+<span>  k_native <span class="op">=</span> <span class="fl">0.15</span>,       <span class="co"># Gompertz k (for L(t))</span></span>
+<span>  growth_model <span class="op">=</span> <span class="st">"gompertz"</span>,</span>
+<span>  two_phase <span class="op">=</span> <span class="cn">TRUE</span>, tmat <span class="op">=</span> <span class="fl">12</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Lorenzen growth-based</span></span>
+<span><span class="co"># Peterson-Wroblewski (native k only, no VB theory)</span></span>
+<span><span class="va">lw_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span><span class="op">)</span> <span class="fl">0.0001</span> <span class="op">*</span> <span class="va">L</span><span class="op">^</span><span class="fl">3.1</span></span>
+<span><span class="va">M_pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_peterson_wroblewski.html">M_peterson_wroblewski</a></span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.15</span>,</span>
+<span>  lw_fun <span class="op">=</span> <span class="va">lw_func</span>, growth_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Lorenzen growth-based (both k values)</span></span>
 <span><span class="va">M_lor</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_lorenzen.html">M_lorenzen</a></span><span class="op">(</span></span>
-<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
-<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  k <span class="op">=</span> <span class="fl">0.15</span>,          <span class="co"># Gompertz k (for L(t)/Linf ratio)</span></span>
+<span>  k_vb <span class="op">=</span> <span class="fl">0.08</span>,       <span class="co"># VB-equivalent (for ln(k) regression term)</span></span>
+<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  growth_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Lorenzen weight-based (native k only)</span></span>
+<span><span class="va">M_lor_wt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_lorenzen.html">M_lorenzen</a></span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.15</span>,</span>
+<span>  lw_fun <span class="op">=</span> <span class="va">lw_func</span>, weight_based <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  growth_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Scale any of them</span></span>
-<span><span class="va">M_scaled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/scale_mortality.html">scale_mortality</a></span><span class="op">(</span><span class="va">M_cw_senesc</span>, M_target <span class="op">=</span> <span class="cn">NULL</span>, tmax <span class="op">=</span> <span class="fl">35</span>, p <span class="op">=</span> <span class="fl">0.001</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">M_scaled</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/scale_mortality.html">scale_mortality</a></span><span class="op">(</span><span class="va">M_cw_gomp</span>, M_target <span class="op">=</span> <span class="cn">NULL</span>, tmax <span class="op">=</span> <span class="fl">35</span>, p <span class="op">=</span> <span class="fl">0.001</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="downstream-integration-survival-simulation">Downstream Integration: Survival Simulation<a class="anchor" aria-label="anchor" href="#downstream-integration-survival-simulation"></a>
@@ -497,7 +668,7 @@ functions:</p>
 <p>Mortality schedules from <code><a href="../reference/get_stochastic_mortality.html">get_stochastic_mortality()</a></code> feed
 directly into <code><a href="../reference/simulate_survivorship.html">simulate_survivorship()</a></code> for cohort survival
 analysis:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_survivorship.html">simulate_survivorship</a></span><span class="op">(</span></span>
 <span>  mc_object <span class="op">=</span> <span class="va">mort</span>,</span>
 <span>  n         <span class="op">=</span> <span class="fl">50000</span>,    <span class="co"># Starting cohort size</span></span>
@@ -555,8 +726,8 @@ interpretation.</p>
 <tr class="even">
 <td>Missing tmat error</td>
 <td>CW needs age-at-maturity</td>
-<td>Provide <code>maturity_fit</code> or manual <code>tmat</code>
-parameter</td>
+<td>Provide <code>maturity_fit</code>, manual <code>tmat</code>, or both
+<code>Lmat</code> and <code>tmat</code> for bivariate sampling</td>
 </tr>
 <tr class="odd">
 <td>
@@ -599,12 +770,13 @@ parameter variation.</li>
 &amp; Watanabe, 1989) with Gompertz senescence, implemented via the
 vitalBayes package (v1.0.0; Author, Year). Growth parameters were drawn
 from the joint posterior of a Gompertz growth model (selected by
-LOO-CV), with VB-equivalent <span class="math inline">\(k\)</span>
-computed from biological milestones following the approach described in
-[vignette reference]. Mortality schedules were scaled to 0.1% survival
-at estimated <span class="math inline">\(t_{max}\)</span> and propagated
-through 2,000 Monte Carlo simulations. Median age-specific mortality
-with 95% credible intervals is reported.”</p>
+LOO-CV). Predicted length-at-age used the native Gompertz trajectory,
+while the asymptotic mortality rate (<span class="math inline">\(M_\infty = k_{VB}\)</span>) was computed from a
+VB-equivalent growth coefficient derived from biological milestones
+<span class="math inline">\((L_\infty, L_0, L_{mat}, t_{mat})\)</span>.
+Mortality schedules were scaled to 0.1% survival at estimated <span class="math inline">\(t_{max}\)</span> and propagated through 2,000
+Monte Carlo simulations. Median age-specific mortality with 95% credible
+intervals is reported.”</p>
 </blockquote>
 </div>
 <div class="section level2">
@@ -631,7 +803,7 @@ Journal of Marine Science</em>, 72(1), 82–92.</p>
 </h2>
 <ul>
 <li>
-<code><a href="../articles/chen_watanabe_reparameterization.html">vignette("chen_watanabe_reparameterization")</a></code> —
+<code>vignette("chen_watanabe_reparameterization")</code> —
 Mathematical derivation of the CW reparameterization and <span class="math inline">\(G(t)\)</span> framework</li>
 <li>
 <code><a href="../articles/survivorship_simulation.html">vignette("survivorship_simulation")</a></code> — Cohort survival

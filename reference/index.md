@@ -4,6 +4,8 @@
 
 - [`M_chen_watanabe()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe.md)
   : Chen-Watanabe Natural Mortality (Model-Dependent)
+- [`M_chen_watanabe_L0()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe_L0.md)
+  : Chen-Watanabe Natural Mortality (\\L_0\\ Parameterization)
 - [`M_lorenzen()`](https://brian-j-moe.github.io/vitalBayes/reference/M_lorenzen.md)
   : Lorenzen Natural Mortality Model
 - [`M_peterson_wroblewski()`](https://brian-j-moe.github.io/vitalBayes/reference/M_peterson_wroblewski.md)
@@ -30,13 +32,15 @@
   : Create LOO Comparison Table
 - [`create_parameter_table()`](https://brian-j-moe.github.io/vitalBayes/reference/create_parameter_table.md)
   : Create Parameter Summary Table
+- [`extract_growth_parameters()`](https://brian-j-moe.github.io/vitalBayes/reference/extract_growth_parameters.md)
+  : Extract Life History Parameters from Growth Model Posterior
 - [`fit_bayesian_birth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_birth.md)
   : Fit Bayesian Length-at-Birth Model
 - [`fit_bayesian_growth()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)
   : Fit Bayesian Individual Growth Models
 - [`fit_bayesian_maturity()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md)
   : Fit Bayesian Maturity Models
-- [`get_stochastic_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
+- [`get_stochastic_mortality`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
   : Stochastic Estimation of Age-Specific Natural Mortality
 - [`is_colorblind_safe()`](https://brian-j-moe.github.io/vitalBayes/reference/is_colorblind_safe.md)
   : Check if Palette is Colorblind-Friendly

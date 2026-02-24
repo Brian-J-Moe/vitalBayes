@@ -85,7 +85,7 @@
 Natural Mortality Estimation</h3>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/Brian-J-Moe/vitalBayes/blob/master/vignettes/chen_watanabe_reparameterization.Rmd" class="external-link"><code>vignettes/chen_watanabe_reparameterization.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Brian-J-Moe/vitalBayes/blob/master/vignettes/articles/chen_watanabe_reparameterization.Rmd" class="external-link"><code>vignettes/articles/chen_watanabe_reparameterization.Rmd</code></a></small>
       <div class="d-none name"><code>chen_watanabe_reparameterization.Rmd</code></div>
     </div>
 
@@ -355,7 +355,7 @@ an internal consistency check:</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Extract VB posterior draws</span></span>
-<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu">extract_growth_parameters</span><span class="op">(</span><span class="va">vb_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
+<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_growth_parameters.html">extract_growth_parameters</a></span><span class="op">(</span><span class="va">vb_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Compare native k to VB-equivalent k</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">k</span>, <span class="va">params</span><span class="op">$</span><span class="va">k_vb_equiv</span>, tolerance <span class="op">=</span> <span class="fl">1e-10</span><span class="op">)</span></span>
@@ -363,7 +363,7 @@ an internal consistency check:</p>
 <p>For Gompertz and Logistic fits, the VB-equivalent <span class="math inline">\(k\)</span> and native <span class="math inline">\(k\)</span> will be correlated but not
 identical:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">params_gomp</span> <span class="op">&lt;-</span> <span class="fu">extract_growth_parameters</span><span class="op">(</span><span class="va">gomp_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">params_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_growth_parameters.html">extract_growth_parameters</a></span><span class="op">(</span><span class="va">gomp_fit</span>, sex <span class="op">=</span> <span class="fl">1</span>, n_draws <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Native Gompertz k vs VB-equivalent k</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">params_gomp</span><span class="op">$</span><span class="va">k</span>, <span class="va">params_gomp</span><span class="op">$</span><span class="va">k_vb_equiv</span>, use <span class="op">=</span> <span class="st">"complete.obs"</span><span class="op">)</span></span>
@@ -443,19 +443,19 @@ kink at <span class="math inline">\(t_m\)</span>.</p>
 <code class="sourceCode R"><span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">35</span>, by <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Single-phase: monotonic decline</span></span>
-<span><span class="va">M_single</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span><span class="va">M_single</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_chen_watanabe_L0.html">M_chen_watanabe_L0</a></span><span class="op">(</span></span>
 <span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
 <span>  two_phase <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Two-phase: Gompertz senescence</span></span>
-<span><span class="va">M_gomp</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span><span class="va">M_gomp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_chen_watanabe_L0.html">M_chen_watanabe_L0</a></span><span class="op">(</span></span>
 <span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
 <span>  two_phase <span class="op">=</span> <span class="cn">TRUE</span>, tmat <span class="op">=</span> <span class="fl">12</span>, late_model <span class="op">=</span> <span class="st">"gompertz"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Two-phase: Logistic senescence</span></span>
-<span><span class="va">M_logis</span> <span class="op">&lt;-</span> <span class="fu">M_chen_watanabe_L0</span><span class="op">(</span></span>
+<span><span class="va">M_logis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/M_chen_watanabe_L0.html">M_chen_watanabe_L0</a></span><span class="op">(</span></span>
 <span>  age <span class="op">=</span> <span class="va">ages</span>, Linf <span class="op">=</span> <span class="fl">100</span>, L0 <span class="op">=</span> <span class="fl">25</span>, k <span class="op">=</span> <span class="fl">0.08</span>,</span>
 <span>  two_phase <span class="op">=</span> <span class="cn">TRUE</span>, tmat <span class="op">=</span> <span class="fl">12</span>, late_model <span class="op">=</span> <span class="st">"logistic"</span></span>
 <span><span class="op">)</span></span>

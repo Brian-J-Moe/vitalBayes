@@ -5,13 +5,7 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Orbitron-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Stochastic Estimation of Age-Specific Natural Mortality — get_stochastic_mortality"><meta name="description" content="Monte Carlo simulation of age-specific natural mortality schedules with
-uncertainty propagation from growth and maturity parameters. Accepts either
-vitalBayes stanfit objects (preserving posterior correlations) or manual
-c(mean, sd) specifications."><meta property="og:description" content="Monte Carlo simulation of age-specific natural mortality schedules with
-uncertainty propagation from growth and maturity parameters. Accepts either
-vitalBayes stanfit objects (preserving posterior correlations) or manual
-c(mean, sd) specifications."><meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Inter-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/Orbitron-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Stochastic Estimation of Age-Specific Natural Mortality — get_stochastic_mortality"><meta property="og:image" content="https://brian-j-moe.github.io/vitalBayes/logo.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Orbitron:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -53,50 +47,81 @@ c(mean, sd) specifications."><meta property="og:image" content="https://brian-j-
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Stochastic Estimation of Age-Specific Natural Mortality</h1>
-      <small class="dont-index">Source: <a href="https://github.com/Brian-J-Moe/vitalBayes/blob/master/R/mortality_estimation.R" class="external-link"><code>R/mortality_estimation.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/Brian-J-Moe/vitalBayes/blob/master/R/get_stochastic_mortality.R" class="external-link"><code>R/get_stochastic_mortality.R</code></a>, <a href="https://github.com/Brian-J-Moe/vitalBayes/blob/master/R/mortality_estimation.R" class="external-link"><code>R/mortality_estimation.R</code></a></small>
       <div class="d-none name"><code>get_stochastic_mortality.Rd</code></div>
     </div>
 
     <div class="ref-description section level2">
-    <p>Monte Carlo simulation of age-specific natural mortality schedules with
-uncertainty propagation from growth and maturity parameters. Accepts either
-vitalBayes stanfit objects (preserving posterior correlations) or manual
-<code>c(mean, sd)</code> specifications.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_stochastic_mortality</span><span class="op">(</span></span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CW"</span>, <span class="st">"PW"</span>, <span class="st">"L"</span><span class="op">)</span>,</span>
-<span>  growth_fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  birth_fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  length_maturity_fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  age_maturity_fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  sex <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  Linf <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  L0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  Lmat <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tmat <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  maturity_cor <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  growth_model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"vb"</span>, <span class="st">"gompertz"</span>, <span class="st">"logistic"</span><span class="op">)</span>,</span>
-<span>  Linf_factor <span class="op">=</span> <span class="fl">0.99</span>,</span>
-<span>  age_seq <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">tmax</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">ceiling</a></span><span class="op">(</span><span class="va">tmax</span><span class="op">)</span>, length.out <span class="op">=</span> <span class="fl">500</span><span class="op">)</span>,</span>
-<span>  iter <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  scaled <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  M_target <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  p <span class="op">=</span> <span class="fl">0.001</span>,</span>
-<span>  two_phase <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  late_model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gompertz"</span>, <span class="st">"logistic"</span><span class="op">)</span>,</span>
-<span>  tm_factor <span class="op">=</span> <span class="fl">2</span><span class="op">/</span><span class="fl">3</span>,</span>
-<span>  M_mult <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  smooth_factor <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">3</span>,</span>
-<span>  weight_based <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  lw_fun <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">1234</span>,</span>
-<span>  palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"synthwave"</span>, <span class="st">"viridis"</span>, <span class="st">"okabe"</span>, <span class="st">"plasma"</span>, <span class="st">"inferno"</span><span class="op">)</span>,</span>
-<span>  print_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  show_progress <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre><code>get_stochastic_mortality(
+  method = c("CW", "PW", "L"),
+  growth_fit = NULL,
+  birth_fit = NULL,
+  length_maturity_fit = NULL,
+  age_maturity_fit = NULL,
+  sex = 1L,
+  Linf = NULL,
+  L0 = NULL,
+  Lmat = NULL,
+  tmat = NULL,
+  maturity_cor = 0.5,
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+  growth_model = c("vb", "gompertz", "logistic"),
+  Linf_factor = 0.99,
+  age_seq = function(tmax) seq(0.1, ceiling(tmax), length.out = 500),
+  iter = 2000,
+  scaled = TRUE,
+  M_target = NULL,
+  p = 0.001,
+  two_phase = FALSE,
+  late_model = c("gompertz", "logistic"),
+  tm_factor = 2/3,
+  M_mult = 2,
+  smooth_factor = 1/3,
+  weight_based = FALSE,
+  lw_fun = NULL,
+  seed = 1234,
+  palette = c("synthwave", "viridis", "okabe", "plasma", "inferno"),
+  print_plot = TRUE,
+  show_progress = TRUE
+)
+
+get_stochastic_mortality(
+  method = c("CW", "PW", "L"),
+  growth_fit = NULL,
+  birth_fit = NULL,
+  length_maturity_fit = NULL,
+  age_maturity_fit = NULL,
+  sex = 1L,
+  Linf = NULL,
+  L0 = NULL,
+  Lmat = NULL,
+  tmat = NULL,
+  maturity_cor = 0.5,
+=======
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; 89361dd64d8e03d181b8dff5161237d2b73d660d
+  growth_model = c("vb", "gompertz", "logistic"),
+  Linf_factor = 0.99,
+  age_seq = function(tmax) seq(0.1, ceiling(tmax), length.out = 500),
+  iter = 2000,
+  scaled = TRUE,
+  M_target = NULL,
+  p = 0.001,
+  two_phase = FALSE,
+  late_model = c("gompertz", "logistic"),
+  tm_factor = 2/3,
+  M_mult = 2,
+  smooth_factor = 1/3,
+  weight_based = FALSE,
+  lw_fun = NULL,
+  seed = 1234,
+  palette = c("synthwave", "viridis", "okabe", "plasma", "inferno"),
+  print_plot = TRUE,
+  show_progress = TRUE
+)</code></pre></div>
     </div>
 
     <div class="section level2">
@@ -133,12 +158,23 @@ for age-at-maturity. Provides tmat if not in growth_fit. Default NULL.</p></dd>
 two-sex model fits. Default 1.</p></dd>
 
 
-<dt id="arg-linf-l-lmat-tmat">Linf, L0, Lmat, tmat<a class="anchor" aria-label="anchor" href="#arg-linf-l-lmat-tmat"></a></dt>
+</dl><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
+<dl><dt id="arg-linf-l-">Linf, L0<a class="anchor" aria-label="anchor" href="#arg-linf-l-"></a></dt>
+<dd><p>Required for manual mode: <code>c(mean, sd)</code> vectors.</p></dd>
+
+
+<dt id="arg-lmat-tmat">Lmat, tmat<a class="anchor" aria-label="anchor" href="#arg-lmat-tmat"></a></dt>
+<dd><p>Optional <code>c(mean, sd)</code> vectors for maturity milestones.
+When both are provided, enables bivariate sampling and milestone-based
+\(k_{VB}^{equiv}\) derivation.</p></dd>
+
+</dl><p>=======</p>
+<dl><dt id="arg-linf-l-lmat-tmat">Linf, L0, Lmat, tmat<a class="anchor" aria-label="anchor" href="#arg-linf-l-lmat-tmat"></a></dt>
 <dd><p>Numeric vectors of length 2: <code>c(mean, sd)</code>.
 Used when corresponding stanfit is not provided.</p></dd>
 
-
-<dt id="arg-maturity-cor">maturity_cor<a class="anchor" aria-label="anchor" href="#arg-maturity-cor"></a></dt>
+</dl><p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 89361dd64d8e03d181b8dff5161237d2b73d660d</p>
+<dl><dt id="arg-maturity-cor">maturity_cor<a class="anchor" aria-label="anchor" href="#arg-maturity-cor"></a></dt>
 <dd><p>Numeric. Correlation between Lmat and tmat when both
 come from manual specification or separate fits. Default 0.5 (positive
 correlation is biologically reasonable). Set to 0 for independent sampling.</p></dd>
@@ -181,11 +217,16 @@ correlation is biologically reasonable). Set to 0 for independent sampling.</p><
 <dd><p>Character. Senescence model. Default <code>"gompertz"</code>.</p></dd>
 
 
-<dt id="arg-tm-factor">tm_factor<a class="anchor" aria-label="anchor" href="#arg-tm-factor"></a></dt>
+</dl><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
+<dl><dt id="arg-tm-factor-m-mult-smooth-factor">tm_factor, M_mult, smooth_factor<a class="anchor" aria-label="anchor" href="#arg-tm-factor-m-mult-smooth-factor"></a></dt>
+<dd><p>Two-phase model parameters.</p></dd>
+
+</dl><p>=======</p>
+<dl><dt id="arg-tm-factor">tm_factor<a class="anchor" aria-label="anchor" href="#arg-tm-factor"></a></dt>
 <dd><p>Numeric. Transition age as fraction of tmat. Default 2/3.</p></dd>
 
-
-<dt id="arg-m-mult">M_mult<a class="anchor" aria-label="anchor" href="#arg-m-mult"></a></dt>
+</dl><p>&gt;&gt;&gt;&gt;&gt;&gt;&gt; 89361dd64d8e03d181b8dff5161237d2b73d660d</p>
+<dl><dt id="arg-m-mult">M_mult<a class="anchor" aria-label="anchor" href="#arg-m-mult"></a></dt>
 <dd><p>Numeric. Mortality multiplier for senescence. Default 2.</p></dd>
 
 
@@ -216,88 +257,123 @@ correlation is biologically reasonable). Set to 0 for independent sampling.</p><
 <dt id="arg-show-progress">show_progress<a class="anchor" aria-label="anchor" href="#arg-show-progress"></a></dt>
 <dd><p>Logical. Show progress messages? Default TRUE.</p></dd>
 
+</dl><p>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</p>
+<dl><dt id="arg-maturity-fit">maturity_fit<a class="anchor" aria-label="anchor" href="#arg-maturity-fit"></a></dt>
+<dd><p>Optional <code>CmdStanMCMC</code> object from
+<code><a href="fit_bayesian_maturity.html">fit_bayesian_maturity</a></code> providing age-at-maturity.</p></dd>
+
+
+<dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
+<dd><p>Optional <code>c(mean, sd)</code> for native growth coefficient (manual
+mode). Required for PW and weight-based Lorenzen. Optional for CW and
+growth-based Lorenzen when <code>Lmat</code> and <code>tmat</code> are provided (the
+VB-equivalent will be derived from milestones).</p></dd>
+
+
+<dt id="arg-rho-lmat-tmat">rho_Lmat_tmat<a class="anchor" aria-label="anchor" href="#arg-rho-lmat-tmat"></a></dt>
+<dd><p>Numeric in (-1, 1). Correlation between \(L_{mat}\)
+and \(t_{mat}\) for bivariate sampling. Default 0.5.</p></dd>
+
+
+<dt id="arg-linf-l-lmat-tmat">Linf, L0, Lmat, tmat<a class="anchor" aria-label="anchor" href="#arg-linf-l-lmat-tmat"></a></dt>
+<dd><p>Numeric vectors of length 2: <code>c(mean, sd)</code>.
+Used when corresponding stanfit is not provided.</p></dd>
+
+
+<dt id="arg-tm-factor">tm_factor<a class="anchor" aria-label="anchor" href="#arg-tm-factor"></a></dt>
+<dd><p>Numeric. Transition age as fraction of tmat. Default 2/3.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with components:</p><dl><dt>Schedules</dt>
-<dd><p>data.table with columns: set_id, age, M</p></dd>
+<dd><p>data.table of all mortality schedules (set_id, age,
+M_raw, M_scaled)</p></dd>
 
 <dt>Parameters</dt>
-<dd><p>data.table with life history parameters and derived quantities</p></dd>
+<dd><p>data.table of sampled life history parameters including
+k_original (native), k_vb_equiv (VB-equivalent), and growth_model</p></dd>
 
 <dt>Summary</dt>
-<dd><p>data.table with age-wise summary statistics</p></dd>
-
-<dt>Plot</dt>
-<dd><p>ggplot2 object</p></dd>
+<dd><p>data.table with median and 95\<!-- % CI by age} -->
+Plotggplot2 object</p></dd>
 
 
-</dl></div>
-    <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function samples life history parameters and computes mortality
+A list with components:
+=======
+
+</dl><p>A list with components:
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; 89361dd64d8e03d181b8dff5161237d2b73d660d
+</p><dl><dt>Schedules</dt>
+<dd><p>data.table with columns: set_id, age, M</p></dd><dt>Parameters</dt>
+<dd><p>data.table with life history parameters and derived quantities</p></dd><dt>Summary</dt>
+<dd><p>data.table with age-wise summary statistics</p></dd><dt>Plot</dt>
+<dd><p>ggplot2 object</p></dd></dl>
+
+
+Monte Carlo simulation of age-specific natural mortality schedules with
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+full uncertainty propagation from growth model posteriors. Supports
+Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
+derivation of VB-equivalent \(k\) from any growth model fit.Monte Carlo simulation of age-specific natural mortality schedules with
+=======
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; 89361dd64d8e03d181b8dff5161237d2b73d660d
+uncertainty propagation from growth and maturity parameters. Accepts either
+vitalBayes stanfit objects (preserving posterior correlations) or manual
+<code>c(mean, sd)</code> specifications.
+
+
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+A key feature of this function is growth-model-agnostic mortality estimation.
+When a growth fit from <code><a href="fit_bayesian_growth.html">fit_bayesian_growth</a></code> is provided, the
+function automatically detects the growth model type and extracts posterior
+draws of the native growth coefficient and biological milestones. All
+mortality models use the native growth trajectory for body-size predictions,
+while CW and growth-based Lorenzen additionally receive the VB-equivalent
+\(k\) for their model-specific parameters that were derived or calibrated
+under VB assumptions.This function samples life history parameters and computes mortality
 schedules using the chosen method. When vitalBayes fit objects are provided,
 posterior correlations between parameters are preserved, yielding more
-realistic uncertainty bounds than independent sampling.</p>
-<p>When maturity parameters (Lmat, tmat) come from separate model fits, the
+realistic uncertainty bounds than independent sampling.=======
+This function samples life history parameters and computes mortality
+schedules using the chosen method. When vitalBayes fit objects are provided,
+posterior correlations between parameters are preserved, yielding more
+realistic uncertainty bounds than independent sampling.&gt;&gt;&gt;&gt;&gt;&gt;&gt; 89361dd64d8e03d181b8dff5161237d2b73d660d
+When maturity parameters (Lmat, tmat) come from separate model fits, the
 <code>maturity_cor</code> argument allows specification of assumed correlation
 between these parameters. Larger individuals typically mature at older ages,
-so a positive correlation (default 0.5) is biologically reasonable.</p>
+so a positive correlation (default 0.5) is biologically reasonable.
+
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+Growth Coefficient RolesThe three mortality models use \(k\) in fundamentally different ways:
+<dl><dt>CW</dt>
+<dd><p>\(M(t) = k_{VB} \cdot L_\infty / L(t)\): the \(k_{VB}\)
+appears as the asymptotic mortality rate constant (derived under VB
+assumptions), while \(L(t)\) is predicted by the native growth model.</p></dd><dt>Lorenzen growth-based</dt>
+<dd><p>\(\ln M = a_0 + a_1 \ln(L/L_\infty) +
+    a_2 \ln(k_{VB})\): the \(k_{VB}\) enters as a calibration coefficient
+(fitted against VB parameters), while \(L(t)/L_\infty\) uses the
+native trajectory.</p></dd><dt>PW and Lorenzen weight-based</dt>
+<dd><p>Operate entirely on predicted body
+weight: \(M(W(t))\). No \(k\) appears in the mortality equation
+itself; only the native growth trajectory matters.</p></dd></dl><p>Manual Parameter SpecificationWhen a growth fit is not available, parameters can be specified manually.
+Two sampling modes are supported:
+</p><dl><dt>Bivariate (preferred)</dt>
+<dd><p>When both <code>Lmat</code> and <code>tmat</code> are
+provided, they are sampled jointly from a bivariate normal with
+correlation <code>rho_Lmat_tmat</code>. The VB-equivalent \(k\) is then
+derived from the sampled milestones.</p></dd><dt>Independent (fallback)</dt>
+<dd><p>When only <code>k</code> is provided, it is
+sampled independently from a normal distribution and assumed to be
+VB-equivalent for CW and growth-based Lorenzen. For non-VB growth
+models, the derivative-matching approach provides a VB-equivalent.</p></dd></dl><p>Parameter SourcesParameters can be supplied from multiple sources with the following priority:
+</p><dl><dt>Linf</dt>
+<dd><p>growth_fit &gt; manual</p></dd><dt>L0</dt>
+<dd><p>growth_fit &gt; birth_fit &gt; manual</p></dd><dt>Lmat</dt>
+<dd><p>growth_fit &gt; length_maturity_fit &gt; manual</p></dd><dt>tmat</dt>
+<dd><p>growth_fit &gt; age_maturity_fit &gt; manual</p></dd></dl><p></p>
     </div>
-    <div class="section level2">
-    <h2 id="parameter-sources">Parameter Sources<a class="anchor" aria-label="anchor" href="#parameter-sources"></a></h2>
 
-
-<p>Parameters can be supplied from multiple sources with the following priority:</p><dl><dt>Linf</dt>
-<dd><p>growth_fit &gt; manual</p></dd>
-
-<dt>L0</dt>
-<dd><p>growth_fit &gt; birth_fit &gt; manual</p></dd>
-
-<dt>Lmat</dt>
-<dd><p>growth_fit &gt; length_maturity_fit &gt; manual</p></dd>
-
-<dt>tmat</dt>
-<dd><p>growth_fit &gt; age_maturity_fit &gt; manual</p></dd>
-
-
-</dl></div>
-
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Using vitalBayes fits (full correlation preservation)</span></span></span>
-<span class="r-in"><span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu">get_stochastic_mortality</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  method <span class="op">=</span> <span class="st">"CW"</span>,</span></span>
-<span class="r-in"><span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,  <span class="co"># From maturity-based fit_bayesian_growth</span></span></span>
-<span class="r-in"><span>  sex <span class="op">=</span> <span class="fl">1</span>,</span></span>
-<span class="r-in"><span>  growth_model <span class="op">=</span> <span class="st">"vb"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Using separate maturity fits with specified correlation</span></span></span>
-<span class="r-in"><span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu">get_stochastic_mortality</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  method <span class="op">=</span> <span class="st">"CW"</span>,</span></span>
-<span class="r-in"><span>  growth_fit <span class="op">=</span> <span class="va">growth_fit</span>,           <span class="co"># For Linf, L0</span></span></span>
-<span class="r-in"><span>  length_maturity_fit <span class="op">=</span> <span class="va">L50_fit</span>,     <span class="co"># For Lmat</span></span></span>
-<span class="r-in"><span>  age_maturity_fit <span class="op">=</span> <span class="va">t50_fit</span>,        <span class="co"># For tmat</span></span></span>
-<span class="r-in"><span>  maturity_cor <span class="op">=</span> <span class="fl">0.6</span>,                <span class="co"># Assumed Lmat-tmat correlation</span></span></span>
-<span class="r-in"><span>  sex <span class="op">=</span> <span class="fl">1</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Using manual parameters with correlation</span></span></span>
-<span class="r-in"><span><span class="va">mort</span> <span class="op">&lt;-</span> <span class="fu">get_stochastic_mortality</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  method <span class="op">=</span> <span class="st">"CW"</span>,</span></span>
-<span class="r-in"><span>  Linf <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">126</span>, <span class="fl">10</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  L0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">35</span>, <span class="fl">3</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  Lmat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">83</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  tmat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">47</span>, <span class="fl">4</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  maturity_cor <span class="op">=</span> <span class="fl">0.5</span>,</span></span>
-<span class="r-in"><span>  growth_model <span class="op">=</span> <span class="st">"gompertz"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

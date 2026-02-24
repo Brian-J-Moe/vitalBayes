@@ -33,11 +33,11 @@ as the organism approaches asymptotic size.
 The VB model is the most widely used growth function in fisheries
 science and provides the baseline parameterization for the Chen-Watanabe
 natural mortality model (see
-[`vignette("chen_watanabe_reparameterization")`](https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.md)).
-However, it is sensitive to data coverage at extreme ages: sparse adult
-observations can produce biologically implausible \\L\_\infty\\
-estimates, and the strong \\L\_\infty\\-\\k\\ correlation under
-traditional parameterization can lead to poorly identified posteriors.
+`vignette("chen_watanabe_reparameterization")`). However, it is
+sensitive to data coverage at extreme ages: sparse adult observations
+can produce biologically implausible \\L\_\infty\\ estimates, and the
+strong \\L\_\infty\\-\\k\\ correlation under traditional
+parameterization can lead to poorly identified posteriors.
 
 ### Gompertz
 
@@ -405,8 +405,7 @@ compare_loo(
 The selected model can then be passed to
 [`get_stochastic_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
 for mortality estimation, regardless of which growth model was chosen
-(see
-[`vignette("chen_watanabe_reparameterization")`](https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.md)).
+(see `vignette("chen_watanabe_reparameterization")`).
 
 ## CV-Based Prior Specification
 
@@ -551,8 +550,8 @@ create_parameter_table(
 
 - [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
   — When and how to use hierarchical structure for imbalanced sex ratios
-- [`vignette("chen_watanabe_reparameterization")`](https://brian-j-moe.github.io/vitalBayes/articles/chen_watanabe_reparameterization.md)
-  — How growth parameters feed into CW mortality estimation
+- `vignette("chen_watanabe_reparameterization")` — How growth parameters
+  feed into CW mortality estimation
 - [`vignette("mortality_estimation")`](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md)
   — Natural mortality from growth posteriors
 - [`vignette("model_diagnostics")`](https://brian-j-moe.github.io/vitalBayes/articles/model_diagnostics.md)
