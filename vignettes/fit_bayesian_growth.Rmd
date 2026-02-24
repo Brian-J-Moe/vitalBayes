@@ -1,8 +1,8 @@
 ---
-title: "Growth Modeling with fit_bayesian_growth()"
+title: "Modeling Individual Growth with fit_bayesian_growth()"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Growth Modeling with fit_bayesian_growth()}
+  %\VignetteIndexEntry{Modeling Individual Growth with fit_bayesian_growth()}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
