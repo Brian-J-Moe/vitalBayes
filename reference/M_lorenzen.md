@@ -1,8 +1,7 @@
 # Lorenzen Natural Mortality Model
 
-\<\<\<\<\<\<\< HEAD Computes size-dependent natural mortality following
-Lorenzen (1996, 2022). Supports both weight-based and growth-based
-formulations.
+Computes size-dependent natural mortality following Lorenzen (1996,
+2022). Supports both weight-based and growth-based formulations.
 
 ## Usage
 
@@ -130,8 +129,7 @@ mortality in juvenile and adult fish. *Journal of Fish Biology*, 49(4),
 627-642.
 
 Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish
-populations. *Fisheries Research*, 255, 106454. ======= Lorenzen Natural
-Mortality Model \>\>\>\>\>\>\> 89361dd64d8e03d181b8dff5161237d2b73d660d
+populations. *Fisheries Research*, 255, 106454.
 
 ## Examples
 
