@@ -24,7 +24,7 @@ models, we can use well-estimated maturity parameters to stabilize
 poorly-estimated growth parameters. This is especially valuable when age
 data are sparse or uncertain.
 
-### The Three-Stage Workflow
+### The Four-Stage Workflow
 
 The vitalBayes framework proceeds through three interconnected
 estimation stages, with a fourth stage connecting the biological
@@ -164,9 +164,7 @@ where:
 **What \\b\_{50}\\ represents**: This isn’t exactly “birth length” in
 the sense of the length at which parturition occurs. Rather, it’s the
 length at which we’d expect a 50-50 chance that a randomly-selected
-individual of that size is free-swimming vs. still an embryo. For
-practical purposes in population modeling, this is often more useful
-than trying to pinpoint an exact birth moment.
+individual of that size is free-swimming vs. still an embryo.
 
 ### Prior Specification
 
@@ -191,15 +189,14 @@ parameter space while remaining appropriately vague.
 
 In some datasets, the largest embryo is smaller than the smallest
 free-swimmer. This actually makes estimation easier—the transition is
-clearly constrained to fall in that gap. The model handles this
-gracefully.
+clearly constrained to fall in that gap.
 
 #### What if there’s substantial overlap?
 
 This is biologically interesting! It suggests high individual variation
 in birth timing, which manifests as a shallow slope \\\beta\\ and wide
 transition zone. The model will estimate this appropriately, though
-you’ll want to think carefully about whether the “overlap” might reflect
+you’ll want to carefully consider whether the “overlap” might reflect
 misclassification in your data.
 
 ## Maturity Estimation
@@ -221,10 +218,9 @@ corresponding 50% maturity point.
 
 ### The Challenge of Imbalanced Sex Ratios
 
-Here’s where things get interesting. Elasmobranch sampling often
-produces highly imbalanced sex ratios due to sexual segregation by
-depth, season, or habitat, gear selectivity, and differential
-catchability.
+Elasmobranch sampling often produces highly imbalanced sex ratios due to
+sexual segregation by depth, season, or habitat, gear selectivity, and
+differential catchability.
 
 **Consider this scenario**: You’ve sampled 150 female gulper sharks with
 good maturity data, but only 34 males. You want sex-specific maturity
@@ -242,8 +238,8 @@ features of hierarchical Bayesian modeling.
 
 ### Partial Pooling: Borrowing Strength Without Losing Flexibility
 
-The core idea is elegant: we model sex-specific parameters as draws from
-a common population distribution. Mathematically:
+The core idea: we model sex-specific parameters as draws from a common
+population distribution. Mathematically:
 
 \\\log(L\_{50,s}) = \mu\_{L\_{50}} + \tau\_{L\_{50}} \cdot \eta_s, \quad
 \eta_s \sim \mathcal{N}(0, 1)\\
@@ -282,17 +278,13 @@ For our imbalanced sex example with 150 females and 34 males:
 - If the males truly are different from females, the data will push
   \\\tau\\ larger and the estimates will separate
 
-This isn’t “making up” data—it’s appropriately using biological
-knowledge (that conspecific sexes are related) to improve inference.
-
 ### The Non-Centered Parameterization: A Technical But Important Detail
 
-You might have noticed something strange in the model specification: why
-write \\\mu + \tau \cdot \eta\\ instead of just sampling
+Why write \\\mu + \tau \cdot \eta\\ instead of just sampling
 \\\log(L\_{50,s}) \sim \mathcal{N}(\mu, \tau^2)\\ directly?
 
-This is called **non-centered parameterization**, and it solves a
-computational problem called the “funnel.”
+This is **non-centered parameterization**, and it solves a computational
+problem called the “funnel.”
 
 **The Funnel Problem**: In hierarchical models, when \\\tau\\ is small,
 the group-level parameters (here, \\L\_{50,s}\\) must all be very close
@@ -347,9 +339,9 @@ maturity stages.
 
 All three models are implemented in \\L_0\\-based form, where \\L_0\\ is
 length at birth—a directly observable quantity, unlike the VB parameter
-\\t_0\\ (the theoretical age at length zero). This means priors can be
-set from embryo or neonate measurements rather than from a mathematical
-abstraction.
+\\t_0\\ (the x-intercept or, more commonly, the “theoretical age at
+length zero”). This means priors can be set from embryo or neonate
+measurements rather than from a mathematical abstraction.
 
 #### von Bertalanffy Growth Model (VBGM)
 
@@ -362,8 +354,8 @@ at birth and declines monotonically, with an inflection point at \\0.632
 fastest in early life and steadily decelerates as the organism
 approaches asymptotic size. The VB model is the most widely used growth
 function in fisheries science and provides the baseline parameterization
-for the Chen-Watanabe natural mortality model (see [Section 7:
-Connecting Growth to Mortality](#mortality)).
+for several natural mortality models (see [Section 7: Connecting Growth
+to Mortality](#mortality)).
 
 #### Gompertz Growth Model
 
@@ -377,9 +369,8 @@ more abruptly than under VB dynamics, with the inflection point
 occurring at \\L\_\infty / e \approx 0.368 \\ L\_\infty\\—much earlier
 in ontogeny than the VB inflection. This makes the Gompertz particularly
 suitable for species exhibiting rapid juvenile growth followed by
-pronounced deceleration. Many small coastal elasmobranchs (bonnetheads,
-Atlantic sharpnose sharks, some skate species) show this pattern, with
-growth effectively ceasing near reproductive maturity.
+pronounced deceleration. Many small coastal elasmobranchs show this
+pattern, with growth effectively ceasing near reproductive maturity.
 
 #### Logistic Growth Model
 
@@ -425,31 +416,35 @@ When we fit a growth curve without constraints, the estimation algorithm
 finds parameter values that minimize prediction error across the
 dataset. For \\L\_\infty\\, this typically means fitting the asymptote
 to go through the *center* of the length-at-age scatter at old ages.
+While commonly defined as the “theoretical asymptotic length” or
+“theoretical maximum length”, the correct interpretation is the
+*asymptote of the average length-at-age curve*.
 
-But think about what this implies biologically. At any given age,
+But what does this actually imply biologically? At any given age,
 there’s natural variation in length—some individuals are larger than
 average, some smaller. The largest individuals at each age represent the
 upper tail of this distribution.
 
 If the fitted \\L\_\infty\\ falls *below* these largest individuals,
 we’re saying they’ve already exceeded their theoretical maximum size.
-That’s biologically nonsensical!
+That’s biologically nonsensical and could complicate future age
+predictions of very large individuals.
 
 #### The Correct Interpretation
 
-\\L\_\infty\\ should represent the expected length of a very old
+\\L\_\infty\\ *should* represent the expected length of a very old
 individual, or the length at which growth rate approaches zero. It’s an
 *upper bound*, not a central tendency.
 
 **The vitalBayes Solution**: We constrain \\L\_\infty \> L\_{max}\\ (the
-maximum observed length) in the Stan model. The prior mean is set at
-\\1.05 \times L\_{max}\\ (5% above observed maximum), reflecting the
-expectation that true asymptotic size modestly exceeds what we’ve
-observed.
+maximum observed length) in the Stan model. The prior mean, by default,
+is set at \\1.05 \times L\_{max}\\ (5% above observed maximum),
+reflecting the expectation that true asymptotic size modestly exceeds
+what we’ve observed.
 
 This ensures that the asymptote always exceeds observed data, that
 \\L\_\infty\\ is interpretable as a true upper bound, and that the model
-doesn’t produce the absurdity of individuals “exceeding” their maximum
+doesn’t produce the idea of individuals “exceeding” their maximum
 possible size.
 
 #### Why We Might Underestimate True \\L\_{max}\\
@@ -474,14 +469,19 @@ elasmobranch datasets, especially for rare or data-limited species,
 \\k\\ is poorly constrained because age estimation is uncertain, sample
 sizes are small, and old individuals (near the asymptote) are rare.
 
+Furthermore, \\k\\ in the von Bertalanffy model carries a different
+meaning than either \\k\\ from the Gompertz or logistic (which
+themselves have different meanings). This makes direct model comparison
+difficult.
+
 vitalBayes offers an alternative: **deriving \\k\\ from maturity
 parameters**.
 
 #### The Key Insight
 
-Here’s the biological fact we exploit: an individual that matures at
-length \\L\_{mat}\\ and age \\t\_{mat}\\ must, by definition, lie on the
-growth curve at the point \\(t\_{mat}, L\_{mat})\\.
+An individual that matures at length \\L\_{mat}\\ and age \\t\_{mat}\\
+must, by definition, lie on the growth curve at the point \\(t\_{mat},
+L\_{mat})\\.
 
 If we know (or can estimate) the maturity milestone, we can substitute
 it into the growth equation and solve for \\k\\. The derivation is
@@ -499,7 +499,7 @@ Rearranging: \\\frac{L\_\infty - L\_{mat}}{L\_\infty - L_0} = e^{-k
 Taking logs: \\-k \cdot t\_{mat} = \ln\left(\frac{L\_\infty -
 L\_{mat}}{L\_\infty - L_0}\right)\\
 
-Solving for \\k\\: \\k\_{VB} = \frac{1}{t\_{mat}}
+Solving for \\k\\: \\k\_{vb} = \frac{1}{t\_{mat}}
 \ln\left(\frac{L\_\infty - L_0}{L\_\infty - L\_{mat}}\right)\\
 
 #### Gompertz and Logistic Derivations
@@ -522,20 +522,12 @@ the Stan model or informed by upstream birth and maturity fits. This
 eliminates the need to specify a prior on \\k\\ directly and breaks the
 \\L\_\infty\\-\\k\\ posterior correlation.
 
-An important subtlety: \\k\\ has different meanings across the three
-models and should not be directly compared between them. For example,
-Gompertz \\k_g\\ is generally larger than VB \\k\_{VB}\\ for the same
-species, because the Gompertz’s exponentially declining growth rate
-requires a faster initial rate constant to reach the same asymptote.
-What matters for biological inference is the resulting growth
-trajectory, not the numerical value of \\k\\.
-
 #### Why This Helps
 
 The maturity-based parameterization offers several advantages:
 
 1.  **Reduced correlation**: The traditional \\(L\_\infty, k)\\
-    parameter pair is notoriously correlated—when \\L\_\infty\\ is high,
+    parameter pair is heavily correlated—when \\L\_\infty\\ is high,
     \\k\\ tends to be low, and vice versa. This ridge-like posterior
     geometry slows MCMC sampling. By replacing \\k\\ with \\(L\_{mat},
     t\_{mat})\\, we break this correlation.
@@ -575,15 +567,15 @@ models
 ([`fit_bayesian_maturity()`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_maturity.md))
 were themselves fit with `use_pooling = TRUE`, the maturity parameters
 (\\L\_{mat}\\, \\t\_{mat}\\) already contain pooled estimates. Pooling
-them *again* in the growth model creates a **double-pooling** problem
-that can over-shrink sex differences toward the population mean, in
-extreme cases reversing genuine biological dimorphism.
+them *again* in the growth model creates **double-pooling** which can
+over-shrink sex differences toward the population mean, and, in extreme
+cases, reverse genuine biological dimorphism.
 
 **The Double-Pooling Problem**: Consider a species where females mature
 at 72 cm and males at 65 cm. If the maturity model already pulled these
 estimates slightly toward each other (say to 71 and 66), and then the
 growth model applies hierarchical pooling again, the estimates might
-compress further (say to 70 and 67). Each stage of pooling is
+compress further (say to 70 and 68). Each stage of pooling is
 individually appropriate, but the cumulative effect can wash out a real
 biological signal.
 
@@ -597,10 +589,10 @@ by the `pool_maturity` argument in
 which auto-detects whether the maturity inputs are vitalBayes model fits
 and adjusts accordingly.
 
-The logic is straightforward: parameters that have already been
-regularized by a hierarchical model shouldn’t be regularized again.
-Parameters that haven’t (\\L\_\infty\\, \\L_0\\) still benefit from
-pooling. For the full decision guide and code examples, see
+Parameters that have already been regularized by a hierarchical model
+shouldn’t be regularized again. Parameters that haven’t (\\L\_\infty\\,
+\\L_0\\) still benefit from pooling. For the full decision guide and
+code examples, see
 [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md).
 
 ### Observation Model
@@ -619,8 +611,8 @@ predictions while lognormal can’t. Measurement error is often
 *proportional* to size—a 1 cm error matters more for a 30 cm juvenile
 than a 100 cm adult, and lognormal naturally captures this
 multiplicative structure. On the log scale, we’re essentially fitting a
-linear model with constant variance, which is statistically
-well-behaved.
+linear model with constant variance, which is more well-behaved when
+implemented in Stan.
 
 For datasets with outliers or heavy-tailed residuals, vitalBayes also
 supports a **Student-t observation model** via the `robust = TRUE`
@@ -642,10 +634,10 @@ scale, rather than standard deviations on the log scale.
 Traditional Bayesian software asks for priors like: “The log of
 \\L\_\infty\\ has a normal prior with mean 4.5 and SD 0.3.”
 
-But what does that *mean* in terms of actual lengths? It’s not
-immediately obvious. And when parameters span different scales (birth
-length vs. asymptotic length vs. growth rate), using consistent SDs on
-the log scale produces inconsistent prior beliefs on the natural scale.
+But, it’s not immediately obvious what that *means* in terms of actual
+lengths. And when parameters span different scales (birth length
+vs. asymptotic length vs. growth rate), using consistent SDs on the log
+scale produces inconsistent prior beliefs on the natural scale.
 
 ### The CV Solution
 
@@ -742,8 +734,9 @@ model), se_diff (standard error of that difference), and LOOIC (LOO
 information criterion, \\-2 \times \text{elpd}\_{loo}\\, analogous to
 AIC).
 
-A rule of thumb: if `elpd_diff` is more than 2–3 times its standard
-error, the model difference is meaningful.
+See \[<https://mc-stan.org/loo/index.html>\] for more on interpreting
+LOO-CV results and model comparison via
+[`loo::loo_compare()`](https://mc-stan.org/loo/reference/loo_compare.html).
 
 ## Connecting Growth to Mortality
 
@@ -771,7 +764,7 @@ at maximum body size) and \\L(t)\\ is the growth function. As an
 individual grows, its mortality declines in inverse proportion to its
 length—large fish die at lower rates than small fish.
 
-The critical insight is that \\M\_\infty = k\_{VB}\\, where \\k\_{VB}\\
+The critical insight is that \\M\_\infty = k\_{vb}\\, where \\k\_{vb}\\
 is the von Bertalanffy growth coefficient. Chen and Watanabe derived
 this relationship under VB assumptions: as \\t \to \infty\\, \\L(t) \to
 L\_\infty\\ and \\M(t) \to k\\. This means the growth coefficient
@@ -788,7 +781,7 @@ L\_\infty\\ that allows the CW mortality model to be written as:
 
 where \\G(t)\\ takes a different functional form for each growth model
 but produces the same mortality behavior: high mortality at young ages
-that declines as the organism grows. Because \\M\_\infty = k\_{VB}\\
+that declines as the organism grows. Because \\M\_\infty = k\_{vb}\\
 regardless of which growth model fits the data, non-VB models compute a
 VB-equivalent \\k\\ from their own biological milestones. For the full
 mathematical framework, see
@@ -805,8 +798,8 @@ distribution of \\M(t)\\. When a fitted growth model is available, draws
 come from the joint posterior preserving all parameter correlations. For
 literature-based analyses, manual parameters can be specified as mean-SD
 pairs, with optional bivariate sampling of \\L\_{mat}\\ and \\t\_{mat}\\
-via Cholesky factorization to preserve their positive biological
-correlation. This is covered in detail in
+via Cholesky factorization to preserve their biological correlation.
+This is covered in detail in
 [`vignette("mortality_estimation")`](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md),
 which also describes two additional mortality estimators
 (Peterson-Wroblewski and Lorenzen) and scaling procedures for
@@ -847,17 +840,6 @@ mortality rate, \\L\_\infty\\ sets the scale, and the growth trajectory
 from the growth model propagates through, so that mortality schedules
 carry appropriate uncertainty from all upstream stages.
 
-**Why not fit everything simultaneously?**
-
-A fully joint model fitting birth, maturity, growth, and mortality
-together would be conceptually elegant, but computationally prohibitive.
-The joint posterior would be very high-dimensional, it would be harder
-to identify which component is misbehaving during diagnostics, and
-researchers often have different data for different stages. The
-sequential approach is a principled approximation that maintains
-biological coherence while keeping computation tractable and each stage
-individually diagnosable.
-
 ## Summary: Key Takeaways
 
 The vitalBayes framework rests on several foundational design choices:
@@ -881,14 +863,14 @@ The vitalBayes framework rests on several foundational design choices:
     uncertainty
 
 6.  **Proper \\L\_\infty\\ constraints** ensuring the asymptote is
-    interpretable as an upper bound, not a central tendency
+    interpretable as a true upper bound, not a central tendency
 
 7.  **Lognormal observation models** with optional Student-t robustness,
     capturing the multiplicative nature of biological measurement error
 
 8.  **Growth-to-mortality integration** connecting individual growth
-    trajectories to age-specific natural mortality schedules via the
-    Chen-Watanabe and other empirical estimators
+    trajectories to age-specific natural mortality schedules via
+    multiple estimators
 
 Each choice was made deliberately to address specific challenges in
 elasmobranch life history estimation: sparse samples, imbalanced sex
@@ -901,37 +883,32 @@ For those wanting to dive deeper:
 
 **Bayesian Foundations**:
 
-- McElreath, R. (2020). *Statistical Rethinking* (2nd ed.). An excellent
-  introduction to Bayesian thinking.
-- Gelman et al. (2013). *Bayesian Data Analysis* (3rd ed.). The
-  comprehensive reference.
+- McElreath. (2020). *Statistical Rethinking* (2nd ed.).
+- Gelman et al. (2013). *Bayesian Data Analysis* (3rd ed.).
+- Gamerman & Lopez (2006). *Markov Chain Monte Carlo* (2nd ed.).
 
 **Hierarchical Models**:
 
 - Betancourt & Girolami (2015). “Hamiltonian Monte Carlo for
-  Hierarchical Models.” Technical but invaluable for understanding
-  non-centered parameterization.
+  Hierarchical Models.”
 
 **Growth Models**:
 
 - Smart et al. (2016). “Multimodel approaches in shark and ray growth
-  studies.” *Fish and Fisheries*. Reviews growth model selection.
+  studies.” *Fish and Fisheries*.
 - Cailliet et al. (2006). “Age and growth studies of chondrichthyan
-  fishes.” *Environmental Biology of Fishes*. Classic methodology
-  reference.
+  fishes.” *Environmental Biology of Fishes*.
 
 **Natural Mortality**:
 
 - Chen & Watanabe (1989). “Age dependence of natural mortality
   coefficient in fish population dynamics.” *Nippon Suisan Gakkaishi*.
-  Foundation for the CW reparameterization.
 - Lorenzen (1996). “The relationship between body weight and natural
   mortality in juvenile and adult fish: a comparison of natural
-  ecosystems and aquaculture.” *Journal of Fish Biology*. Weight-based
-  mortality estimator.
+  ecosystems and aquaculture.” *Journal of Fish Biology*.
 - Then et al. (2015). “Evaluating the predictive performance of
   estimators of natural mortality rate.” *Methods in Ecology and
-  Evolution*. Empirical comparison of mortality estimators.
+  Evolution*.
 
 **Stan and cmdstanr**:
 

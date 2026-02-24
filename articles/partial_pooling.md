@@ -434,3 +434,8 @@ recommended default** when fitting two-sex models.
   — Maturity model fitting
 - [`vignette("model_diagnostics")`](https://brian-j-moe.github.io/vitalBayes/articles/model_diagnostics.md)
   — Comparing pooled vs unpooled via LOO-CV
+
+------------------------------------------------------------------------
+
+*This document is part of the vitalBayes R package. For bug reports,
+feature requests, or questions, please visit the GitHub repository.*

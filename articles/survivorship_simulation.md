@@ -311,3 +311,8 @@ Associates.
 
 Cortes, E. (2002). Incorporating uncertainty into demographic modeling.
 *Conservation Biology*, 16(4), 1048-1062.
+
+------------------------------------------------------------------------
+
+*This document is part of the vitalBayes R package. For bug reports,
+feature requests, or questions, please visit the GitHub repository.*

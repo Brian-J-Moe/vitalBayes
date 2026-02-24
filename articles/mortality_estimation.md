@@ -635,21 +635,6 @@ When reporting mortality estimates in publications, include:
     these reflect joint posterior sampling or independent parameter
     variation.
 
-Example methods text:
-
-> “Natural mortality was estimated using the Chen-Watanabe model (Chen &
-> Watanabe, 1989) with Gompertz senescence, implemented via the
-> vitalBayes package (v1.0.0; Author, Year). Growth parameters were
-> drawn from the joint posterior of a Gompertz growth model (selected by
-> LOO-CV). Predicted length-at-age used the native Gompertz trajectory,
-> while the asymptotic mortality rate (\\M\_\infty = k\_{VB}\\) was
-> computed from a VB-equivalent growth coefficient derived from
-> biological milestones \\(L\_\infty, L_0, L\_{mat}, t\_{mat})\\.
-> Mortality schedules were scaled to 0.1% survival at estimated
-> \\t\_{max}\\ and propagated through 2,000 Monte Carlo simulations.
-> Median age-specific mortality with 95% credible intervals is
-> reported.”
-
 ## References
 
 Chen, S., & Watanabe, S. (1989). Age dependence of natural mortality
@@ -682,3 +667,8 @@ of Marine Science*, 72(1), 82–92.
   — Growth model fitting that feeds the mortality workflow
 - [`vignette("fit_bayesian_maturity")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md)
   — Maturity estimation for \\t\_{mat}\\ and \\L\_{mat}\\
+
+------------------------------------------------------------------------
+
+*This document is part of the vitalBayes R package. For bug reports,
+feature requests, or questions, please visit the GitHub repository.*

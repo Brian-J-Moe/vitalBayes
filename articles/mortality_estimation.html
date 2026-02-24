@@ -764,20 +764,6 @@ estimate.</li>
 noting whether these reflect joint posterior sampling or independent
 parameter variation.</li>
 </ol>
-<p>Example methods text:</p>
-<blockquote>
-<p>“Natural mortality was estimated using the Chen-Watanabe model (Chen
-&amp; Watanabe, 1989) with Gompertz senescence, implemented via the
-vitalBayes package (v1.0.0; Author, Year). Growth parameters were drawn
-from the joint posterior of a Gompertz growth model (selected by
-LOO-CV). Predicted length-at-age used the native Gompertz trajectory,
-while the asymptotic mortality rate (<span class="math inline">\(M_\infty = k_{VB}\)</span>) was computed from a
-VB-equivalent growth coefficient derived from biological milestones
-<span class="math inline">\((L_\infty, L_0, L_{mat}, t_{mat})\)</span>.
-Mortality schedules were scaled to 0.1% survival at estimated <span class="math inline">\(t_{max}\)</span> and propagated through 2,000
-Monte Carlo simulations. Median age-specific mortality with 95% credible
-intervals is reported.”</p>
-</blockquote>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -816,6 +802,10 @@ that feeds the mortality workflow</li>
 for <span class="math inline">\(t_{mat}\)</span> and <span class="math inline">\(L_{mat}\)</span>
 </li>
 </ul>
+<hr>
+<p><em>This document is part of the vitalBayes R package. For bug
+reports, feature requests, or questions, please visit the GitHub
+repository.</em></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
