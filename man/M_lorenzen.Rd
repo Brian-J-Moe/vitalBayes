@@ -61,6 +61,7 @@ Numeric vector of instantaneous mortality rates.
 Numeric vector of instantaneous mortality rates.
 }
 \description{
+<<<<<<< HEAD
 Computes size-dependent natural mortality following Lorenzen (1996, 2022).
 Supports both weight-based and growth-based formulations.
 }
@@ -125,4 +126,7 @@ mortality in juvenile and adult fish. \emph{Journal of Fish Biology},
 
 Lorenzen, K. (2022). Size- and age-dependent natural mortality in fish
 populations. \emph{Fisheries Research}, 255, 106454.
+=======
+Lorenzen Natural Mortality Model
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 }

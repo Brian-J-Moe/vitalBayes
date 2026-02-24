@@ -17,6 +17,7 @@ get_stochastic_mortality(
   Lmat = NULL,
   tmat = NULL,
   maturity_cor = 0.5,
+<<<<<<< HEAD
   growth_model = c("vb", "gompertz", "logistic"),
   Linf_factor = 0.99,
   age_seq = function(tmax) seq(0.1, ceiling(tmax), length.out = 500),
@@ -49,6 +50,8 @@ get_stochastic_mortality(
   Lmat = NULL,
   tmat = NULL,
   maturity_cor = 0.5,
+=======
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
   growth_model = c("vb", "gompertz", "logistic"),
   Linf_factor = 0.99,
   age_seq = function(tmax) seq(0.1, ceiling(tmax), length.out = 500),
@@ -88,11 +91,16 @@ for age-at-maturity. Provides tmat if not in growth_fit. Default NULL.}
 \item{sex}{Integer. Sex code (1 = female, 2 = male) for extracting from
 two-sex model fits. Default 1.}
 
+<<<<<<< HEAD
 \item{Linf, L0}{Required for manual mode: \code{c(mean, sd)} vectors.}
 
 \item{Lmat, tmat}{Optional \code{c(mean, sd)} vectors for maturity milestones.
 When both are provided, enables bivariate sampling and milestone-based
 \eqn{k_{VB}^{equiv}} derivation.}
+=======
+\item{Linf, L0, Lmat, tmat}{Numeric vectors of length 2: \code{c(mean, sd)}.
+Used when corresponding stanfit is not provided.}
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 
 \item{maturity_cor}{Numeric. Correlation between Lmat and tmat when both
 come from manual specification or separate fits. Default 0.5 (positive
@@ -117,7 +125,11 @@ correlation is biologically reasonable). Set to 0 for independent sampling.}
 
 \item{late_model}{Character. Senescence model. Default \code{"gompertz"}.}
 
+<<<<<<< HEAD
 \item{tm_factor, M_mult, smooth_factor}{Two-phase model parameters.}
+=======
+\item{tm_factor}{Numeric. Transition age as fraction of tmat. Default 2/3.}
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 
 \item{M_mult}{Numeric. Mortality multiplier for senescence. Default 2.}
 
@@ -134,6 +146,7 @@ correlation is biologically reasonable). Set to 0 for independent sampling.}
 \item{print_plot}{Logical. Print the plot? Default TRUE.}
 
 \item{show_progress}{Logical. Show progress messages? Default TRUE.}
+<<<<<<< HEAD
 
 \item{maturity_fit}{Optional \code{CmdStanMCMC} object from
 \code{\link{fit_bayesian_maturity}} providing age-at-maturity.}
@@ -163,6 +176,11 @@ k_original (native), k_vb_equiv (VB-equivalent), and growth_model}
 }
 
 A list with components:
+=======
+}
+\value{
+A list with components:
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 \describe{
 \item{Schedules}{data.table with columns: set_id, age, M}
 \item{Parameters}{data.table with life history parameters and derived quantities}
@@ -172,16 +190,20 @@ A list with components:
 }
 \description{
 Monte Carlo simulation of age-specific natural mortality schedules with
+<<<<<<< HEAD
 full uncertainty propagation from growth model posteriors. Supports
 Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
 derivation of VB-equivalent \eqn{k} from any growth model fit.
 
 Monte Carlo simulation of age-specific natural mortality schedules with
+=======
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 uncertainty propagation from growth and maturity parameters. Accepts either
 vitalBayes stanfit objects (preserving posterior correlations) or manual
 \code{c(mean, sd)} specifications.
 }
 \details{
+<<<<<<< HEAD
 A key feature of this function is growth-model-agnostic mortality estimation.
 When a growth fit from \code{\link{fit_bayesian_growth}} is provided, the
 function automatically detects the growth model type and extracts posterior
@@ -196,11 +218,19 @@ schedules using the chosen method. When vitalBayes fit objects are provided,
 posterior correlations between parameters are preserved, yielding more
 realistic uncertainty bounds than independent sampling.
 
+=======
+This function samples life history parameters and computes mortality
+schedules using the chosen method. When vitalBayes fit objects are provided,
+posterior correlations between parameters are preserved, yielding more
+realistic uncertainty bounds than independent sampling.
+
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 When maturity parameters (Lmat, tmat) come from separate model fits, the
 \code{maturity_cor} argument allows specification of assumed correlation
 between these parameters. Larger individuals typically mature at older ages,
 so a positive correlation (default 0.5) is biologically reasonable.
 }
+<<<<<<< HEAD
 \section{Growth Coefficient Roles}{
 
 The three mortality models use \eqn{k} in fundamentally different ways:
@@ -280,6 +310,21 @@ mort_k <- get_stochastic_mortality(
 }
 
 \dontrun{
+=======
+\section{Parameter Sources}{
+
+Parameters can be supplied from multiple sources with the following priority:
+\describe{
+\item{Linf}{growth_fit > manual}
+\item{L0}{growth_fit > birth_fit > manual}
+\item{Lmat}{growth_fit > length_maturity_fit > manual}
+\item{tmat}{growth_fit > age_maturity_fit > manual}
+}
+}
+
+\examples{
+\dontrun{
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 # Using vitalBayes fits (full correlation preservation)
 mort <- get_stochastic_mortality(
   method = "CW",

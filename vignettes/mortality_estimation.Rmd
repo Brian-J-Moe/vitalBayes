@@ -38,6 +38,7 @@ This vignette covers:
 
 The Chen-Watanabe model derives age-specific mortality from the relationship between body growth and mortality risk under von Bertalanffy dynamics. In the $L_0$-parameterized form used by vitalBayes, the model is:
 
+<<<<<<< HEAD
 $$M(t) = \frac{k_{VB} \cdot L_\infty}{L(t)}$$
 
 where $k_{VB}$ is the von Bertalanffy growth coefficient serving as the asymptotic mortality rate ($M_\infty$), $L_\infty$ is asymptotic length, and $L(t)$ is predicted length at age $t$. Mortality is inversely proportional to body size: small, young individuals experience the highest mortality, which declines as the organism grows toward $L_\infty$.
@@ -85,6 +86,43 @@ $$k_{VB}^{equiv} = k_g \cdot \frac{L_0 \cdot \ln(L_\infty / L_0)}{L_\infty - L_0
 $$k_{VB}^{equiv} = k_l \cdot \frac{L_0}{L_\infty} \quad \text{(Logistic)}$$
 
 These closed-form expressions follow from equating the VB growth rate at birth, $dL/dt|_{t=0} = k_{VB}(L_\infty - L_0)$, with the corresponding Gompertz or Logistic growth rate. The milestone-based derivation is preferred when maturity data are available, since it anchors the conversion at a biologically meaningful interior point of the growth trajectory.
+=======
+$$M(t) = \frac{M_\infty \cdot L_\infty}{L(t)}$$
+
+where $M_\infty \equiv k_{VB}$ is the asymptotic mortality rate (equal to the von Bertalanffy growth coefficient), $L_\infty$ is asymptotic length, and $L(t)$ is the predicted length at age $t$. Mortality is inversely proportional to body size: small, young individuals experience the highest mortality, which declines as the organism grows toward $L_\infty$.
+
+When growth is fitted using a Gompertz or Logistic model rather than von Bertalanffy, the function automatically computes the VB-equivalent $k$ from the shared biological milestones $(L_\infty, L_0, L_{mat}, t_{mat})$:
+
+$$k_{VB}^{equiv} = \frac{1}{t_{mat}} \ln\!\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)$$
+
+The Chen-Watanabe model also supports a two-phase extension for late-life senescence, in which mortality transitions from the declining CW trajectory to an increasing senescence function (Gompertz or Logistic) at a fraction of the age at maturity. For the complete mathematical development of the CW reparameterization, the normalized growth coefficient $G(t)$, and the senescence extensions, see `vignette("chen_watanabe_reparameterization")`.
+
+### Peterson-Wroblewski (1984)
+
+The Peterson-Wroblewski model estimates mortality from an allometric relationship between body weight and mortality rate, derived from empirical data on pelagic fish populations:
+
+$$M(W) = 1.92 \cdot W(t)^{-0.25}$$
+
+where $W(t)$ is body weight in grams at age $t$, computed from predicted length via a user-supplied length-weight function $W = f(L)$. The $-0.25$ exponent reflects metabolic scaling theory: metabolic rate scales approximately as $W^{0.75}$ (Kleiber's law), and mortality is assumed proportional to mass-specific metabolic rate, yielding a $W^{-0.25}$ dependence.
+
+Unlike the CW model, the PW model requires a length-weight relationship function (provided via the `lw_fun` argument). Because the model operates on predicted body weight rather than growth model parameters directly, it is inherently growth-model-agnostic. Any growth model that predicts $L(t)$ can be combined with any $L$-$W$ conversion to produce mortality estimates. The length-at-age predictions use the native growth model's $k$ (not a VB-equivalent), since the PW model was not derived under VB-specific assumptions.
+
+### Lorenzen (1996, 2022)
+
+The Lorenzen model relates natural mortality to body size through empirical calibration across a broad taxonomic range. vitalBayes supports two formulations.
+
+**Weight-based** (Lorenzen, 1996):
+
+$$M(W) = \alpha \cdot W(t)^{\beta}$$
+
+where $\alpha$ and $\beta$ are allometric parameters estimated from a meta-analysis of marine and freshwater fishes ($\alpha \sim \mathcal{N}(3.69, \, 0.502)$, $\beta \sim \mathcal{N}(-0.305, \, 0.029)$). Like the PW model, this requires a length-weight function and uses the native growth model's $k$ and $L(t)$ predictions.
+
+**Growth-based** (Lorenzen, 2022):
+
+$$\ln M = 0.28 - 1.30 \, \ln\!\left(\frac{L(t)}{L_\infty}\right) + 1.08 \, \ln(k)$$
+
+This formulation was calibrated using von Bertalanffy parameters, so $k$ should be the VB-equivalent growth coefficient when inputs come from Gompertz or Logistic model fits. The growth-based formulation has the advantage of not requiring a length-weight relationship, making it useful when $L$-$W$ data are unavailable.
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 
 ## Scaling Mortality Schedules
 
@@ -170,7 +208,11 @@ mort <- get_stochastic_mortality(
 )
 ```
 
+<<<<<<< HEAD
 The function automatically detects the growth model type from the fit object and extracts $(L_\infty, L_0, L_{mat}, t_{mat})$ from the joint posterior. When the growth model is Gompertz or Logistic, two things happen: the native $k$ and growth equation are used for $L(t)$ prediction, and a separate VB-equivalent $k$ is computed for mortality models that require it (CW and growth-based Lorenzen). For maturity-based fits, $k_{VB}^{equiv}$ is derived from the biological milestones; for k-based fits, a derivative-matching conversion is applied. Joint posterior sampling preserves parameter correlations --- critically, the strong negative correlation between $L_\infty$ and $k$ that is typical of growth model fits.
+=======
+The function automatically extracts $(L_\infty, L_0, L_{mat}, t_{mat})$ from the growth posterior and computes the VB-equivalent $k$ when the growth model is Gompertz or Logistic. Joint posterior sampling preserves parameter correlations --- critically, the strong negative correlation between $L_\infty$ and $k$ that is typical of growth model fits.
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 
 ### Output Structure
 
@@ -185,11 +227,19 @@ head(mort$Schedules)
 #> 1:      1   0.5  0.42318  0.31204       0.5
 #> 2:      1   1.0  0.33721  0.24870       1.0
 
+<<<<<<< HEAD
 # Parameter draws used (includes both k values and growth model type)
 head(mort$Parameters)
 #>    set_id   Linf     L0   Lmat  tmat k_native k_vb_equiv growth_model  tmax
 #>     <int>  <num>  <num>  <num> <num>    <num>      <num>       <char> <num>
 #> 1:      1  98.42  24.31  68.92  11.2   0.1521     0.0945     gompertz  34.2
+=======
+# Parameter draws used (includes k_vb_equiv)
+head(mort$Parameters)
+#>    set_id   Linf     L0   Lmat  tmat k_original k_vb_equiv k_for_mort  tmax
+#>     <int>  <num>  <num>  <num> <num>      <num>      <num>      <num> <num>
+#> 1:      1  98.42  24.31  68.92  11.2     0.0823     0.0945     0.0945  34.2
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 
 # Summary statistics across posterior draws
 head(mort$Summary)
@@ -200,6 +250,7 @@ head(mort$Summary)
 
 ### Manual Parameter Specification
 
+<<<<<<< HEAD
 For literature-based analyses where posterior draws are unavailable, parameters can be specified as mean-SD pairs. Two sampling modes are supported, mirroring the k-based and maturity-based parameterizations in `fit_bayesian_growth()`.
 
 #### k-Based (Independent Sampling)
@@ -213,11 +264,22 @@ mort_vb <- get_stochastic_mortality(
   Linf   = c(100, 8),     # mean, sd
   L0     = c(25, 2),
   k      = c(0.08, 0.01), # VB k
+=======
+For literature-based analyses where posterior draws are unavailable, parameters can be specified as mean-SD pairs:
+
+```{r manual}
+mort_manual <- get_stochastic_mortality(
+  method = "CW",
+  Linf   = c(100, 8),     # mean, sd
+  L0     = c(25, 2),
+  k      = c(0.08, 0.01),
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
   tmat   = c(12, 1.5),
   iter   = 2000,
   scaled = TRUE,
   p      = 0.001
 )
+<<<<<<< HEAD
 
 # Gompertz parameters (derivative matching for k_vb)
 mort_gomp <- get_stochastic_mortality(
@@ -282,6 +344,11 @@ mort_rho <- lapply(rho_values, function(r) {
 ```
 
 In practice, sensitivity to $\rho$ is usually modest when the marginal standard deviations of $L_{mat}$ and $t_{mat}$ are small relative to their means. The primary effect of higher $\rho$ is to tighten the uncertainty bands on derived $k$ (and therefore $M$), because correlated sampling generates fewer extreme parameter combinations than independent sampling.
+=======
+```
+
+Note that manual specification samples parameters independently, destroying any correlations. This typically produces wider (less precise) uncertainty bands than joint posterior sampling from a fitted model.
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 
 ## Comparing Mortality Models
 
@@ -342,7 +409,11 @@ A complementary diagnostic tests whether mortality estimates are robust to the c
 # gomp_fit <- fit_bayesian_growth(..., model = "g")
 # logis_fit <- fit_bayesian_growth(..., model = "l")
 
+<<<<<<< HEAD
 # CW mortality from each growth model (auto-detects model type)
+=======
+# CW mortality from each growth model
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 mort_from_vb <- get_stochastic_mortality(
   method = "CW", growth_fit = vb_fit, sex = 1, print_plot = FALSE
 )
@@ -364,12 +435,20 @@ ggplot(combined_growth, aes(x = age_round, color = growth_model, fill = growth_m
   geom_line(aes(y = M_median), linewidth = 1) +
   labs(x = "Age (years)", y = "Natural Mortality (M)",
        title = "CW Mortality by Growth Model",
+<<<<<<< HEAD
        subtitle = "Native L(t) trajectories with VB-equivalent M_inf") +
+=======
+       subtitle = "All derived from same biological milestones") +
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
   theme_bw() +
   theme(legend.position = "top")
 ```
 
+<<<<<<< HEAD
 Differences between growth models in CW mortality now arise from two sources: the VB-equivalent $k$ (which may differ across models if the milestone-based inversions produce slightly different values), and --- more importantly --- the native $L(t)$ trajectories, which have different curvatures between anchor points. Models with faster early growth (like Gompertz) predict larger $L(t)$ at young ages and therefore lower juvenile mortality, while models that approach $L_\infty$ less tightly (like Logistic) may produce slightly different late-age behavior. If the three curves are similar, mortality estimates are robust to growth model choice. Divergence indicates genuine model uncertainty that should be reported.
+=======
+If the three curves are similar, mortality estimates are robust to growth model choice. Divergence indicates genuine model uncertainty that should be reported.
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 
 ## Modular Mortality Functions
 
@@ -378,12 +457,23 @@ For applications outside the Monte Carlo framework --- quick calculations, integ
 ```{r modular}
 ages <- seq(0.5, 30, by = 0.5)
 
+<<<<<<< HEAD
 # Chen-Watanabe with VB (k serves both roles)
 M_cw_vb <- M_chen_watanabe_L0(
+=======
+# Chen-Watanabe (single-phase and two-phase)
+M_cw_single <- M_chen_watanabe_L0(
+  age = ages, Linf = 100, L0 = 25, k = 0.08,
+  two_phase = FALSE
+)
+
+M_cw_senesc <- M_chen_watanabe_L0(
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
   age = ages, Linf = 100, L0 = 25, k = 0.08,
   two_phase = TRUE, tmat = 12, late_model = "gompertz"
 )
 
+<<<<<<< HEAD
 # Chen-Watanabe with Gompertz (separated k roles)
 M_cw_gomp <- M_chen_watanabe_L0(
   age = ages, Linf = 100, L0 = 25,
@@ -418,6 +508,23 @@ M_lor_wt <- M_lorenzen(
 
 # Scale any of them
 M_scaled <- scale_mortality(M_cw_gomp, M_target = NULL, tmax = 35, p = 0.001)
+=======
+# Peterson-Wroblewski
+lw_func <- function(L) 0.0001 * L^3.1
+M_pw <- M_peterson_wroblewski(
+  age = ages, Linf = 100, L0 = 25, k = 0.08,
+  lw_fun = lw_func, growth_model = "vb"
+)
+
+# Lorenzen growth-based
+M_lor <- M_lorenzen(
+  age = ages, Linf = 100, L0 = 25, k = 0.08,
+  weight_based = FALSE
+)
+
+# Scale any of them
+M_scaled <- scale_mortality(M_cw_senesc, M_target = NULL, tmax = 35, p = 0.001)
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 ```
 
 ## Downstream Integration: Survival Simulation
@@ -453,7 +560,11 @@ See `vignette("survivorship_simulation")` for comprehensive coverage of survival
 | Negative mortality values | CW two-phase Taylor expansion breakdown | Function automatically caps at 0; consider single-phase or different `late_model` |
 | Very wide uncertainty bands | Weak growth model posterior | Check growth model convergence and parameter correlations |
 | Unrealistic tmax estimates | `Linf_factor` too extreme | Reduce from 0.99 to 0.95 for exploratory analysis |
+<<<<<<< HEAD
 | Missing tmat error | CW needs age-at-maturity | Provide `maturity_fit`, manual `tmat`, or both `Lmat` and `tmat` for bivariate sampling |
+=======
+| Missing tmat error | CW needs age-at-maturity | Provide `maturity_fit` or manual `tmat` parameter |
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 | `lw_fun` error | PW/Lorenzen weight-based needs length-weight | Provide function: `lw_fun = function(L) a * L^b` |
 | CW and PW disagree strongly | Different theoretical assumptions | Report both; consider which assumptions best match your species |
 
@@ -468,7 +579,11 @@ When reporting mortality estimates in publications, include:
 
 Example methods text:
 
+<<<<<<< HEAD
 > "Natural mortality was estimated using the Chen-Watanabe model (Chen & Watanabe, 1989) with Gompertz senescence, implemented via the vitalBayes package (v1.0.0; Author, Year). Growth parameters were drawn from the joint posterior of a Gompertz growth model (selected by LOO-CV). Predicted length-at-age used the native Gompertz trajectory, while the asymptotic mortality rate ($M_\infty = k_{VB}$) was computed from a VB-equivalent growth coefficient derived from biological milestones $(L_\infty, L_0, L_{mat}, t_{mat})$. Mortality schedules were scaled to 0.1% survival at estimated $t_{max}$ and propagated through 2,000 Monte Carlo simulations. Median age-specific mortality with 95% credible intervals is reported."
+=======
+> "Natural mortality was estimated using the Chen-Watanabe model (Chen & Watanabe, 1989) with Gompertz senescence, implemented via the vitalBayes package (v1.0.0; Author, Year). Growth parameters were drawn from the joint posterior of a Gompertz growth model (selected by LOO-CV), with VB-equivalent $k$ computed from biological milestones following the approach described in [vignette reference]. Mortality schedules were scaled to 0.1% survival at estimated $t_{max}$ and propagated through 2,000 Monte Carlo simulations. Median age-specific mortality with 95% credible intervals is reported."
+>>>>>>> 89361dd64d8e03d181b8dff5161237d2b73d660d
 
 ## References
 
