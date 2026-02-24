@@ -22,10 +22,4 @@ Numeric vector of G(t) values bounded in (0, 1].
 }
 \description{
 Computes the relative size at specified ages using a given growth model.
-This is the denominator in the mortality formula M(t) = M_inf / G(t).
-}
-\examples{
-ages <- seq(0, 100, by = 1)
-G_vb <- compute_G(ages, Linf = 126, L0 = 35, k = 0.016, growth_model = "vb")
-
 }

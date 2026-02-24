@@ -34,22 +34,3 @@ Numeric vector of native k values. Invalid values returned as NA.
 Derives the growth coefficient \eqn{k} for a specified growth model from
 biological milestones \eqn{(L_\infty, L_0, L_{mat}, t_{mat})}.
 }
-\details{
-The native k formulas for each model are:
-
-\strong{Von Bertalanffy:}
-\deqn{k = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
-
-\strong{Gompertz:}
-\deqn{k = -\frac{1}{t_{mat}} \ln\left(\frac{\ln(L_\infty / L_{mat})}{\ln(L_\infty / L_0)}\right)}
-
-\strong{Logistic:}
-\deqn{k = -\frac{1}{t_{mat}} \ln\left(\frac{L_\infty/L_{mat} - 1}{L_\infty/L_0 - 1}\right)}
-}
-\examples{
-k_vb <- compute_k_native(Linf = 126, L0 = 35, Lmat = 83, tmat = 47,
-                         growth_model = "vb")
-k_gomp <- compute_k_native(Linf = 108, L0 = 35, Lmat = 83, tmat = 47,
-                           growth_model = "gompertz")
-
-}

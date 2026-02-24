@@ -25,14 +25,3 @@ Computes the asymptotic mortality rate \eqn{M_\infty} from biological
 milestones using the VB formula. This serves as the unified mortality
 scaling factor in the Chen-Watanabe framework.
 }
-\details{
-\deqn{M_\infty = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
-
-This formula is used regardless of growth model, providing a consistent
-mortality anchor that prevents the ~10-fold survival differences arising
-from model-native k formulas.
-}
-\examples{
-Minf <- compute_Minf(Linf = 126, L0 = 35, Lmat = 83, tmat = 47)
-
-}

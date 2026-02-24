@@ -28,8 +28,7 @@ Names become facet labels.}
 \item{age_col, length_col, sex_col}{Column names in data.}
 
 \item{sex_labels}{Named character vector. Labels for sex in plot legend and facets.
-Default \code{c("1" = "Female", "2" = "Male")}. Can be customized for other
-languages, e.g., \code{c("1" = "Femelle", "2" = "Mâle")} (French).}
+Default \code{c("1" = "Female", "2" = "Male")}.}
 
 \item{age_range}{Numeric vector of length 2. If \code{NULL}, auto-determined.}
 
@@ -74,7 +73,7 @@ compare_growth_models(
 
 \code{vignette("model_diagnostics")} for model comparison via LOO-CV.
 
-\href{../doc/vitalBayes_stats_explained.html#assessment}{Statistical Methods: Model Assessment}
+\href{../doc/Understanding_vitalBayes.html#assessment}{Statistical Methods: Model Assessment}
 for LOO-CV theory.
 
 \code{\link{plot_growth_curve}}, \code{\link{compute_loo}}, \code{\link{compare_loo}}

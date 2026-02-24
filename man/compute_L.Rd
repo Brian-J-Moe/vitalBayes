@@ -21,9 +21,5 @@ compute_L(age, Linf, L0, k, growth_model = c("vb", "gompertz", "logistic"))
 Numeric vector of predicted lengths.
 }
 \description{
-Computes predicted length at age using a specified growth model.
-}
-\examples{
-L_vb <- compute_L(0:50, Linf = 126, L0 = 35, k = 0.016, growth_model = "vb")
-
+Compute Length at Age L(t)
 }

@@ -955,6 +955,18 @@ fit_bayesian_growth <- function(
     )
   }
 
+  # =========================================================================
+  # Attach Growth Model Metadata
+  # =========================================================================
+  #
+  # CmdStanMCMC objects don't carry metadata about which growth model or
+  # parameterization was used. These attributes enable mortality estimation
+  # functions to auto-detect the model type and correctly dispatch between
+  # VB-equivalent k derivation strategies and native growth trajectories.
+
+  attr(fit, "vb_growth_model") <- switch(model, v = "vb", g = "gompertz", l = "logistic")
+  attr(fit, "vb_k_based")      <- k_based
+
   return(fit)
 }
 
