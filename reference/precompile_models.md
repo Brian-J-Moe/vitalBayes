@@ -13,7 +13,8 @@ precompile_models(
   cpp_options = list(),
   stanc_options = list(),
   quiet = TRUE,
-  stop_on_error = FALSE
+  stop_on_error = FALSE,
+  print_dt = FALSE
 )
 ```
 
@@ -40,7 +41,7 @@ precompile_models(
 
   Logical. If `TRUE`, stops at the first error.
 
-## Value
+- print_dt:
 
-A `data.table` with columns: `model`, `ok`, `exe_file`, `elapsed_sec`,
-`error`.
+  Logical. If `TRUE` prints a `data.table` with columns: `model`, `ok`,
+  `exe_file`, `elapsed_sec`, `error`. Default `FALSE`.
