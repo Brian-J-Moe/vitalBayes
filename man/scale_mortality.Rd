@@ -22,7 +22,7 @@ target), a function of tmax (e.g.,
 \code{NULL}).}
 
 \item{p}{Probability of surviving to \code{tmax}. Used only if
-\code{M_target = NULL}. Default 0.001 (0.1\\% survival).}
+\code{M_target = NULL}. Default 0.001 (0.1\% survival).}
 }
 \value{
 Numeric vector of scaled mortality rates (same length as \code{M}).

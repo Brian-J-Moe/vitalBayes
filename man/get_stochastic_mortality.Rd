@@ -109,7 +109,7 @@ A list with components:
 M_raw, M_scaled)}
 \item{Parameters}{data.table of sampled life history parameters including
 k_original (native), k_vb_equiv (VB-equivalent), and growth_model}
-\item{Summary}{data.table with median and 95\\% CI by age}
+\item{Summary}{data.table with median and 95\% CI by age}
 \item{Plot}{ggplot2 object}
 }
 }
