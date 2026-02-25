@@ -12,15 +12,17 @@
 #' @param cpp_options,stanc_options Lists forwarded to cmdstanr::cmdstan_model().
 #' @param quiet Logical. If `FALSE`, prints CmdStan compilation output.
 #' @param stop_on_error Logical. If `TRUE`, stops at the first error.
+#' @param print_dt Logical. If `TRUE` prints a `data.table` with
+#'   columns: `model`, `ok`, `exe_file`, `elapsed_sec`, `error`. Default `FALSE`.
 #'
-#' @return A `data.table` with columns: `model`, `ok`, `exe_file`, `elapsed_sec`, `error`.
 #' @export
 precompile_models <- function(models = NULL,
                               force_recompile = FALSE,
                               cpp_options = list(),
                               stanc_options = list(),
                               quiet = TRUE,
-                              stop_on_error = FALSE) {
+                              stop_on_error = FALSE,
+                              print_dt = FALSE) {
 
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required for precompile_models().", call. = FALSE)
@@ -127,7 +129,7 @@ precompile_models <- function(models = NULL,
     res[[i]] <- out
   }
 
-  data.table::rbindlist(res, use.names = TRUE, fill = TRUE)
+  if(print_dt) data.table::rbindlist(res, use.names = TRUE, fill = TRUE)
 }
 
 

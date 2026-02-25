@@ -10,7 +10,8 @@ precompile_models(
   cpp_options = list(),
   stanc_options = list(),
   quiet = TRUE,
-  stop_on_error = FALSE
+  stop_on_error = FALSE,
+  print_dt = FALSE
 )
 }
 \arguments{
@@ -24,9 +25,9 @@ Use \code{NULL} to compile all models shipped in \verb{inst/stan/}.}
 \item{quiet}{Logical. If \code{FALSE}, prints CmdStan compilation output.}
 
 \item{stop_on_error}{Logical. If \code{TRUE}, stops at the first error.}
-}
-\value{
-A \code{data.table} with columns: \code{model}, \code{ok}, \code{exe_file}, \code{elapsed_sec}, \code{error}.
+
+\item{print_dt}{Logical. If \code{TRUE} prints a \code{data.table} with
+columns: \code{model}, \code{ok}, \code{exe_file}, \code{elapsed_sec}, \code{error}. Default \code{FALSE}.}
 }
 \description{
 Compiles one or more Stan models located in \verb{inst/stan/} and caches the
