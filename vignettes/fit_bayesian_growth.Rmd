@@ -1,8 +1,8 @@
 ---
-title: "Modeling Individual Growth with fit_bayesian_growth()"
+title: "Growth Modeling with fit_bayesian_growth()"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Modeling Individual Growth with fit_bayesian_growth()}
+  %\VignetteIndexEntry{Growth Modeling with fit_bayesian_growth()}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -457,7 +457,3 @@ create_parameter_table(
 - `vignette("model_diagnostics")` --- LOO-CV model comparison and convergence checks
 - `plot_growth_curve()`, `compare_growth_models()` --- Visualization
 - `compute_loo()`, `compare_loo()` --- Model comparison
-
----
-
-*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

@@ -94,29 +94,31 @@ Theoretical mortality models (CW, PW, Lorenzen) produce age-specific *shapes* th
 
 ### The Scaling Transformation
 
-Given a raw mortality schedule $M_{raw}(t)$ and a target mean mortality $\bar{M}_{target}$, the scaled schedule is:
+Scaling finds a proportional constant $c$ such that $M_{scaled}(t) = c \times M_{raw}(t)$. This multiplicative adjustment preserves the relative differences between ages --- if neonatal mortality is 5$\times$ adult mortality in the raw schedule, it remains 5$\times$ in the scaled schedule.
 
-$$M_{scaled}(t) = M_{raw}(t) \times \frac{\bar{M}_{target}}{\bar{M}_{raw}}$$
+The constant $c$ is determined by matching the *cumulative hazard* of the scaled schedule to the target. The cumulative hazard $H = \int_0^{t_{max}} M(a) \, da$ is the quantity that directly governs survival: $S(t_{max}) = e^{-H}$. vitalBayes computes the raw cumulative hazard via trapezoidal numerical integration of the mortality schedule over the age grid:
 
-where $\bar{M}_{raw} = \frac{1}{n} \sum_t M_{raw}(t)$ is the mean of the unscaled schedule. This multiplicative adjustment preserves the relative differences between ages --- if neonatal mortality is 5$\times$ adult mortality in the raw schedule, it remains 5$\times$ in the scaled schedule.
+$$H_{raw} = \int_0^{t_{max}} M_{raw}(a) \, da \approx \sum_{i=1}^{n-1} \frac{a_{i+1} - a_i}{2} \left[ M_{raw}(a_i) + M_{raw}(a_{i+1}) \right]$$
+
+This approach is preferred over the simpler arithmetic-mean-based scaling ($c = \bar{M}_{target} / \bar{M}_{raw}$) because it directly constrains the biologically relevant quantity (cumulative survival probability) and is invariant to age grid spacing. The arithmetic mean approximates the integral only when the grid is uniformly spaced over the full lifespan, and can introduce systematic bias when the grid starts above age 0 or is irregularly spaced --- precisely the conditions that arise with CW's neonatal mortality spike.
 
 ### Target Specification
 
-The scaling target $\bar{M}_{target}$ can be specified in three ways.
+The scaling target can be specified in three ways, each producing a target cumulative hazard $H_{target}$ and scaling constant $c = H_{target} / H_{raw}$.
 
-**Survival probability** (`M_target = NULL, p = ...`): Specify the proportion of a cohort expected to survive to maximum age $t_{max}$. The target is derived as:
+**Survival probability** (`M_target = NULL, p = ...`): Specify the proportion of a cohort expected to survive to maximum age $t_{max}$. The target cumulative hazard is:
 
-$$\bar{M}_{target} = -\frac{\ln(p)}{t_{max}}$$
+$$H_{target} = -\ln(p)$$
 
-A common choice is $p = 0.001$ (0.1% survival to $t_{max}$), which produces moderate scaling for long-lived species.
+A common choice is $p = 0.001$ (0.1% survival to $t_{max}$), which produces moderate scaling for long-lived species. This is the most directly interpretable target: the scaled schedule will produce exactly $S(t_{max}) = p$ under the cumulative hazard framework.
 
 **Empirical relationship** (`M_target = function(tmax) ...`): Supply a function of $t_{max}$, such as the Then et al. (2015) estimator:
 
 $$\bar{M}_{target} = 4.899 \cdot t_{max}^{-0.916}$$
 
-This approach leverages the strong empirical correlation between maximum age and mean mortality across fish taxa.
+This is interpreted as the average mortality rate over the lifespan, producing $H_{target} = \bar{M}_{target} \times t_{max}$.
 
-**Fixed value** (`M_target = 0.15`): Directly specify a target mean mortality from literature estimates or independent analyses.
+**Fixed value** (`M_target = 0.15`): Directly specify a target mean mortality from literature estimates or independent analyses, also interpreted as the lifespan-averaged rate ($H_{target} = 0.15 \times t_{max}$).
 
 ```{r scaling-examples}
 library(vitalBayes)
@@ -466,6 +468,9 @@ When reporting mortality estimates in publications, include:
 3. **Key metrics**: Mean $M$, age-specific $M$ at key life stages (e.g., neonate, sub-adult, adult), $t_{max}$ estimate.
 4. **Uncertainty**: 95% credible intervals throughout, noting whether these reflect joint posterior sampling or independent parameter variation.
 
+Example methods text:
+
+> "Natural mortality was estimated using the Chen-Watanabe model (Chen & Watanabe, 1989) with Gompertz senescence, implemented via the vitalBayes package (v1.0.0; Author, Year). Growth parameters were drawn from the joint posterior of a Gompertz growth model (selected by LOO-CV). Predicted length-at-age used the native Gompertz trajectory, while the asymptotic mortality rate ($M_\infty = k_{VB}$) was computed from a VB-equivalent growth coefficient derived from biological milestones $(L_\infty, L_0, L_{mat}, t_{mat})$. Mortality schedules were scaled to 0.1% survival at estimated $t_{max}$ and propagated through 2,000 Monte Carlo simulations. Median age-specific mortality with 95% credible intervals is reported."
 
 ## References
 
@@ -485,7 +490,3 @@ Then, A. Y., Hoenig, J. M., Hall, N. G., & Hewitt, D. A. (2015). Evaluating the 
 - `vignette("survivorship_simulation")` --- Cohort survival analysis using mortality schedules
 - `vignette("fit_bayesian_growth")` --- Growth model fitting that feeds the mortality workflow
 - `vignette("fit_bayesian_maturity")` --- Maturity estimation for $t_{mat}$ and $L_{mat}$
-
----
-
-*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

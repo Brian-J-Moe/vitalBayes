@@ -1104,3 +1104,110 @@ standardize_sex <- function(sex_values, female = NULL, male = NULL, silent = FAL
   tau <- max(as.numeric(tau), eps)
   (as.numeric(target_log) - as.numeric(mu)) / tau
 }
+
+
+#' Compute Von Bertalanffy-Equivalent Growth Coefficient
+#'
+#' @description
+#' Derives the von Bertalanffy growth coefficient \eqn{k} from biological
+#' milestones \eqn{(L_\infty, L_0, L_{mat}, t_{mat})}. This enables Chen-Watanabe
+#' mortality estimation using posteriors from \emph{any} growth model (von
+#' Bertalanffy, Gompertz, or Logistic).
+#'
+#' @details
+#' The key insight is that while the three growth models use different functional
+#' forms and produce different numerical \eqn{k} values, they all estimate the
+#' same underlying biological quantities: asymptotic length, birth size, and
+#' maturity milestones. The VB-equivalent \eqn{k} is computed as:
+#'
+#' \deqn{k_{VB}^{equiv} = \frac{1}{t_{mat}} \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)}
+#'
+#' This is the growth coefficient that would produce a von Bertalanffy curve
+#' passing through the biological milestones \eqn{(0, L_0)} and
+#' \eqn{(t_{mat}, L_{mat})} with asymptote \eqn{L_\infty}.
+#'
+#' When the input growth fit is von Bertalanffy with maturity-based
+#' parameterization, this computation exactly reproduces the fitted \eqn{k}.
+#' When the input is Gompertz or Logistic, it produces the VB-equivalent
+#' \eqn{k} that encodes the same biological growth information.
+#'
+#' The von Bertalanffy model tends to produce unstable \eqn{L_\infty} estimates
+#' when data are sparse at older ages - a common situation in elasmobranch
+#' research. Gompertz and Logistic models often provide more reliable fits in
+#' these cases. By deriving VB-equivalent \eqn{k} from biological milestones,
+#' users can select the growth model that best fits their data while still
+#' using Chen-Watanabe mortality estimation and maintaining theoretical
+#' coherence (since CW was derived under VB assumptions).
+#'
+#' @param Linf Numeric vector. Asymptotic length posterior draws.
+#' @param L0 Numeric vector. Length at birth posterior draws.
+#' @param Lmat Numeric vector. Length at maturity posterior draws.
+#' @param tmat Numeric vector. Age at maturity posterior draws.
+#' @param warn Logical. If \code{TRUE} (default), warns when draws produce
+#'   invalid \eqn{k} values.
+#'
+#' @return Numeric vector of VB-equivalent \eqn{k} values. Invalid values
+#'   (from non-positive arguments to log) are returned as \code{NA}.
+#'
+#' @examples
+#' \dontrun{
+#' # Extract from any growth model posterior
+#' draws <- extract_growth_parameters(growth_fit, sex = 1)
+#' k_vb <- compute_k_vb_equivalent(
+#'   Linf = draws$Linf,
+#'   L0   = draws$L0,
+#'   Lmat = draws$Lmat,
+#'   tmat = draws$tmat
+#' )
+#'
+#' # Direct specification for sensitivity analysis
+#' k_vb <- compute_k_vb_equivalent(
+#'   Linf = rnorm(1000, 100, 5),
+#'   L0   = rnorm(1000, 25, 2),
+#'   Lmat = rnorm(1000, 70, 3),
+#'   tmat = rnorm(1000, 10, 1)
+#' )
+#' }
+#'
+#' @seealso \code{\link{M_chen_watanabe_L0}} for the L0-parameterized CW model,
+#'   \code{\link{extract_growth_parameters}} for posterior extraction.
+#'
+#' @export
+compute_k_vb_equivalent <- function(Linf, L0, Lmat, tmat, warn = TRUE) {
+
+
+  # Validate inputs
+
+  n <- length(Linf)
+  if (!all(c(length(L0), length(Lmat), length(tmat)) == n)) {
+    stop("All input vectors must have the same length.", call. = FALSE)
+  }
+
+  # Compute VB-equivalent k: k = (1/tmat) * ln((Linf - L0) / (Linf - Lmat))
+  numerator   <- Linf - L0
+  denominator <- Linf - Lmat
+
+  # Identify invalid values (would produce NaN or Inf)
+  invalid <- numerator <= 0 | denominator <= 0 | tmat <= 0 |
+    is.na(numerator) | is.na(denominator) | is.na(tmat)
+
+  if (warn && any(invalid, na.rm = TRUE)) {
+    n_invalid <- sum(invalid, na.rm = TRUE)
+    warning(
+      sprintf(
+        "%d of %d draws (%.1f%%) produced invalid k values. Common causes:\n
+        - Lmat >= Linf (maturity size exceeds asymptotic size)\n
+        - L0 >= Linf (birth size exceeds asymptotic size)\n
+        - tmat <= 0 (non-positive maturity age)\n
+        These draws will be excluded from mortality calculations.",
+        n_invalid, n, 100 * n_invalid / n
+      ),
+      call. = FALSE
+    )
+  }
+
+  k <- (1 / tmat) * log(numerator / denominator)
+  k[invalid] <- NA_real_
+
+  k
+}

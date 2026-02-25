@@ -363,7 +363,3 @@ For most elasmobranch life history analyses, **partial pooling is the recommende
 - `vignette("fit_bayesian_growth")` --- Growth model fitting with selective pooling
 - `vignette("fit_bayesian_maturity")` --- Maturity model fitting
 - `vignette("model_diagnostics")` --- Comparing pooled vs unpooled via LOO-CV
-
----
-
-*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

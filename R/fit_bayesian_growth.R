@@ -955,6 +955,9 @@ fit_bayesian_growth <- function(
     )
   }
 
+  attr(fit, "vb_growth_model") <- switch(model, v = "vb", g = "gompertz", l = "logistic")
+  attr(fit, "vb_k_based")      <- k_based
+
   return(fit)
 }
 
