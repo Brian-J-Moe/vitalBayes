@@ -441,17 +441,6 @@ That’s biologically nonsensical!
 individual, or the length at which growth rate approaches zero. It’s an
 *upper bound*, not a central tendency.
 
-**The vitalBayes Solution**: We constrain \\L\_\infty \> L\_{max}\\ (the
-maximum observed length) in the Stan model. The prior mean is set at
-\\1.05 \times L\_{max}\\ (5% above observed maximum), reflecting the
-expectation that true asymptotic size modestly exceeds what we’ve
-observed.
-
-This ensures that the asymptote always exceeds observed data, that
-\\L\_\infty\\ is interpretable as a true upper bound, and that the model
-doesn’t produce the absurdity of individuals “exceeding” their maximum
-possible size.
-
 #### Why We Might Underestimate True \\L\_{max}\\
 
 The observed maximum in your sample is almost certainly *not* the true
@@ -461,9 +450,65 @@ individuals are also the oldest and have accumulated years of mortality
 risk (mortality truncation). Third, size-selective fishing often removes
 the largest individuals before they can be sampled.
 
-For these reasons, the 5% multiplier above \\L\_{max}\\ is
-conservative—it provides modest headroom without being so large that
-\\L\_\infty\\ becomes unconstrained.
+#### The Delta-Gamma Parameterization
+
+Rather than estimating \\L\_\infty\\ directly with a hard lower bound at
+\\L\_{max}\\, vitalBayes estimates the **excess** above \\L\_{max}\\:
+
+\\\delta_L = L\_\infty - L\_{max}, \quad \delta_L \> 0\\
+
+and then reconstructs \\L\_\infty = L\_{max} + \delta_L\\ in the Stan
+model.
+
+**Why not a truncated lognormal?**
+
+The original approach placed a lognormal prior on \\L\_\infty\\ with a
+hard lower bound at \\L\_{max}\\. When the prior mean is close to the
+truncation point (e.g., \\1.05 \times L\_{max}\\), the truncated
+lognormal piles up density right at the boundary. This creates a flat
+region in the posterior surface that HMC’s leapfrog integrator struggles
+to navigate — the sampler bounces off the wall, producing poor
+exploration and slow mixing. This pathology is especially pronounced for
+the logistic growth model, which approaches the asymptote faster than VB
+and can genuinely prefer \\L\_\infty\\ very close to \\L\_{max}\\.
+
+The excess \\\delta_L\\ receives a **gamma prior**:
+
+\\\delta_L \sim \text{Gamma}(\alpha\_\delta, \beta\_\delta)\\
+
+with shape and rate parameters derived from the user’s `Linf_multiplier`
+and `CV_Linf`:
+
+\\\mu\_\delta = L\_{max} \times (\text{Linf\\multiplier} - 1)\\
+
+\\\alpha\_\delta = \frac{1}{CV\_{L\_\infty}^2}, \quad \beta\_\delta =
+\frac{1}{\mu\_\delta \times CV\_{L\_\infty}^2}\\
+
+At the default settings (`Linf_multiplier = 1.05`, `CV_Linf = 0.20`),
+this produces a gamma with mean \\0.05 \times L\_{max}\\ and shape
+parameter 25 — a moderately peaked distribution centered at “5% above
+observed maximum” that allows the data to pull \\\delta_L\\ toward zero
+if the logistic model warrants it, or push it higher if the VB model
+needs more headroom.
+
+This approach eliminates boundary pile-ups (because \\\delta_L\\ lives
+on \\(0, \infty)\\ with no truncation), provides natural positive skew
+(small excesses are more probable than large ones, but the gamma’s right
+tail accommodates uncertainty), and produces a lighter right tail than
+lognormal (preventing biologically absurd asymptotic lengths while still
+allowing flexibility). The user interface is unchanged — you still
+specify `Linf_multiplier` and `CV_Linf` in the same way.
+
+**Why gamma rather than lognormal for \\\delta_L\\?** The gamma’s
+lighter right tail is appropriate here: \\\delta_L\\ represents a modest
+biological excess, and placing too much prior mass on very large values
+of \\\delta_L\\ would allow \\L\_\infty\\ to drift far above
+observations without data support. The gamma concentrates more mass near
+its mode while still being flexible enough to accommodate data-driven
+deviations. The lognormal’s heavier tail would be more appropriate if we
+had genuine uncertainty about the *order of magnitude* of \\\delta_L\\,
+which we typically don’t — we’re uncertain about whether it’s 3% or 8%
+of \\L\_{max}\\, not whether it’s 5% or 500%.
 
 ### The Maturity-Based Parameterization
 
@@ -677,18 +722,58 @@ can be adjusted based on prior knowledge. When upstream model fits are
 provided (e.g., `birth_stanfit`, `length.mature_stanfit`), their
 posterior summaries replace the CV-based defaults.
 
-### Converting to Log-Scale
+### What Are the Actual Prior Distributions?
 
-Under the hood, vitalBayes converts these CV-based specifications to
-appropriate log-scale parameters for the lognormal priors used in Stan.
-The conversion uses simulation-based moment matching: samples are drawn
-from a truncated normal on the natural scale (ensuring positivity),
-log-transformed, and then the empirical mean and SD of the log-samples
-provide the prior hyperparameters. This approach properly handles the
-positivity constraint and produces priors that accurately reflect the
-intended uncertainty, even when the CV is large enough that the
-lognormal approximation (\\\sigma\_{log} \approx CV\\) begins to break
-down.
+Most positive parameters in vitalBayes receive **lognormal priors**:
+
+\\\log(\theta) \sim \mathcal{N}(\mu\_{log}, \sigma\_{log}^2)\\
+
+This applies to \\b\_{50}\\, \\\beta\\ (birth model); \\L\_{50}\\,
+\\t\_{50}\\, slope (maturity models); and \\L_0\\, \\k\\, \\L\_{mat}\\,
+\\t\_{mat}\\ (growth models). Lognormal priors are a natural choice for
+strictly positive biological quantities because they enforce positivity,
+they produce right-skewed distributions on the natural scale (consistent
+with the idea that a parameter is more likely to be somewhat larger than
+your best guess than dramatically smaller), and they are conjugate-ish
+with the log-scale observation models used throughout the package.
+
+The CV specification is converted to log-scale hyperparameters
+\\(\mu\_{log}, \sigma\_{log})\\ before being passed to Stan (see below).
+
+\\L\_\infty\\ is the exception. Rather than a truncated lognormal, it
+receives a **gamma prior on the excess above \\L\_{max}\\** — the
+delta-gamma parameterization described in the [\\L\_\infty\\ section
+above](#linf).
+
+The observation error \\\sigma\\ receives a half-normal prior: \\\sigma
+\sim \text{Half-Normal}(0, s)\\, where \\s\\ is a scale parameter
+(default 1). Hierarchical between-sex standard deviations \\\tau\\ also
+receive half-normal priors (see the [partial pooling
+section](#partial-pooling)).
+
+### Converting CV to Log-Scale Priors
+
+The user specifies a natural-scale mean \\\mu\_\theta\\ and
+\\CV\_\theta\\, producing \\\sigma\_\theta = CV\_\theta \times
+\mu\_\theta\\. These must be converted to log-scale hyperparameters for
+the lognormal prior in Stan. The analytical approximation is:
+
+\\\mu\_{log} \approx \log(\mu\_\theta) - \frac{\sigma\_{log}^2}{2},
+\quad \sigma\_{log} \approx CV\_\theta\\
+
+This works well for small CVs (\\\lesssim 0.3\\), but breaks down at
+larger values because the lognormal is increasingly skewed and the
+relationship between natural-scale moments and log-scale parameters
+becomes nonlinear.
+
+vitalBayes instead uses **simulation-based moment matching**: it draws
+samples from a truncated normal on the natural scale (lower bound at
+zero, ensuring positivity), log-transforms them, and takes the empirical
+mean and SD of the log-transformed samples as \\\mu\_{log}\\ and
+\\\sigma\_{log}\\. This properly handles the positivity constraint and
+produces accurate log-scale priors even when the CV is large enough
+(e.g., \\CV_k = 0.5\\) that the analytical approximation would introduce
+meaningful bias.
 
 ## Model Assessment and Comparison
 

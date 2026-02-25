@@ -648,16 +648,6 @@ nonsensical!</p>
 expected length of a very old individual, or the length at which growth
 rate approaches zero. It’s an <em>upper bound</em>, not a central
 tendency.</p>
-<div class="key-concept">
-<p><strong>The vitalBayes Solution</strong>: We constrain <span class="math inline">\(L_\infty &gt; L_{max}\)</span> (the maximum
-observed length) in the Stan model. The prior mean is set at <span class="math inline">\(1.05 \times L_{max}\)</span> (5% above observed
-maximum), reflecting the expectation that true asymptotic size modestly
-exceeds what we’ve observed.</p>
-<p>This ensures that the asymptote always exceeds observed data, that
-<span class="math inline">\(L_\infty\)</span> is interpretable as a true
-upper bound, and that the model doesn’t produce the absurdity of
-individuals “exceeding” their maximum possible size.</p>
-</div>
 </div>
 <div class="section level4">
 <h4 id="why-we-might-underestimate-true-l_max">Why We Might Underestimate True <span class="math inline">\(L_{max}\)</span><a class="anchor" aria-label="anchor" href="#why-we-might-underestimate-true-l_max"></a>
@@ -668,8 +658,62 @@ samples won’t capture the rarest, largest individuals. Second, the
 largest individuals are also the oldest and have accumulated years of
 mortality risk (mortality truncation). Third, size-selective fishing
 often removes the largest individuals before they can be sampled.</p>
-<p>For these reasons, the 5% multiplier above <span class="math inline">\(L_{max}\)</span> is conservative—it provides
-modest headroom without being so large that <span class="math inline">\(L_\infty\)</span> becomes unconstrained.</p>
+</div>
+<div class="section level4">
+<h4 id="delta-gamma">The Delta-Gamma Parameterization<a class="anchor" aria-label="anchor" href="#delta-gamma"></a>
+</h4>
+<p>Rather than estimating <span class="math inline">\(L_\infty\)</span>
+directly with a hard lower bound at <span class="math inline">\(L_{max}\)</span>, vitalBayes estimates the
+<strong>excess</strong> above <span class="math inline">\(L_{max}\)</span>:</p>
+<p><span class="math display">\[\delta_L = L_\infty - L_{max}, \quad
+\delta_L &gt; 0\]</span></p>
+<p>and then reconstructs <span class="math inline">\(L_\infty = L_{max}
++ \delta_L\)</span> in the Stan model.</p>
+<div class="key-concept">
+<p><strong>Why not a truncated lognormal?</strong></p>
+<p>The original approach placed a lognormal prior on <span class="math inline">\(L_\infty\)</span> with a hard lower bound at <span class="math inline">\(L_{max}\)</span>. When the prior mean is close to
+the truncation point (e.g., <span class="math inline">\(1.05 \times
+L_{max}\)</span>), the truncated lognormal piles up density right at the
+boundary. This creates a flat region in the posterior surface that HMC’s
+leapfrog integrator struggles to navigate — the sampler bounces off the
+wall, producing poor exploration and slow mixing. This pathology is
+especially pronounced for the logistic growth model, which approaches
+the asymptote faster than VB and can genuinely prefer <span class="math inline">\(L_\infty\)</span> very close to <span class="math inline">\(L_{max}\)</span>.</p>
+</div>
+<p>The excess <span class="math inline">\(\delta_L\)</span> receives a
+<strong>gamma prior</strong>:</p>
+<p><span class="math display">\[\delta_L \sim
+\text{Gamma}(\alpha_\delta, \beta_\delta)\]</span></p>
+<p>with shape and rate parameters derived from the user’s
+<code>Linf_multiplier</code> and <code>CV_Linf</code>:</p>
+<p><span class="math display">\[\mu_\delta = L_{max} \times
+(\text{Linf\_multiplier} - 1)\]</span></p>
+<p><span class="math display">\[\alpha_\delta =
+\frac{1}{CV_{L_\infty}^2}, \quad \beta_\delta = \frac{1}{\mu_\delta
+\times CV_{L_\infty}^2}\]</span></p>
+<p>At the default settings (<code>Linf_multiplier = 1.05</code>,
+<code>CV_Linf = 0.20</code>), this produces a gamma with mean <span class="math inline">\(0.05 \times L_{max}\)</span> and shape parameter
+25 — a moderately peaked distribution centered at “5% above observed
+maximum” that allows the data to pull <span class="math inline">\(\delta_L\)</span> toward zero if the logistic
+model warrants it, or push it higher if the VB model needs more
+headroom.</p>
+<p>This approach eliminates boundary pile-ups (because <span class="math inline">\(\delta_L\)</span> lives on <span class="math inline">\((0, \infty)\)</span> with no truncation), provides
+natural positive skew (small excesses are more probable than large ones,
+but the gamma’s right tail accommodates uncertainty), and produces a
+lighter right tail than lognormal (preventing biologically absurd
+asymptotic lengths while still allowing flexibility). The user interface
+is unchanged — you still specify <code>Linf_multiplier</code> and
+<code>CV_Linf</code> in the same way.</p>
+<div class="thinking-question">
+<p><strong>Why gamma rather than lognormal for <span class="math inline">\(\delta_L\)</span>?</strong> The gamma’s lighter
+right tail is appropriate here: <span class="math inline">\(\delta_L\)</span> represents a modest biological
+excess, and placing too much prior mass on very large values of <span class="math inline">\(\delta_L\)</span> would allow <span class="math inline">\(L_\infty\)</span> to drift far above observations
+without data support. The gamma concentrates more mass near its mode
+while still being flexible enough to accommodate data-driven deviations.
+The lognormal’s heavier tail would be more appropriate if we had genuine
+uncertainty about the <em>order of magnitude</em> of <span class="math inline">\(\delta_L\)</span>, which we typically don’t —
+we’re uncertain about whether it’s 3% or 8% of <span class="math inline">\(L_{max}\)</span>, not whether it’s 5% or 500%.</p>
+</div>
 </div>
 </div>
 <div class="section level3">
@@ -921,18 +965,55 @@ the CV-based defaults.</p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="converting-to-log-scale">Converting to Log-Scale<a class="anchor" aria-label="anchor" href="#converting-to-log-scale"></a>
+<h3 id="what-are-the-actual-prior-distributions">What Are the Actual Prior Distributions?<a class="anchor" aria-label="anchor" href="#what-are-the-actual-prior-distributions"></a>
 </h3>
-<p>Under the hood, vitalBayes converts these CV-based specifications to
-appropriate log-scale parameters for the lognormal priors used in Stan.
-The conversion uses simulation-based moment matching: samples are drawn
-from a truncated normal on the natural scale (ensuring positivity),
-log-transformed, and then the empirical mean and SD of the log-samples
-provide the prior hyperparameters. This approach properly handles the
-positivity constraint and produces priors that accurately reflect the
-intended uncertainty, even when the CV is large enough that the
-lognormal approximation (<span class="math inline">\(\sigma_{log}
-\approx CV\)</span>) begins to break down.</p>
+<p>Most positive parameters in vitalBayes receive <strong>lognormal
+priors</strong>:</p>
+<p><span class="math display">\[\log(\theta) \sim \mathcal{N}(\mu_{log},
+\sigma_{log}^2)\]</span></p>
+<p>This applies to <span class="math inline">\(b_{50}\)</span>, <span class="math inline">\(\beta\)</span> (birth model); <span class="math inline">\(L_{50}\)</span>, <span class="math inline">\(t_{50}\)</span>, slope (maturity models); and
+<span class="math inline">\(L_0\)</span>, <span class="math inline">\(k\)</span>, <span class="math inline">\(L_{mat}\)</span>, <span class="math inline">\(t_{mat}\)</span> (growth models). Lognormal priors
+are a natural choice for strictly positive biological quantities because
+they enforce positivity, they produce right-skewed distributions on the
+natural scale (consistent with the idea that a parameter is more likely
+to be somewhat larger than your best guess than dramatically smaller),
+and they are conjugate-ish with the log-scale observation models used
+throughout the package.</p>
+<p>The CV specification is converted to log-scale hyperparameters <span class="math inline">\((\mu_{log}, \sigma_{log})\)</span> before being
+passed to Stan (see below).</p>
+<p><span class="math inline">\(L_\infty\)</span> is the exception.
+Rather than a truncated lognormal, it receives a <strong>gamma prior on
+the excess above <span class="math inline">\(L_{max}\)</span></strong> —
+the delta-gamma parameterization described in the <a href="#linf"><span class="math inline">\(L_\infty\)</span> section above</a>.</p>
+<p>The observation error <span class="math inline">\(\sigma\)</span>
+receives a half-normal prior: <span class="math inline">\(\sigma \sim
+\text{Half-Normal}(0, s)\)</span>, where <span class="math inline">\(s\)</span> is a scale parameter (default 1).
+Hierarchical between-sex standard deviations <span class="math inline">\(\tau\)</span> also receive half-normal priors (see
+the <a href="#partial-pooling">partial pooling section</a>).</p>
+</div>
+<div class="section level3">
+<h3 id="converting-cv-to-log-scale-priors">Converting CV to Log-Scale Priors<a class="anchor" aria-label="anchor" href="#converting-cv-to-log-scale-priors"></a>
+</h3>
+<p>The user specifies a natural-scale mean <span class="math inline">\(\mu_\theta\)</span> and <span class="math inline">\(CV_\theta\)</span>, producing <span class="math inline">\(\sigma_\theta = CV_\theta \times
+\mu_\theta\)</span>. These must be converted to log-scale
+hyperparameters for the lognormal prior in Stan. The analytical
+approximation is:</p>
+<p><span class="math display">\[\mu_{log} \approx \log(\mu_\theta) -
+\frac{\sigma_{log}^2}{2}, \quad \sigma_{log} \approx
+CV_\theta\]</span></p>
+<p>This works well for small CVs (<span class="math inline">\(\lesssim
+0.3\)</span>), but breaks down at larger values because the lognormal is
+increasingly skewed and the relationship between natural-scale moments
+and log-scale parameters becomes nonlinear.</p>
+<p>vitalBayes instead uses <strong>simulation-based moment
+matching</strong>: it draws samples from a truncated normal on the
+natural scale (lower bound at zero, ensuring positivity), log-transforms
+them, and takes the empirical mean and SD of the log-transformed samples
+as <span class="math inline">\(\mu_{log}\)</span> and <span class="math inline">\(\sigma_{log}\)</span>. This properly handles the
+positivity constraint and produces accurate log-scale priors even when
+the CV is large enough (e.g., <span class="math inline">\(CV_k =
+0.5\)</span>) that the analytical approximation would introduce
+meaningful bias.</p>
 </div>
 </div>
 <div class="section level2">
