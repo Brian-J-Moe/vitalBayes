@@ -53,6 +53,16 @@ $glow-purple: 0 0 10px rgba($sunset-purple, 0.6), 0 0 20px rgba($sunset-purple, 
   }
 }
 
+// Subtler variant for article titles where smaller text gets overwhelmed
+@keyframes neon-pulse-soft {
+  0%, 100% {
+    text-shadow: 0 0 4px rgba($bayes-blue, 0.5), 0 0 8px rgba($bayes-blue, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 6px rgba($bayes-blue, 0.7), 0 0 12px rgba($bayes-blue, 0.4), 0 0 20px rgba($bayes-blue, 0.2);
+  }
+}
+
 @keyframes pink-pulse {
   0%, 100% {
     text-shadow: 0 0 5px rgba($vital-pink, 0.8), 0 0 10px rgba($vital-pink, 0.6), 0 0 20px rgba($vital-pink, 0.4);
@@ -311,8 +321,10 @@ main {
       color: $bayes-blue !important;
       text-shadow: $glow-cyan;
 
-      &::after {
-        width: 80%;
+      &:hover, &:focus {
+        &::after {
+          width: 80%;
+        }
       }
     }
   }
@@ -393,8 +405,8 @@ main {
 
   h1 {
     color: $bayes-blue;
-    text-shadow: $glow-cyan;
-    animation: neon-pulse 3s ease-in-out infinite;
+    text-shadow: 0 0 4px rgba($bayes-blue, 0.5), 0 0 8px rgba($bayes-blue, 0.3);
+    animation: neon-pulse-soft 3s ease-in-out infinite;
   }
 }
 
@@ -1152,14 +1164,15 @@ img[src*="badge"], img[src*="lifecycle"], img[src*="img.shields"] {
 .template-article {
   .article-heading {
     color: $bayes-blue;
-    text-shadow: $glow-cyan;
+    text-shadow: 0 0 4px rgba($bayes-blue, 0.5), 0 0 8px rgba($bayes-blue, 0.3);
   }
 
   // Article header area
   .page-header {
     h1 {
       color: $bayes-blue;
-      text-shadow: $glow-cyan;
+      text-shadow: 0 0 4px rgba($bayes-blue, 0.5), 0 0 8px rgba($bayes-blue, 0.3);
+      animation: neon-pulse-soft 3s ease-in-out infinite;
     }
 
     // Subtitle styling (various possible classes)
