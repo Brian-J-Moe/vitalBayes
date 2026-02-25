@@ -915,10 +915,7 @@ fit_bayesian_growth <- function(
 
   message("\nLoading precompiled Stan model: ", stan_model_name)
 
-  model_obj <- instantiate::stan_package_model(
-    name = stan_model_name,
-    package = "vitalBayes"
-  )
+  model_obj <- .vb_cmdstan_model_cached(stan_model_name)
 
   n_cores <- if (parallel) min(chains, parallel::detectCores() - 1) else 1
 

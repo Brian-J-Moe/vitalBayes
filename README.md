@@ -20,6 +20,9 @@ cmdstanr::install_cmdstan()
 
 # Install vitalBayes from GitHub
 pak::pak("Brian-J-Moe/vitalBayes")
+
+# compile Stan models
+vitalBayes::precompile_models()
 ```
 
 ## The Workflow
