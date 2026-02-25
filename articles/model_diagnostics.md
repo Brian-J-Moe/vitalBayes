@@ -277,7 +277,7 @@ compare_pooling(
 
 For a comprehensive treatment of when and why to use partial pooling,
 including the underlying mathematics and practical guidance, see
-[`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md).
+`vignette("partial_pooling")`.
 
 ------------------------------------------------------------------------
 
@@ -369,8 +369,8 @@ When models are equivalent by LOO, prefer:
 
 ## See Also
 
-- [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
-  — Detailed treatment of hierarchical modeling and shrinkage
+- `vignette("partial_pooling")` — Detailed treatment of hierarchical
+  modeling and shrinkage
 - [Statistical Methods: Model
   Assessment](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#assessment)
   — LOO-CV theory and interpretation

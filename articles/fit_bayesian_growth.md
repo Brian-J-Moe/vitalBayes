@@ -258,8 +258,7 @@ growth_robust <- fit_bayesian_growth(
 When sample sizes are imbalanced between sexes (common in elasmobranch
 research), partial pooling borrows strength across sexes to reduce
 uncertainty for the sparse group. For the general theory of partial
-pooling, see
-[`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md).
+pooling, see `vignette("partial_pooling")`.
 
 ### The Double-Pooling Problem
 
@@ -419,20 +418,26 @@ growth_fit <- fit_bayesian_growth(
   data = gdata,
 
   # Prior CVs (proportion of mean)
-  CV_Linf = 0.20,    # 20% uncertainty on Linf
-  CV_L0   = 0.30,    # 30% uncertainty on L0
-  CV_k    = 0.50,    # 50% uncertainty on k (if k_based = TRUE)
-  CV_Lmat = 0.20,    # 20% uncertainty on Lmat
-  CV_tmat = 0.30,    # 30% uncertainty on tmat
+  CV_delta = 0.50,   # 50% uncertainty on delta (excess above Lmax)
+  CV_L0    = 0.30,   # 30% uncertainty on L0
+  CV_k     = 0.50,   # 50% uncertainty on k (if k_based = TRUE)
+  CV_Lmat  = 0.20,   # 20% uncertainty on Lmat
+  CV_tmat  = 0.30,   # 30% uncertainty on tmat
 
   # Linf prior mean = 1.05 * Lmax by default
   Linf_multiplier = 1.05
 )
 ```
 
-The CV approach ensures priors scale sensibly across species of
-different sizes — a 20% CV on \\L\_\infty\\ means the same thing whether
-the species is 50 cm or 300 cm.
+Most CVs operate on the parameter itself (e.g., `CV_L0 = 0.30` means 30%
+relative uncertainty on \\L_0\\). The exception is `CV_delta`, which
+controls uncertainty about the *excess* \\\delta_L = L\_\infty -
+L\_{max}\\ rather than about \\L\_\infty\\ directly. At the default
+`CV_delta = 0.50`, this produces a gamma prior on \\\delta_L\\ with
+shape \\\alpha = 4\\, giving a proper mode and well-behaved HMC
+geometry. The `Linf_multiplier` controls the prior *mean* of the excess
+(default: 5% above \\L\_{max}\\), while `CV_delta` controls how tightly
+concentrated the prior is around that mean.
 
 ## Visualization
 
@@ -536,20 +541,20 @@ create_parameter_table(
 
 ## Troubleshooting
 
-| Issue                                                             | Solution                                                              |
-|-------------------------------------------------------------------|-----------------------------------------------------------------------|
-| Divergent transitions                                             | Increase `adapt_delta` (0.95 → 0.99)                                  |
-| \\k\\ hitting boundaries                                          | Check that \\L\_{mat} \< L\_\infty\\ and \\L_0 \< L\_{mat}\\          |
-| \\L\_\infty\\ too low                                             | Increase `Lmax` or `Linf_multiplier`                                  |
-| \\L\_\infty\\ boundary pile-up (posterior median at \\L\_{max}\\) | Consider wider `CV_Linf` or different growth model                    |
-| Poor fit at young ages                                            | Consider different growth model (Gompertz often better for juveniles) |
-| Sex differences reversed                                          | Check `pool_maturity`; try `pool_maturity = FALSE`                    |
-| Over-tight credible intervals                                     | May indicate double-pooling; use selective pooling                    |
+| Issue                                                             | Solution                                                                                        |
+|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| Divergent transitions                                             | Increase `adapt_delta` (0.95 → 0.99)                                                            |
+| \\k\\ hitting boundaries                                          | Check that \\L\_{mat} \< L\_\infty\\ and \\L_0 \< L\_{mat}\\                                    |
+| \\L\_\infty\\ too low                                             | Increase `Lmax` or `Linf_multiplier`                                                            |
+| \\L\_\infty\\ boundary pile-up (posterior median at \\L\_{max}\\) | Increase `CV_delta` or try a different growth model (logistic naturally prefers smaller excess) |
+| Poor fit at young ages                                            | Consider different growth model (Gompertz often better for juveniles)                           |
+| Sex differences reversed                                          | Check `pool_maturity`; try `pool_maturity = FALSE`                                              |
+| Over-tight credible intervals                                     | May indicate double-pooling; use selective pooling                                              |
 
 ## See Also
 
-- [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
-  — When and how to use hierarchical structure for imbalanced sex ratios
+- `vignette("partial_pooling")` — When and how to use hierarchical
+  structure for imbalanced sex ratios
 - `vignette("chen_watanabe_reparameterization")` — How growth parameters
   feed into CW mortality estimation
 - [`vignette("mortality_estimation")`](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md)

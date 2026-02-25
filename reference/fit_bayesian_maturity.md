@@ -162,9 +162,8 @@ chains start near the high-probability region of the posterior.
 [`vignette("fit_bayesian_maturity")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md)
 for usage examples with gulper shark data.
 
-[`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
-for detailed explanation of hierarchical modeling for imbalanced sex
-ratios.
+`vignette("partial_pooling")` for detailed explanation of hierarchical
+modeling for imbalanced sex ratios.
 
 [Statistical Methods: Maturity
 Estimation](https://brian-j-moe.github.io/vitalBayes/doc/vitalBayes_stats_explained.html#maturity)

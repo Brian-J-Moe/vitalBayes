@@ -91,9 +91,8 @@ data:
 - Small \\\tau\\ → sexes are similar → estimates shrink together
 - Sparse sex → borrows strength from the other sex
 
-For a comprehensive treatment, see
-[`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
-or the [Partial Pooling
+For a comprehensive treatment, see `vignette("partial_pooling")` or the
+[Partial Pooling
 section](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity)
 in the Statistical Methods guide.
 
@@ -232,8 +231,8 @@ growth_fit <- fit_bayesian_growth(
 
 ## See Also
 
-- [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
-  — Detailed treatment of hierarchical modeling for imbalanced data
+- `vignette("partial_pooling")` — Detailed treatment of hierarchical
+  modeling for imbalanced data
 - [Statistical Methods: Maturity
   Estimation](https://brian-j-moe.github.io/vitalBayes/articles/Understanding_vitalBayes.html#maturity)
   — Full mathematical derivation

@@ -153,7 +153,7 @@ Spanish, Portuguese, French, German, Japanese, Chinese, Russian).
 | Birth size           | [`vignette("fit_bayesian_birth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_birth.md)           |
 | Maturity ogives      | [`vignette("fit_bayesian_maturity")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md)     |
 | Growth models        | [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)         |
-| Partial pooling      | [`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)                 |
+| Partial pooling      | `vignette("partial_pooling")`                                                                                         |
 | Mortality estimation | [`vignette("mortality_estimation")`](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md)       |
 | Mortality framework  | `vignette("chen_watanabe_reparameterization")`                                                                        |
 | Survival simulation  | [`vignette("survivorship_simulation")`](https://brian-j-moe.github.io/vitalBayes/articles/survivorship_simulation.md) |

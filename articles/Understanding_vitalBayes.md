@@ -477,27 +477,38 @@ The excess \\\delta_L\\ receives a **gamma prior**:
 \\\delta_L \sim \text{Gamma}(\alpha\_\delta, \beta\_\delta)\\
 
 with shape and rate parameters derived from the user’s `Linf_multiplier`
-and `CV_Linf`:
+and `CV_delta`:
 
 \\\mu\_\delta = L\_{max} \times (\text{Linf\\multiplier} - 1)\\
 
-\\\alpha\_\delta = \frac{1}{CV\_{L\_\infty}^2}, \quad \beta\_\delta =
-\frac{1}{\mu\_\delta \times CV\_{L\_\infty}^2}\\
+\\\alpha\_\delta = \frac{1}{CV\_\delta^2}, \quad \beta\_\delta =
+\frac{1}{\mu\_\delta \times CV\_\delta^2}\\
 
-At the default settings (`Linf_multiplier = 1.05`, `CV_Linf = 0.20`),
-this produces a gamma with mean \\0.05 \times L\_{max}\\ and shape
-parameter 25 — a moderately peaked distribution centered at “5% above
-observed maximum” that allows the data to pull \\\delta_L\\ toward zero
-if the logistic model warrants it, or push it higher if the VB model
-needs more headroom.
+Note that `CV_delta` controls uncertainty about the *excess*
+\\\delta_L\\, not about \\L\_\infty\\ itself. This is an important
+distinction. If we applied a CV intended for \\L\_\infty\\ (a large
+number, say ~105 cm) to \\\delta_L\\ (a small number, ~5 cm), the prior
+would be dramatically tighter than intended — the SD would reflect 20%
+of 5 cm rather than a meaningful uncertainty band, an order-of-magnitude
+error. By using a dedicated `CV_delta`, the user directly expresses
+uncertainty about the quantity being modeled: “how sure am I about the
+excess above \\L\_{max}\\?”
+
+At the default settings (`Linf_multiplier = 1.05`, `CV_delta = 0.50`),
+this produces a gamma with mean \\0.05 \times L\_{max}\\, shape
+parameter \\\alpha = 4\\, and \\SD(\delta_L) = 0.5 \times 0.05 \times
+L\_{max}\\. For a species with \\L\_{max} = 100\\ cm, this means
+\\\delta_L = 5 \pm 2.5\\ cm, so \\L\_\infty \approx 105 \pm 2.5\\ cm.
+The gamma has a proper mode (since \\\alpha \> 1\\), well-behaved HMC
+geometry, and allows the data to pull \\\delta_L\\ down toward smaller
+values or push it higher as warranted.
 
 This approach eliminates boundary pile-ups (because \\\delta_L\\ lives
 on \\(0, \infty)\\ with no truncation), provides natural positive skew
 (small excesses are more probable than large ones, but the gamma’s right
 tail accommodates uncertainty), and produces a lighter right tail than
 lognormal (preventing biologically absurd asymptotic lengths while still
-allowing flexibility). The user interface is unchanged — you still
-specify `Linf_multiplier` and `CV_Linf` in the same way.
+allowing flexibility).
 
 **Why gamma rather than lognormal for \\\delta_L\\?** The gamma’s
 lighter right tail is appropriate here: \\\delta_L\\ represents a modest
@@ -505,10 +516,10 @@ biological excess, and placing too much prior mass on very large values
 of \\\delta_L\\ would allow \\L\_\infty\\ to drift far above
 observations without data support. The gamma concentrates more mass near
 its mode while still being flexible enough to accommodate data-driven
-deviations. The lognormal’s heavier tail would be more appropriate if we
-had genuine uncertainty about the *order of magnitude* of \\\delta_L\\,
-which we typically don’t — we’re uncertain about whether it’s 3% or 8%
-of \\L\_{max}\\, not whether it’s 5% or 500%.
+deviations. At the default `CV_delta = 0.50`, the shape parameter
+\\\alpha = 4\\ produces a gamma with a well-defined mode slightly below
+the mean — a natural shape for “I expect the excess to be around 5% of
+\\L\_{max}\\, but I’m not terribly sure.”
 
 ### The Maturity-Based Parameterization
 
@@ -708,14 +719,14 @@ that mean).
 
 **Default CVs in vitalBayes**:
 
-| Parameter                             | Default CV | Context                                                         |
-|:--------------------------------------|:-----------|:----------------------------------------------------------------|
-| \\L\_\infty\\                         | 0.20       | Growth model; informed by \\L\_{max}\\                          |
-| \\L_0\\                               | 0.30       | Growth model; fewer neonatal observations                       |
-| \\k\\                                 | 0.50       | Growth model (k-based only); often poorly constrained           |
-| \\L\_{mat}\\                          | 0.20       | Growth model (maturity-based); well-estimated from maturity fit |
-| \\t\_{mat}\\                          | 0.30       | Growth model (maturity-based); more uncertain than \\L\_{mat}\\ |
-| \\b\_{50}\\, \\L\_{50}\\, \\t\_{50}\\ | 0.30       | Birth and maturity models                                       |
+| Parameter                                | Default CV | Context                                                         |
+|:-----------------------------------------|:-----------|:----------------------------------------------------------------|
+| \\\delta_L\\ (excess above \\L\_{max}\\) | 0.50       | Growth model; controls \\L\_\infty\\ prior spread               |
+| \\L_0\\                                  | 0.30       | Growth model; fewer neonatal observations                       |
+| \\k\\                                    | 0.50       | Growth model (k-based only); often poorly constrained           |
+| \\L\_{mat}\\                             | 0.20       | Growth model (maturity-based); well-estimated from maturity fit |
+| \\t\_{mat}\\                             | 0.30       | Growth model (maturity-based); more uncertain than \\L\_{mat}\\ |
+| \\b\_{50}\\, \\L\_{50}\\, \\t\_{50}\\    | 0.30       | Birth and maturity models                                       |
 
 These defaults encode reasonable beliefs for data-limited species but
 can be adjusted based on prior knowledge. When upstream model fits are
@@ -743,7 +754,9 @@ The CV specification is converted to log-scale hyperparameters
 \\L\_\infty\\ is the exception. Rather than a truncated lognormal, it
 receives a **gamma prior on the excess above \\L\_{max}\\** — the
 delta-gamma parameterization described in the [\\L\_\infty\\ section
-above](#linf).
+above](#linf). The gamma parameters are derived from `CV_delta`
+(uncertainty about the excess, default 0.50), not from a CV on
+\\L\_\infty\\ itself.
 
 The observation error \\\sigma\\ receives a half-normal prior: \\\sigma
 \sim \text{Half-Normal}(0, s)\\, where \\s\\ is a scale parameter

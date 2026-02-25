@@ -23,7 +23,7 @@ fit_bayesian_growth(
   age.mature_stanfit = NULL,
   Lmax = NULL,
   Linf_multiplier = 1.05,
-  CV_Linf = 0.2,
+  CV_delta = 0.5,
   CV_k = 0.5,
   CV_L0 = 0.3,
   CV_Lmat = 0.2,
@@ -124,11 +124,13 @@ fit_bayesian_growth(
   Numeric. Multiplier for Lmax to get Linf prior mean. Default 1.05
   (i.e., 5% larger than observed max).
 
-- CV_Linf:
+- CV_delta:
 
-  Coefficient of variation for Linf delta-gamma prior. Controls the
-  shape of the Gamma distribution on \\\delta = L\_\infty - L\_{max}\\.
-  Default 0.2.
+  Coefficient of variation for the \\\delta_L\\ excess in the
+  delta-gamma \\L\_\infty\\ prior. Controls the shape of the
+  \\\text{Gamma}(\alpha, \beta)\\ distribution on \\\delta_L =
+  L\_\infty - L\_{max}\\. A value of 0.50 means "50\\ uncertainty about
+  how far above \\L\_{max}\\ the asymptote sits." Default 0.50.
 
 - CV_k:
 
@@ -325,11 +327,13 @@ Priors are constructed using coefficient of variation (CV) arguments:
 **Linf:** Uses a delta-gamma parameterization to avoid boundary pile-up
 near Lmax. Internally, \\\delta = L\_\infty - L\_{max}\\ is estimated
 with \\\delta \sim \text{Gamma}(\alpha, \beta)\\, where \\\alpha =
-1/\text{CV}^2\\ and \\\beta = 1/(\mu\_\delta \cdot \text{CV}^2)\\. The
-prior mean for \\\delta\\ defaults to `Lmax * (Linf_multiplier - 1)`.
-For two-sex models with pooling, between-sex shrinkage is applied via a
-soft penalty on \\\log(L\_\infty)\\, preserving the proportional
-interpretation of `prior_tau`.
+1/\text{CV\\delta}^2\\ and \\\beta = 1/(\mu\_\delta \cdot
+\text{CV\\delta}^2)\\. The prior mean for \\\delta\\ defaults to
+`Lmax * (Linf_multiplier - 1)`. `CV_delta` controls uncertainty about
+the excess above \\L\_{max}\\, not about \\L\_\infty\\ itself (see
+vignette for details). For two-sex models with pooling, between-sex
+shrinkage is applied via a soft penalty on \\\log(L\_\infty)\\,
+preserving the proportional interpretation of `prior_tau`.
 
 **k:** Prior mean is estimated from the data by solving the growth
 equation for k at each observation and averaging. Prior SD is
@@ -349,8 +353,8 @@ starting value.
 [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)
 for usage examples with gulper shark data.
 
-[`vignette("partial_pooling")`](https://brian-j-moe.github.io/vitalBayes/articles/partial_pooling.md)
-for hierarchical modeling of imbalanced sex ratios.
+`vignette("partial_pooling")` for hierarchical modeling of imbalanced
+sex ratios.
 
 [Statistical Methods: Growth
 Models](https://brian-j-moe.github.io/vitalBayes/doc/vitalBayes_stats_explained.html#growth)

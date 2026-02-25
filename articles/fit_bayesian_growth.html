@@ -337,7 +337,7 @@ model, which downweights extreme observations:</p>
 <p>When sample sizes are imbalanced between sexes (common in
 elasmobranch research), partial pooling borrows strength across sexes to
 reduce uncertainty for the sparse group. For the general theory of
-partial pooling, see <code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code>.</p>
+partial pooling, see <code>vignette("partial_pooling")</code>.</p>
 <div class="section level3">
 <h3 id="the-double-pooling-problem">The Double-Pooling Problem<a class="anchor" aria-label="anchor" href="#the-double-pooling-problem"></a>
 </h3>
@@ -551,18 +551,24 @@ scale-invariant control:</p>
 <span>  data <span class="op">=</span> <span class="va">gdata</span>,</span>
 <span></span>
 <span>  <span class="co"># Prior CVs (proportion of mean)</span></span>
-<span>  CV_Linf <span class="op">=</span> <span class="fl">0.20</span>,    <span class="co"># 20% uncertainty on Linf</span></span>
-<span>  CV_L0   <span class="op">=</span> <span class="fl">0.30</span>,    <span class="co"># 30% uncertainty on L0</span></span>
-<span>  CV_k    <span class="op">=</span> <span class="fl">0.50</span>,    <span class="co"># 50% uncertainty on k (if k_based = TRUE)</span></span>
-<span>  CV_Lmat <span class="op">=</span> <span class="fl">0.20</span>,    <span class="co"># 20% uncertainty on Lmat</span></span>
-<span>  CV_tmat <span class="op">=</span> <span class="fl">0.30</span>,    <span class="co"># 30% uncertainty on tmat</span></span>
+<span>  CV_delta <span class="op">=</span> <span class="fl">0.50</span>,   <span class="co"># 50% uncertainty on delta (excess above Lmax)</span></span>
+<span>  CV_L0    <span class="op">=</span> <span class="fl">0.30</span>,   <span class="co"># 30% uncertainty on L0</span></span>
+<span>  CV_k     <span class="op">=</span> <span class="fl">0.50</span>,   <span class="co"># 50% uncertainty on k (if k_based = TRUE)</span></span>
+<span>  CV_Lmat  <span class="op">=</span> <span class="fl">0.20</span>,   <span class="co"># 20% uncertainty on Lmat</span></span>
+<span>  CV_tmat  <span class="op">=</span> <span class="fl">0.30</span>,   <span class="co"># 30% uncertainty on tmat</span></span>
 <span></span>
 <span>  <span class="co"># Linf prior mean = 1.05 * Lmax by default</span></span>
 <span>  Linf_multiplier <span class="op">=</span> <span class="fl">1.05</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>The CV approach ensures priors scale sensibly across species of
-different sizes — a 20% CV on <span class="math inline">\(L_\infty\)</span> means the same thing whether the
-species is 50 cm or 300 cm.</p>
+<p>Most CVs operate on the parameter itself (e.g.,
+<code>CV_L0 = 0.30</code> means 30% relative uncertainty on <span class="math inline">\(L_0\)</span>). The exception is
+<code>CV_delta</code>, which controls uncertainty about the
+<em>excess</em> <span class="math inline">\(\delta_L = L_\infty -
+L_{max}\)</span> rather than about <span class="math inline">\(L_\infty\)</span> directly. At the default
+<code>CV_delta = 0.50</code>, this produces a gamma prior on <span class="math inline">\(\delta_L\)</span> with shape <span class="math inline">\(\alpha = 4\)</span>, giving a proper mode and
+well-behaved HMC geometry. The <code>Linf_multiplier</code> controls the
+prior <em>mean</em> of the excess (default: 5% above <span class="math inline">\(L_{max}\)</span>), while <code>CV_delta</code>
+controls how tightly concentrated the prior is around that mean.</p>
 </div>
 <div class="section level2">
 <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
@@ -699,7 +705,8 @@ L_{mat}\)</span>
 <td>
 <span class="math inline">\(L_\infty\)</span> boundary pile-up
 (posterior median at <span class="math inline">\(L_{max}\)</span>)</td>
-<td>Consider wider <code>CV_Linf</code> or different growth model</td>
+<td>Increase <code>CV_delta</code> or try a different growth model
+(logistic naturally prefers smaller excess)</td>
 </tr>
 <tr class="odd">
 <td>Poor fit at young ages</td>
@@ -724,7 +731,7 @@ juveniles)</td>
 </h2>
 <ul>
 <li>
-<code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code> — When and how to use
+<code>vignette("partial_pooling")</code> — When and how to use
 hierarchical structure for imbalanced sex ratios</li>
 <li>
 <code>vignette("chen_watanabe_reparameterization")</code> — How

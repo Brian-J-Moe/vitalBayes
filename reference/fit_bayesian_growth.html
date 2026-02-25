@@ -80,7 +80,7 @@ two-sex models with optional partial pooling between sexes.</p>
 <span>  age.mature_stanfit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  Lmax <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  Linf_multiplier <span class="op">=</span> <span class="fl">1.05</span>,</span>
-<span>  CV_Linf <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  CV_delta <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  CV_k <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  CV_L0 <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>  CV_Lmat <span class="op">=</span> <span class="fl">0.2</span>,</span>
@@ -176,10 +176,13 @@ or length-2 vector for sex-specific values c(female, male).</p></dd>
 Default 1.05 (i.e., 5% larger than observed max).</p></dd>
 
 
-<dt id="arg-cv-linf">CV_Linf<a class="anchor" aria-label="anchor" href="#arg-cv-linf"></a></dt>
-<dd><p>Coefficient of variation for Linf delta-gamma prior. Controls
-the shape of the Gamma distribution on \(\delta = L_\infty - L_{max}\).
-Default 0.2.</p></dd>
+<dt id="arg-cv-delta">CV_delta<a class="anchor" aria-label="anchor" href="#arg-cv-delta"></a></dt>
+<dd><p>Coefficient of variation for the \(\delta_L\) excess in the
+delta-gamma \(L_\infty\) prior. Controls the shape of the
+\(\text{Gamma}(\alpha, \beta)\) distribution on
+\(\delta_L = L_\infty - L_{max}\). A value of 0.50 means "50\<!-- % relative -->
+uncertainty about how far above \(L_{max}\) the asymptote sits." Default
+0.50.</p></dd>
 
 
 <dt id="arg-cv-k">CV_k<a class="anchor" aria-label="anchor" href="#arg-cv-k"></a></dt>
@@ -364,8 +367,11 @@ in the maturity models.</p>
 <p><strong>Linf:</strong> Uses a delta-gamma parameterization to avoid boundary pile-up
 near Lmax. Internally, \(\delta = L_\infty - L_{max}\) is estimated with
 \(\delta \sim \text{Gamma}(\alpha, \beta)\), where
-\(\alpha = 1/\text{CV}^2\) and \(\beta = 1/(\mu_\delta \cdot \text{CV}^2)\).
+\(\alpha = 1/\text{CV\_delta}^2\) and
+\(\beta = 1/(\mu_\delta \cdot \text{CV\_delta}^2)\).
 The prior mean for \(\delta\) defaults to <code>Lmax * (Linf_multiplier - 1)</code>.
+<code>CV_delta</code> controls uncertainty about the excess above \(L_{max}\),
+not about \(L_\infty\) itself (see vignette for details).
 For two-sex models with pooling, between-sex shrinkage is applied via a soft
 penalty on \(\log(L_\infty)\), preserving the proportional interpretation
 of <code>prior_tau</code>.</p>
@@ -387,7 +393,7 @@ linearization method is used to provide a reasonable starting value.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="../articles/fit_bayesian_growth.html">vignette("fit_bayesian_growth")</a></code> for usage examples with gulper shark data.</p>
-<p><code><a href="../articles/partial_pooling.html">vignette("partial_pooling")</a></code> for hierarchical modeling of imbalanced sex ratios.</p>
+<p><code>vignette("partial_pooling")</code> for hierarchical modeling of imbalanced sex ratios.</p>
 <p><a href="../doc/vitalBayes_stats_explained.html#growth">Statistical Methods: Growth Models</a>
 for equations and model comparison.</p>
 <p><a href="../doc/vitalBayes_stats_explained.html#maturity-param">Statistical Methods: Maturity-Based Parameterization</a>

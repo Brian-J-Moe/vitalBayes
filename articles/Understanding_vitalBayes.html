@@ -685,34 +685,45 @@ the asymptote faster than VB and can genuinely prefer <span class="math inline">
 <p><span class="math display">\[\delta_L \sim
 \text{Gamma}(\alpha_\delta, \beta_\delta)\]</span></p>
 <p>with shape and rate parameters derived from the user’s
-<code>Linf_multiplier</code> and <code>CV_Linf</code>:</p>
+<code>Linf_multiplier</code> and <code>CV_delta</code>:</p>
 <p><span class="math display">\[\mu_\delta = L_{max} \times
 (\text{Linf\_multiplier} - 1)\]</span></p>
-<p><span class="math display">\[\alpha_\delta =
-\frac{1}{CV_{L_\infty}^2}, \quad \beta_\delta = \frac{1}{\mu_\delta
-\times CV_{L_\infty}^2}\]</span></p>
+<p><span class="math display">\[\alpha_\delta = \frac{1}{CV_\delta^2},
+\quad \beta_\delta = \frac{1}{\mu_\delta \times
+CV_\delta^2}\]</span></p>
+<p>Note that <code>CV_delta</code> controls uncertainty about the
+<em>excess</em> <span class="math inline">\(\delta_L\)</span>, not about
+<span class="math inline">\(L_\infty\)</span> itself. This is an
+important distinction. If we applied a CV intended for <span class="math inline">\(L_\infty\)</span> (a large number, say ~105 cm) to
+<span class="math inline">\(\delta_L\)</span> (a small number, ~5 cm),
+the prior would be dramatically tighter than intended — the SD would
+reflect 20% of 5 cm rather than a meaningful uncertainty band, an
+order-of-magnitude error. By using a dedicated <code>CV_delta</code>,
+the user directly expresses uncertainty about the quantity being
+modeled: “how sure am I about the excess above <span class="math inline">\(L_{max}\)</span>?”</p>
 <p>At the default settings (<code>Linf_multiplier = 1.05</code>,
-<code>CV_Linf = 0.20</code>), this produces a gamma with mean <span class="math inline">\(0.05 \times L_{max}\)</span> and shape parameter
-25 — a moderately peaked distribution centered at “5% above observed
-maximum” that allows the data to pull <span class="math inline">\(\delta_L\)</span> toward zero if the logistic
-model warrants it, or push it higher if the VB model needs more
-headroom.</p>
+<code>CV_delta = 0.50</code>), this produces a gamma with mean <span class="math inline">\(0.05 \times L_{max}\)</span>, shape parameter
+<span class="math inline">\(\alpha = 4\)</span>, and <span class="math inline">\(SD(\delta_L) = 0.5 \times 0.05 \times
+L_{max}\)</span>. For a species with <span class="math inline">\(L_{max}
+= 100\)</span> cm, this means <span class="math inline">\(\delta_L = 5
+\pm 2.5\)</span> cm, so <span class="math inline">\(L_\infty \approx 105
+\pm 2.5\)</span> cm. The gamma has a proper mode (since <span class="math inline">\(\alpha &gt; 1\)</span>), well-behaved HMC
+geometry, and allows the data to pull <span class="math inline">\(\delta_L\)</span> down toward smaller values or
+push it higher as warranted.</p>
 <p>This approach eliminates boundary pile-ups (because <span class="math inline">\(\delta_L\)</span> lives on <span class="math inline">\((0, \infty)\)</span> with no truncation), provides
 natural positive skew (small excesses are more probable than large ones,
 but the gamma’s right tail accommodates uncertainty), and produces a
 lighter right tail than lognormal (preventing biologically absurd
-asymptotic lengths while still allowing flexibility). The user interface
-is unchanged — you still specify <code>Linf_multiplier</code> and
-<code>CV_Linf</code> in the same way.</p>
+asymptotic lengths while still allowing flexibility).</p>
 <div class="thinking-question">
 <p><strong>Why gamma rather than lognormal for <span class="math inline">\(\delta_L\)</span>?</strong> The gamma’s lighter
 right tail is appropriate here: <span class="math inline">\(\delta_L\)</span> represents a modest biological
 excess, and placing too much prior mass on very large values of <span class="math inline">\(\delta_L\)</span> would allow <span class="math inline">\(L_\infty\)</span> to drift far above observations
 without data support. The gamma concentrates more mass near its mode
 while still being flexible enough to accommodate data-driven deviations.
-The lognormal’s heavier tail would be more appropriate if we had genuine
-uncertainty about the <em>order of magnitude</em> of <span class="math inline">\(\delta_L\)</span>, which we typically don’t —
-we’re uncertain about whether it’s 3% or 8% of <span class="math inline">\(L_{max}\)</span>, not whether it’s 5% or 500%.</p>
+At the default <code>CV_delta = 0.50</code>, the shape parameter <span class="math inline">\(\alpha = 4\)</span> produces a gamma with a
+well-defined mode slightly below the mean — a natural shape for “I
+expect the excess to be around 5% of <span class="math inline">\(L_{max}\)</span>, but I’m not terribly sure.”</p>
 </div>
 </div>
 </div>
@@ -919,10 +930,11 @@ to that mean).</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left"><span class="math inline">\(L_\infty\)</span></td>
-<td align="left">0.20</td>
-<td align="left">Growth model; informed by <span class="math inline">\(L_{max}\)</span>
-</td>
+<td align="left">
+<span class="math inline">\(\delta_L\)</span> (excess
+above <span class="math inline">\(L_{max}\)</span>)</td>
+<td align="left">0.50</td>
+<td align="left">Growth model; controls <span class="math inline">\(L_\infty\)</span> prior spread</td>
 </tr>
 <tr class="even">
 <td align="left"><span class="math inline">\(L_0\)</span></td>
@@ -984,7 +996,9 @@ passed to Stan (see below).</p>
 <p><span class="math inline">\(L_\infty\)</span> is the exception.
 Rather than a truncated lognormal, it receives a <strong>gamma prior on
 the excess above <span class="math inline">\(L_{max}\)</span></strong> —
-the delta-gamma parameterization described in the <a href="#linf"><span class="math inline">\(L_\infty\)</span> section above</a>.</p>
+the delta-gamma parameterization described in the <a href="#linf"><span class="math inline">\(L_\infty\)</span> section above</a>. The gamma
+parameters are derived from <code>CV_delta</code> (uncertainty about the
+excess, default 0.50), not from a CV on <span class="math inline">\(L_\infty\)</span> itself.</p>
 <p>The observation error <span class="math inline">\(\sigma\)</span>
 receives a half-normal prior: <span class="math inline">\(\sigma \sim
 \text{Half-Normal}(0, s)\)</span>, where <span class="math inline">\(s\)</span> is a scale parameter (default 1).
