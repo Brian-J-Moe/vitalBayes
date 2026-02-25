@@ -255,41 +255,61 @@ pattern, anchoring the curve to an independent empirical estimate.</p>
 <div class="section level3">
 <h3 id="the-scaling-transformation">The Scaling Transformation<a class="anchor" aria-label="anchor" href="#the-scaling-transformation"></a>
 </h3>
-<p>Given a raw mortality schedule <span class="math inline">\(M_{raw}(t)\)</span> and a target mean mortality
-<span class="math inline">\(\bar{M}_{target}\)</span>, the scaled
-schedule is:</p>
-<p><span class="math display">\[M_{scaled}(t) = M_{raw}(t) \times
-\frac{\bar{M}_{target}}{\bar{M}_{raw}}\]</span></p>
-<p>where <span class="math inline">\(\bar{M}_{raw} = \frac{1}{n} \sum_t
-M_{raw}(t)\)</span> is the mean of the unscaled schedule. This
+<p>Scaling finds a proportional constant <span class="math inline">\(c\)</span> such that <span class="math inline">\(M_{scaled}(t) = c \times M_{raw}(t)\)</span>. This
 multiplicative adjustment preserves the relative differences between
 ages — if neonatal mortality is 5<span class="math inline">\(\times\)</span> adult mortality in the raw
 schedule, it remains 5<span class="math inline">\(\times\)</span> in the
 scaled schedule.</p>
+<p>The constant <span class="math inline">\(c\)</span> is determined by
+matching the <em>cumulative hazard</em> of the scaled schedule to the
+target. The cumulative hazard <span class="math inline">\(H =
+\int_0^{t_{max}} M(a) \, da\)</span> is the quantity that directly
+governs survival: <span class="math inline">\(S(t_{max}) =
+e^{-H}\)</span>. vitalBayes computes the raw cumulative hazard via
+trapezoidal numerical integration of the mortality schedule over the age
+grid:</p>
+<p><span class="math display">\[H_{raw} = \int_0^{t_{max}} M_{raw}(a) \,
+da \approx \sum_{i=1}^{n-1} \frac{a_{i+1} - a_i}{2} \left[ M_{raw}(a_i)
++ M_{raw}(a_{i+1}) \right]\]</span></p>
+<p>This approach is preferred over the simpler arithmetic-mean-based
+scaling (<span class="math inline">\(c = \bar{M}_{target} /
+\bar{M}_{raw}\)</span>) because it directly constrains the biologically
+relevant quantity (cumulative survival probability) and is invariant to
+age grid spacing. The arithmetic mean approximates the integral only
+when the grid is uniformly spaced over the full lifespan, and can
+introduce systematic bias when the grid starts above age 0 or is
+irregularly spaced — precisely the conditions that arise with CW’s
+neonatal mortality spike.</p>
 </div>
 <div class="section level3">
 <h3 id="target-specification">Target Specification<a class="anchor" aria-label="anchor" href="#target-specification"></a>
 </h3>
-<p>The scaling target <span class="math inline">\(\bar{M}_{target}\)</span> can be specified in
-three ways.</p>
+<p>The scaling target can be specified in three ways, each producing a
+target cumulative hazard <span class="math inline">\(H_{target}\)</span>
+and scaling constant <span class="math inline">\(c = H_{target} /
+H_{raw}\)</span>.</p>
 <p><strong>Survival probability</strong>
 (<code>M_target = NULL, p = ...</code>): Specify the proportion of a
-cohort expected to survive to maximum age <span class="math inline">\(t_{max}\)</span>. The target is derived as:</p>
-<p><span class="math display">\[\bar{M}_{target} =
--\frac{\ln(p)}{t_{max}}\]</span></p>
+cohort expected to survive to maximum age <span class="math inline">\(t_{max}\)</span>. The target cumulative hazard
+is:</p>
+<p><span class="math display">\[H_{target} = -\ln(p)\]</span></p>
 <p>A common choice is <span class="math inline">\(p = 0.001\)</span>
 (0.1% survival to <span class="math inline">\(t_{max}\)</span>), which
-produces moderate scaling for long-lived species.</p>
+produces moderate scaling for long-lived species. This is the most
+directly interpretable target: the scaled schedule will produce exactly
+<span class="math inline">\(S(t_{max}) = p\)</span> under the cumulative
+hazard framework.</p>
 <p><strong>Empirical relationship</strong>
 (<code>M_target = function(tmax) ...</code>): Supply a function of <span class="math inline">\(t_{max}\)</span>, such as the Then et al. (2015)
 estimator:</p>
 <p><span class="math display">\[\bar{M}_{target} = 4.899 \cdot
 t_{max}^{-0.916}\]</span></p>
-<p>This approach leverages the strong empirical correlation between
-maximum age and mean mortality across fish taxa.</p>
+<p>This is interpreted as the average mortality rate over the lifespan,
+producing <span class="math inline">\(H_{target} = \bar{M}_{target}
+\times t_{max}\)</span>.</p>
 <p><strong>Fixed value</strong> (<code>M_target = 0.15</code>): Directly
 specify a target mean mortality from literature estimates or independent
-analyses.</p>
+analyses, also interpreted as the lifespan-averaged rate (<span class="math inline">\(H_{target} = 0.15 \times t_{max}\)</span>).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span></span>
@@ -764,6 +784,20 @@ estimate.</li>
 noting whether these reflect joint posterior sampling or independent
 parameter variation.</li>
 </ol>
+<p>Example methods text:</p>
+<blockquote>
+<p>“Natural mortality was estimated using the Chen-Watanabe model (Chen
+&amp; Watanabe, 1989) with Gompertz senescence, implemented via the
+vitalBayes package (v1.0.0; Author, Year). Growth parameters were drawn
+from the joint posterior of a Gompertz growth model (selected by
+LOO-CV). Predicted length-at-age used the native Gompertz trajectory,
+while the asymptotic mortality rate (<span class="math inline">\(M_\infty = k_{VB}\)</span>) was computed from a
+VB-equivalent growth coefficient derived from biological milestones
+<span class="math inline">\((L_\infty, L_0, L_{mat}, t_{mat})\)</span>.
+Mortality schedules were scaled to 0.1% survival at estimated <span class="math inline">\(t_{max}\)</span> and propagated through 2,000
+Monte Carlo simulations. Median age-specific mortality with 95% credible
+intervals is reported.”</p>
+</blockquote>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -802,10 +836,6 @@ that feeds the mortality workflow</li>
 for <span class="math inline">\(t_{mat}\)</span> and <span class="math inline">\(L_{mat}\)</span>
 </li>
 </ul>
-<hr>
-<p><em>This document is part of the vitalBayes R package. For bug
-reports, feature requests, or questions, please visit the GitHub
-repository.</em></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

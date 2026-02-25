@@ -2,8 +2,6 @@
 
 ## All functions
 
-- [`M_chen_watanabe()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe.md)
-  : Chen-Watanabe Natural Mortality (Model-Dependent)
 - [`M_chen_watanabe_L0()`](https://brian-j-moe.github.io/vitalBayes/reference/M_chen_watanabe_L0.md)
   : Chen-Watanabe Natural Mortality (\\L_0\\ Parameterization)
 - [`M_lorenzen()`](https://brian-j-moe.github.io/vitalBayes/reference/M_lorenzen.md)
@@ -16,18 +14,10 @@
   : Compare Models Using LOO
 - [`compare_pooling()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_pooling.md)
   : Compare Pooling Effects
-- [`compute_G()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_G.md)
-  : Compute Relative Size G(t) = L(t)/Linf
-- [`compute_L()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_L.md)
-  : Compute Length at Age L(t)
-- [`compute_Minf()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_Minf.md)
-  : Compute Asymptotic Mortality Rate (M_inf)
-- [`compute_k_native()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_native.md)
-  : Compute Native Growth Coefficient for a Specific Model
+- [`compute_k_vb_equivalent()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)
+  : Compute Von Bertalanffy-Equivalent Growth Coefficient
 - [`compute_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_loo.md)
   : LOO Cross-Validation for vitalBayes Models
-- [`compute_tmax()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_tmax.md)
-  : Compute Maximum Age from Growth Parameters
 - [`create_loo_table()`](https://brian-j-moe.github.io/vitalBayes/reference/create_loo_table.md)
   : Create LOO Comparison Table
 - [`create_parameter_table()`](https://brian-j-moe.github.io/vitalBayes/reference/create_parameter_table.md)
@@ -59,7 +49,7 @@
 - [`print(`*`<vitalBayes_ppc>`*`)`](https://brian-j-moe.github.io/vitalBayes/reference/print.vitalBayes_ppc.md)
   : Print PPC Summary
 - [`scale_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/scale_mortality.md)
-  : Scale Mortality Schedule to Target Mean
+  : Scale Mortality Schedule to Target via Cumulative Hazard
 - [`simulate_survivorship()`](https://brian-j-moe.github.io/vitalBayes/reference/simulate_survivorship.md)
   : Monte Carlo Simulation of Survivorship
 - [`imbalanced_data`](https://brian-j-moe.github.io/vitalBayes/reference/simulated_datasets.md)

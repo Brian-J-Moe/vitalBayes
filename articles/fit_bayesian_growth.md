@@ -1,4 +1,4 @@
-# Modeling Individual Growth with fit_bayesian_growth()
+# Growth Modeling with fit_bayesian_growth()
 
 ## Overview
 
@@ -562,8 +562,3 @@ create_parameter_table(
 - [`compute_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_loo.md),
   [`compare_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_loo.md)
   — Model comparison
-
-------------------------------------------------------------------------
-
-*This document is part of the vitalBayes R package. For bug reports,
-feature requests, or questions, please visit the GitHub repository.*

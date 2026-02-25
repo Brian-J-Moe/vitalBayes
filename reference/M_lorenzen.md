@@ -10,24 +10,12 @@ M_lorenzen(
   age,
   Linf,
   L0,
-  Lmat,
-  tmat,
+  k,
+  k_vb = k,
   lw_fun = NULL,
   weight_based = FALSE,
   growth_model = c("vb", "gompertz", "logistic"),
-  sample_params = TRUE
-)
-
-M_lorenzen(
-  age,
-  Linf,
-  L0,
-  Lmat,
-  tmat,
-  lw_fun = NULL,
-  weight_based = FALSE,
-  growth_model = c("vb", "gompertz", "logistic"),
-  sample_params = TRUE
+  sample_params = FALSE
 )
 ```
 
@@ -35,7 +23,7 @@ M_lorenzen(
 
 - age:
 
-  Numeric vector of ages.
+  Numeric vector of ages at which to compute mortality.
 
 - Linf:
 
@@ -44,30 +32,6 @@ M_lorenzen(
 - L0:
 
   Length at birth.
-
-- Lmat:
-
-  Length at maturity.
-
-- tmat:
-
-  Age at maturity.
-
-- lw_fun:
-
-  Length-weight function (required if weight_based = TRUE).
-
-- weight_based:
-
-  Use weight-based formulation?
-
-- growth_model:
-
-  Growth model for L(t).
-
-- sample_params:
-
-  Sample parameters from their distributions?
 
 - k:
 
@@ -78,12 +42,32 @@ M_lorenzen(
 
   VB-equivalent growth coefficient for the growth-based formulation's
   \\\ln(k)\\ term. Defaults to `k`, which is correct for VB fits. For
-  non-VB fits, use `compute_k_vb_equivalent` or the derivative-matching
-  approach. Ignored for weight-based formulation.
+  non-VB fits, use
+  [`compute_k_vb_equivalent`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)
+  or the derivative-matching approach. Ignored for weight-based
+  formulation.
+
+- lw_fun:
+
+  Function mapping length to weight in grams: `lw_fun(L)`. Required if
+  `weight_based = TRUE`.
+
+- weight_based:
+
+  Logical. If `TRUE`, uses weight-based formulation. If `FALSE`
+  (default), uses growth-based formulation.
+
+- growth_model:
+
+  Character. Growth model for length prediction: `"vb"`, `"gompertz"`,
+  or `"logistic"`. Default `"vb"`.
+
+- sample_params:
+
+  Logical. If `TRUE`, samples allometric/regression parameters from
+  their distributions for each call. If `FALSE`, uses mean values.
 
 ## Value
-
-Numeric vector of instantaneous mortality rates.
 
 Numeric vector of instantaneous mortality rates.
 

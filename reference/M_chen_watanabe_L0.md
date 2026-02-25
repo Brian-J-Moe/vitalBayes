@@ -43,8 +43,9 @@ M_chen_watanabe_L0(
 
   VB-equivalent growth coefficient (used as \\M\_\infty\\ in the CW
   formula). For VB fits, this is the native \\k\\. For Gompertz or
-  Logistic fits, use `compute_k_vb_equivalent` or
-  `.derive_k_vb_derivative`.
+  Logistic fits, use
+  [`compute_k_vb_equivalent`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)
+  or `.derive_k_vb_derivative`.
 
 - k_native:
 
@@ -162,8 +163,8 @@ coefficient in fish population dynamics. *Nippon Suisan Gakkaishi*,
 
 ## See also
 
-`compute_k_vb_equivalent` for deriving \\k\_{VB}\\ from maturity
-milestones,
+[`compute_k_vb_equivalent`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)
+for deriving \\k\_{VB}\\ from maturity milestones,
 [`get_stochastic_mortality`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
 for Monte Carlo mortality estimation with uncertainty.
 

@@ -239,7 +239,9 @@ parameterization, \\k\_{VB}^{equiv}\\ exactly reproduces the fitted
 the three models define \\k\\ differently. But \\k\_{VB}^{equiv}\\ is
 the correct input for the CW mortality model regardless.
 
-In vitalBayes, `compute_k_vb_equivalent()` performs this computation and
+In vitalBayes,
+[`compute_k_vb_equivalent()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)
+performs this computation and
 [`get_stochastic_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/get_stochastic_mortality.md)
 calls it automatically when processing posteriors from non-VB growth
 fits.
