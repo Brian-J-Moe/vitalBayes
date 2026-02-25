@@ -63,27 +63,12 @@ precompile_models <- function(models = NULL,
     ))
   }
 
-  # ---- progress (cli if available, otherwise base) ----
-  use_cli <- requireNamespace("cli", quietly = TRUE)
-  cli_has_dots <- FALSE
-  pb_cli <- NULL
-  pb_base <- NULL
+  # ---- progress
 
-  if (use_cli) {
-    cli_has_dots <- "..." %in% names(formals(cli::cli_progress_update))
-    fmt <- if (cli_has_dots) {
-      # can inject {model} in newer cli
-      "Compiling Stan models {cli::pb_bar} {cli::pb_percent} | {model}"
-    } else {
-      # older cli: keep format simple
-      "Compiling Stan models {cli::pb_bar} {cli::pb_percent}"
-    }
-    pb_cli <- cli::cli_progress_bar(total = n, format = fmt, clear = FALSE)
-    on.exit(cli::cli_progress_done(pb_cli), add = TRUE)
-  } else {
-    pb_base <- utils::txtProgressBar(min = 0, max = n, style = 3)
-    on.exit(close(pb_base), add = TRUE)
-  }
+  n <- length(models)
+  pb <- utils::txtProgressBar(min = 0, max = n, style = 3)
+  on.exit(close(pb), add = TRUE)
+
 
   res <- vector("list", n)
 
@@ -91,18 +76,9 @@ precompile_models <- function(models = NULL,
     m <- models[[i]]
 
     # update progress
-    if (use_cli) {
-      if (cli_has_dots) {
-        cli::cli_progress_update(pb_cli, inc = 1L, model = m)
-      } else {
-        cli::cli_progress_update(pb_cli, inc = 1L)
-        # model label printed separately for older cli
-        cli::cli_inform(sprintf("→ [%d/%d] %s", i, n, m))
-      }
-    } else {
-      utils::setTxtProgressBar(pb_base, i)
-      message(sprintf("→ [%d/%d] %s", i, n, m))
-    }
+    utils::setTxtProgressBar(pb, i)
+    message(sprintf("→ [%d/%d] %s", i, n, m))
+
 
     t0 <- proc.time()[["elapsed"]]
 
