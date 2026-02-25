@@ -324,18 +324,18 @@ growth_fit <- fit_bayesian_growth(
   data = gdata,
 
   # Prior CVs (proportion of mean)
-  CV_Linf = 0.20,    # 20% uncertainty on Linf
-  CV_L0   = 0.30,    # 30% uncertainty on L0
-  CV_k    = 0.50,    # 50% uncertainty on k (if k_based = TRUE)
-  CV_Lmat = 0.20,    # 20% uncertainty on Lmat
-  CV_tmat = 0.30,    # 30% uncertainty on tmat
+  CV_delta = 0.50,   # 50% uncertainty on delta (excess above Lmax)
+  CV_L0    = 0.30,   # 30% uncertainty on L0
+  CV_k     = 0.50,   # 50% uncertainty on k (if k_based = TRUE)
+  CV_Lmat  = 0.20,   # 20% uncertainty on Lmat
+  CV_tmat  = 0.30,   # 30% uncertainty on tmat
 
   # Linf prior mean = 1.05 * Lmax by default
   Linf_multiplier = 1.05
 )
 ```
 
-The CV approach ensures priors scale sensibly across species of different sizes --- a 20% CV on $L_\infty$ means the same thing whether the species is 50 cm or 300 cm.
+Most CVs operate on the parameter itself (e.g., `CV_L0 = 0.30` means 30% relative uncertainty on $L_0$). The exception is `CV_delta`, which controls uncertainty about the *excess* $\delta_L = L_\infty - L_{max}$ rather than about $L_\infty$ directly. At the default `CV_delta = 0.50`, this produces a gamma prior on $\delta_L$ with shape $\alpha = 4$, giving a proper mode and well-behaved HMC geometry. The `Linf_multiplier` controls the prior *mean* of the excess (default: 5% above $L_{max}$), while `CV_delta` controls how tightly concentrated the prior is around that mean.
 
 ## Visualization
 
@@ -444,7 +444,7 @@ create_parameter_table(
 | Divergent transitions | Increase `adapt_delta` (0.95 → 0.99) |
 | $k$ hitting boundaries | Check that $L_{mat} < L_\infty$ and $L_0 < L_{mat}$ |
 | $L_\infty$ too low | Increase `Lmax` or `Linf_multiplier` |
-| $L_\infty$ boundary pile-up (posterior median at $L_{max}$) | Consider wider `CV_Linf` or different growth model |
+| $L_\infty$ boundary pile-up (posterior median at $L_{max}$) | Increase `CV_delta` or try a different growth model (logistic naturally prefers smaller excess) |
 | Poor fit at young ages | Consider different growth model (Gompertz often better for juveniles) |
 | Sex differences reversed | Check `pool_maturity`; try `pool_maturity = FALSE` |
 | Over-tight credible intervals | May indicate double-pooling; use selective pooling |

@@ -71,8 +71,11 @@
 #' **Linf:** Uses a delta-gamma parameterization to avoid boundary pile-up
 #' near Lmax. Internally, \eqn{\delta = L_\infty - L_{max}} is estimated with
 #' \eqn{\delta \sim \text{Gamma}(\alpha, \beta)}, where
-#' \eqn{\alpha = 1/\text{CV}^2} and \eqn{\beta = 1/(\mu_\delta \cdot \text{CV}^2)}.
+#' \eqn{\alpha = 1/\text{CV\_delta}^2} and
+#' \eqn{\beta = 1/(\mu_\delta \cdot \text{CV\_delta}^2)}.
 #' The prior mean for \eqn{\delta} defaults to \code{Lmax * (Linf_multiplier - 1)}.
+#' \code{CV_delta} controls uncertainty about the excess above \eqn{L_{max}},
+#' not about \eqn{L_\infty} itself (see vignette for details).
 #' For two-sex models with pooling, between-sex shrinkage is applied via a soft
 #' penalty on \eqn{\log(L_\infty)}, preserving the proportional interpretation
 #' of \code{prior_tau}.
@@ -119,9 +122,12 @@
 #'   or length-2 vector for sex-specific values c(female, male).
 #' @param Linf_multiplier Numeric. Multiplier for Lmax to get Linf prior mean.
 #'   Default 1.05 (i.e., 5% larger than observed max).
-#' @param CV_Linf Coefficient of variation for Linf delta-gamma prior. Controls
-#'   the shape of the Gamma distribution on \eqn{\delta = L_\infty - L_{max}}.
-#'   Default 0.2.
+#' @param CV_delta Coefficient of variation for the \eqn{\delta_L} excess in the
+#'   delta-gamma \eqn{L_\infty} prior. Controls the shape of the
+#'   \eqn{\text{Gamma}(\alpha, \beta)} distribution on
+#'   \eqn{\delta_L = L_\infty - L_{max}}. A value of 0.50 means "50\% relative
+#'   uncertainty about how far above \eqn{L_{max}} the asymptote sits." Default
+#'   0.50.
 #' @param CV_k Coefficient of variation for k prior. Default 0.5.
 #' @param CV_L0 Coefficient of variation for L0 prior (if not from birth fit). Default 0.3.
 #' @param CV_Lmat Coefficient of variation for Lmat prior (if not from maturity fit). Default 0.2.
@@ -269,7 +275,7 @@ fit_bayesian_growth <- function(
     Linf_multiplier   = 1.05,
 
     # CV arguments for priors
-    CV_Linf       = 0.2,
+    CV_delta      = 0.5,
     CV_k          = 0.5,
     CV_L0         = 0.3,
     CV_Lmat       = 0.2,
@@ -506,17 +512,21 @@ fit_bayesian_growth <- function(
   # --- Linf priors (delta-gamma parameterization) ---
   # Linf = Lmax + delta, where delta ~ Gamma(alpha, beta)
   # This avoids boundary pile-up when the posterior favors Linf near Lmax
+  # CV_delta controls uncertainty about the excess, not about Linf itself
   mean_Linf_nat <- Lmax_vec * Linf_multiplier
   mu_delta    <- Lmax_vec * (Linf_multiplier - 1)
-  alpha_delta <- rep(1 / CV_Linf^2, n_sex)
-  beta_delta  <- 1 / (mu_delta * CV_Linf^2)
+  alpha_delta <- rep(1 / CV_delta^2, n_sex)
+  beta_delta  <- 1 / (mu_delta * CV_delta^2)
 
   message("Linf prior: mean = ", paste(round(mean_Linf_nat, 1), collapse = ", "),
-          " cm (", Linf_multiplier, " x Lmax, CV = ", CV_Linf, ")",
+          " cm (", Linf_multiplier, " x Lmax)",
           "\n  -> delta-gamma: E[delta] = ",
           paste(round(mu_delta, 2), collapse = ", "),
-          " cm, alpha = ", round(alpha_delta[1], 2),
-          ", beta = ", paste(round(beta_delta, 4), collapse = ", "))
+          " cm (CV_delta = ", CV_delta, ")",
+          ", alpha = ", round(alpha_delta[1], 2),
+          ", beta = ", paste(round(beta_delta, 4), collapse = ", "),
+          "\n  -> SD[delta] = ",
+          paste(round(mu_delta * CV_delta, 2), collapse = ", "), " cm")
 
   # --- L0 priors ---
   if (!is.null(birth_stanfit)) {

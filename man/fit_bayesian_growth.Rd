@@ -18,7 +18,7 @@ fit_bayesian_growth(
   age.mature_stanfit = NULL,
   Lmax = NULL,
   Linf_multiplier = 1.05,
-  CV_Linf = 0.2,
+  CV_delta = 0.5,
   CV_k = 0.5,
   CV_L0 = 0.3,
   CV_Lmat = 0.2,
@@ -84,9 +84,12 @@ or length-2 vector for sex-specific values c(female, male).}
 \item{Linf_multiplier}{Numeric. Multiplier for Lmax to get Linf prior mean.
 Default 1.05 (i.e., 5\% larger than observed max).}
 
-\item{CV_Linf}{Coefficient of variation for Linf delta-gamma prior. Controls
-the shape of the Gamma distribution on \eqn{\delta = L_\infty - L_{max}}.
-Default 0.2.}
+\item{CV_delta}{Coefficient of variation for the \eqn{\delta_L} excess in the
+delta-gamma \eqn{L_\infty} prior. Controls the shape of the
+\eqn{\text{Gamma}(\alpha, \beta)} distribution on
+\eqn{\delta_L = L_\infty - L_{max}}. A value of 0.50 means "50\\% relative
+uncertainty about how far above \eqn{L_{max}} the asymptote sits." Default
+0.50.}
 
 \item{CV_k}{Coefficient of variation for k prior. Default 0.5.}
 
@@ -223,8 +226,11 @@ Priors are constructed using coefficient of variation (CV) arguments:
 \strong{Linf:} Uses a delta-gamma parameterization to avoid boundary pile-up
 near Lmax. Internally, \eqn{\delta = L_\infty - L_{max}} is estimated with
 \eqn{\delta \sim \text{Gamma}(\alpha, \beta)}, where
-\eqn{\alpha = 1/\text{CV}^2} and \eqn{\beta = 1/(\mu_\delta \cdot \text{CV}^2)}.
+\eqn{\alpha = 1/\text{CV\_delta}^2} and
+\eqn{\beta = 1/(\mu_\delta \cdot \text{CV\_delta}^2)}.
 The prior mean for \eqn{\delta} defaults to \code{Lmax * (Linf_multiplier - 1)}.
+\code{CV_delta} controls uncertainty about the excess above \eqn{L_{max}},
+not about \eqn{L_\infty} itself (see vignette for details).
 For two-sex models with pooling, between-sex shrinkage is applied via a soft
 penalty on \eqn{\log(L_\infty)}, preserving the proportional interpretation
 of \code{prior_tau}.
