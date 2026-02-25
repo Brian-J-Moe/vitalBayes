@@ -1,5 +1,10 @@
 # Stochastic Estimation of Age-Specific Natural Mortality
 
+Monte Carlo simulation of age-specific natural mortality schedules with
+full uncertainty propagation from growth model posteriors. Supports
+Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
+derivation of VB-equivalent \\k\\ from any growth model fit.
+
 ## Usage
 
 ``` r
@@ -164,23 +169,27 @@ A list with components:
 
 - Summary:
 
-  data.table with median and 95\\ Plotggplot2 object
+  data.table with median and 95% CI by age
 
-Monte Carlo simulation of age-specific natural mortality schedules with
-full uncertainty propagation from growth model posteriors. Supports
-Chen-Watanabe, Peterson-Wroblewski, and Lorenzen models with automatic
-derivation of VB-equivalent \\k\\ from any growth model fit. A key
-feature of this function is growth-model-agnostic mortality estimation.
-When a growth fit from
+- Plot:
+
+  ggplot2 object
+
+## Details
+
+A key feature of this function is growth-model-agnostic mortality
+estimation. When a growth fit from
 [`fit_bayesian_growth`](https://brian-j-moe.github.io/vitalBayes/reference/fit_bayesian_growth.md)
 is provided, the function automatically detects the growth model type
 and extracts posterior draws of the native growth coefficient and
 biological milestones. All mortality models use the native growth
 trajectory for body-size predictions, while CW and growth-based Lorenzen
 additionally receive the VB-equivalent \\k\\ for their model-specific
-parameters that were derived or calibrated under VB assumptions. Growth
-Coefficient RolesThe three mortality models use \\k\\ in fundamentally
-different ways:
+parameters that were derived or calibrated under VB assumptions.
+
+## Growth Coefficient Roles
+
+The three mortality models use \\k\\ in fundamentally different ways:
 
 - CW:
 
@@ -200,8 +209,10 @@ different ways:
   appears in the mortality equation itself; only the native growth
   trajectory matters.
 
-Manual Parameter SpecificationWhen a growth fit is not available,
-parameters can be specified manually. Two sampling modes are supported:
+## Manual Parameter Specification
+
+When a growth fit is not available, parameters can be specified
+manually. Two sampling modes are supported:
 
 - Bivariate (preferred):
 
@@ -215,3 +226,40 @@ parameters can be specified manually. Two sampling modes are supported:
   distribution and assumed to be VB-equivalent for CW and growth-based
   Lorenzen. For non-VB growth models, the derivative-matching approach
   provides a VB-equivalent.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# From a Gompertz growth fit (auto-detects model, uses native trajectory)
+mort <- get_stochastic_mortality(
+  method     = "CW",
+  growth_fit = gomp_fit,
+  sex        = 1,
+  iter       = 2000
+)
+
+# Manual: maturity-based (bivariate Lmat-tmat sampling)
+mort_mat <- get_stochastic_mortality(
+  method        = "CW",
+  Linf          = c(100, 8),
+  L0            = c(25, 2),
+  Lmat          = c(72, 4),
+  tmat          = c(12, 1.5),
+  rho_Lmat_tmat = 0.5,
+  growth_model  = "gompertz",
+  k             = c(0.15, 0.02),  # native Gompertz k for L(t)
+  iter          = 2000
+)
+
+# Manual: k-based (backward-compatible, VB assumed)
+mort_k <- get_stochastic_mortality(
+  method = "CW",
+  Linf   = c(100, 8),
+  L0     = c(25, 2),
+  k      = c(0.08, 0.01),
+  tmat   = c(12, 1.5),
+  iter   = 2000
+)
+} # }
+```

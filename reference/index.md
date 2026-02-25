@@ -46,6 +46,8 @@
   : Plot Residual Diagnostics
 - [`ppc_summary()`](https://brian-j-moe.github.io/vitalBayes/reference/ppc_summary.md)
   : Posterior Predictive Summary
+- [`precompile_models()`](https://brian-j-moe.github.io/vitalBayes/reference/precompile_models.md)
+  : Precompile Stan models shipped with vitalBayes
 - [`print(`*`<vitalBayes_ppc>`*`)`](https://brian-j-moe.github.io/vitalBayes/reference/print.vitalBayes_ppc.md)
   : Print PPC Summary
 - [`scale_mortality()`](https://brian-j-moe.github.io/vitalBayes/reference/scale_mortality.md)

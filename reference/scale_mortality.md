@@ -1,5 +1,9 @@
 # Scale Mortality Schedule to Target via Cumulative Hazard
 
+Rescales an age-specific mortality schedule by matching the cumulative
+hazard to an empirical target (from Hoenig, Then et al., or a specified
+survival probability).
+
 ## Usage
 
 ``` r
@@ -31,25 +35,52 @@ scale_mortality(M, age, M_target = NULL, tmax = NULL, p = 0.001)
 - p:
 
   Probability of surviving to `tmax`. Used only if `M_target = NULL`.
-  Default 0.001 (0.1\\
+  Default 0.001 (0.1% survival).
 
-Numeric vector of scaled mortality rates (same length as `M`). Rescales
-an age-specific mortality schedule by matching the cumulative hazard to
-an empirical target (from Hoenig, Then et al., or a specified survival
-probability). The scaling finds a proportional constant \\c\\ such that:
-\$\$M\_{scaled}(t) = c \times M\_{raw}(t)\$\$The constant \\c\\ is
-determined by matching the cumulative hazard to the target. The
-cumulative hazard is computed via trapezoidal integration: \$\$H\_{raw}
-= \int_0^{t\_{max}} M\_{raw}(a) \\ da \approx \sum_i \frac{\Delta
-a_i}{2} \left\[ M(a_i) + M(a\_{i+1}) \right\]\$\$For the
-**survival-probability target** (`M_target = NULL`): \$\$c =
+## Value
+
+Numeric vector of scaled mortality rates (same length as `M`).
+
+## Details
+
+The scaling finds a proportional constant \\c\\ such that:
+\$\$M\_{scaled}(t) = c \times M\_{raw}(t)\$\$
+
+The constant \\c\\ is determined by matching the cumulative hazard to
+the target. The cumulative hazard is computed via trapezoidal
+integration: \$\$H\_{raw} = \int_0^{t\_{max}} M\_{raw}(a) \\ da \approx
+\sum_i \frac{\Delta a_i}{2} \left\[ M(a_i) + M(a\_{i+1}) \right\]\$\$
+
+For the **survival-probability target** (`M_target = NULL`): \$\$c =
 \frac{-\ln(p)}{H\_{raw}}\$\$ This ensures \\S(t\_{max}) = \exp\\\left(-c
-\cdot H\_{raw}\right) = p\\ exactly.For a **fixed mean-mortality
-target** (numeric or function of `tmax`): \$\$c =
-\frac{\bar{M}\_{target} \times t\_{max}}{H\_{raw}}\$\$ This interprets
-the target as the average mortality over the lifespan, so the cumulative
-hazard of the scaled schedule equals \\\bar{M}\_{target} \times
-t\_{max}\\.This approach is preferred over arithmetic-mean-based scaling
-because it directly constrains the biologically relevant quantity
-(cumulative survival) rather than a proxy, and is invariant to the age
-grid spacing.
+\cdot H\_{raw}\right) = p\\ exactly.
+
+For a **fixed mean-mortality target** (numeric or function of `tmax`):
+\$\$c = \frac{\bar{M}\_{target} \times t\_{max}}{H\_{raw}}\$\$ This
+interprets the target as the average mortality over the lifespan, so the
+cumulative hazard of the scaled schedule equals \\\bar{M}\_{target}
+\times t\_{max}\\.
+
+This approach is preferred over arithmetic-mean-based scaling because it
+directly constrains the biologically relevant quantity (cumulative
+survival) rather than a proxy, and is invariant to the age grid spacing.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+ages  <- seq(0.1, 30, length.out = 500)
+M_raw <- M_chen_watanabe_L0(ages, Linf = 100, L0 = 25, k = 0.1,
+                             two_phase = FALSE)
+
+# Scale to survival probability
+M_sp <- scale_mortality(M_raw, age = ages, tmax = 30, p = 0.01)
+
+# Scale using Then et al. (2015) relationship
+then_2015 <- function(tmax) 4.899 * tmax^(-0.916)
+M_then <- scale_mortality(M_raw, age = ages, M_target = then_2015, tmax = 30)
+
+# Scale to fixed target
+M_fixed <- scale_mortality(M_raw, age = ages, M_target = 0.2, tmax = 30)
+} # }
+```
