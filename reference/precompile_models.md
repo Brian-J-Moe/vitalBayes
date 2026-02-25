@@ -22,7 +22,7 @@ precompile_models(
 - models:
 
   Character vector of model base names (no `.stan` extension). Use
-  `NULL` to compile all models in `inst/stan/`.
+  `NULL` to compile all models shipped in `inst/stan/`.
 
 - force_recompile:
 
