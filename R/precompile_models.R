@@ -69,6 +69,7 @@ precompile_models <- function(models = NULL,
 
   for (i in seq_len(n)) {
     m <- models[[i]]
+    message(sprintf("→ [%d/%d] %s", i, n, m))
 
     t0 <- proc.time()[["elapsed"]]
 
