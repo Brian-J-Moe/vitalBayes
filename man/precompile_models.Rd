@@ -15,7 +15,7 @@ precompile_models(
 }
 \arguments{
 \item{models}{Character vector of model base names (no \code{.stan} extension).
-Use \code{NULL} to compile all models in \verb{inst/stan/}.}
+Use \code{NULL} to compile all models shipped in \verb{inst/stan/}.}
 
 \item{force_recompile}{Logical. Force recompilation even if cached exe exists.}
 

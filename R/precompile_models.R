@@ -5,7 +5,7 @@
 #' package installation and speeds up first use.
 #'
 #' @param models Character vector of model base names (no `.stan` extension).
-#'   Use `NULL` to compile all models in `inst/stan/`.
+#'   Use `NULL` to compile all models shipped in `inst/stan/`.
 #' @param force_recompile Logical. Force recompilation even if cached exe exists.
 #' @param cpp_options,stanc_options Lists forwarded to cmdstanr::cmdstan_model().
 #' @param quiet Logical. If `FALSE`, prints CmdStan compilation output.
@@ -14,20 +14,19 @@
 #' @return A `data.table` with columns: `model`, `ok`, `exe_file`, `elapsed_sec`, `error`.
 #' @export
 precompile_models <- function(models = NULL,
-                                 force_recompile = FALSE,
-                                 cpp_options = list(),
-                                 stanc_options = list(),
-                                 quiet = TRUE,
-                                 stop_on_error = FALSE) {
+                              force_recompile = FALSE,
+                              cpp_options = list(),
+                              stanc_options = list(),
+                              quiet = TRUE,
+                              stop_on_error = FALSE) {
 
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required for precompile_models().", call. = FALSE)
   }
-  if (!requireNamespace("cli", quietly = TRUE)) {
-    stop("Package 'cli' is required for precompile_models().", call. = FALSE)
+  if (!requireNamespace("cmdstanr", quietly = TRUE)) {
+    stop("Package 'cmdstanr' is required to compile Stan models.", call. = FALSE)
   }
 
-  # Your known model set (from inst/stan)
   all_models <- c(
     "age_at_maturity_single",
     "age_at_maturity_twosex",
@@ -54,35 +53,98 @@ precompile_models <- function(models = NULL,
     }
   }
 
-  pb <- cli::cli_progress_bar(
-    total = length(models),
-    format = "Compiling Stan models {cli::pb_bar} {cli::pb_percent} | {cur}/{total} | {model}",
-    clear = FALSE
-  )
-  on.exit(cli::cli_progress_done(pb), add = TRUE)
+  n <- length(models)
+  if (n == 0L) {
+    return(data.table::data.table(
+      model = character(), ok = logical(), exe_file = character(),
+      elapsed_sec = numeric(), error = character()
+    ))
+  }
 
-  res <- vector("list", length(models))
+  # ---- progress (cli if available, otherwise base) ----
+  use_cli <- requireNamespace("cli", quietly = TRUE)
+  cli_has_dots <- FALSE
+  pb_cli <- NULL
+  pb_base <- NULL
 
-  for (i in seq_along(models)) {
+  if (use_cli) {
+    cli_has_dots <- "..." %in% names(formals(cli::cli_progress_update))
+    fmt <- if (cli_has_dots) {
+      # can inject {model} in newer cli
+      "Compiling Stan models {cli::pb_bar} {cli::pb_percent} | {model}"
+    } else {
+      # older cli: keep format simple
+      "Compiling Stan models {cli::pb_bar} {cli::pb_percent}"
+    }
+    pb_cli <- cli::cli_progress_bar(total = n, format = fmt, clear = FALSE)
+    on.exit(cli::cli_progress_done(pb_cli), add = TRUE)
+  } else {
+    pb_base <- utils::txtProgressBar(min = 0, max = n, style = 3)
+    on.exit(close(pb_base), add = TRUE)
+  }
+
+  res <- vector("list", n)
+
+  for (i in seq_len(n)) {
     m <- models[[i]]
-    cli::cli_progress_update(pb, cur = i, total = length(models), model = m)
+
+    # update progress
+    if (use_cli) {
+      if (cli_has_dots) {
+        cli::cli_progress_update(pb_cli, inc = 1L, model = m)
+      } else {
+        cli::cli_progress_update(pb_cli, inc = 1L)
+        # model label printed separately for older cli
+        cli::cli_inform(sprintf("→ [%d/%d] %s", i, n, m))
+      }
+    } else {
+      utils::setTxtProgressBar(pb_base, i)
+      message(sprintf("→ [%d/%d] %s", i, n, m))
+    }
 
     t0 <- proc.time()[["elapsed"]]
+
     out <- tryCatch(
       {
-        mod <- .vb_cmdstan_model_cached(
-          model = m,
+        # Stan source lives in inst/stan/, accessible via system.file()
+        stan_file <- system.file("stan", paste0(m, ".stan"), package = "vitalBayes")
+        if (!nzchar(stan_file)) {
+          stop(sprintf("Stan file not found for model '%s'.", m), call. = FALSE)
+        }
+
+        # Choose a stable cache location (per user) so we don't recompile every session.
+        cache_dir <- file.path(tools::R_user_dir("vitalBayes", "cache"), "cmdstan_models")
+        dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
+
+        # Cache key: md5 of stan file + options + cmdstanr + CmdStan version
+        stan_hash <- unname(tools::md5sum(stan_file))
+        cmdstanr_ver <- as.character(utils::packageVersion("cmdstanr"))
+        cmdstan_ver <- tryCatch(as.character(cmdstanr::cmdstan_version()), error = function(e) NA_character_)
+
+        tf <- tempfile(fileext = ".bin")
+        serialize(list(cpp_options = cpp_options, stanc_options = stanc_options), tf, xdr = FALSE)
+        opt_hash <- unname(tools::md5sum(tf))
+        unlink(tf)
+
+        key <- paste(stan_hash, cmdstanr_ver, cmdstan_ver, opt_hash, sep = "-")
+        exe_ext <- if (.Platform$OS.type == "windows") ".exe" else ""
+        exe_dir <- file.path(cache_dir, m, key)
+        dir.create(exe_dir, recursive = TRUE, showWarnings = FALSE)
+        exe_file <- file.path(exe_dir, paste0(m, exe_ext))
+
+        mod <- cmdstanr::cmdstan_model(
+          stan_file = stan_file,
+          exe_file = exe_file,
           force_recompile = force_recompile,
           cpp_options = cpp_options,
           stanc_options = stanc_options,
           quiet = quiet
         )
-        exe <- tryCatch(mod$exe_file(), error = function(e) NA_character_)
 
         data.table::data.table(
           model = m,
           ok = TRUE,
-          exe_file = exe,
+          exe_file = tryCatch(mod$exe_file(), error = function(e) exe_file),
           elapsed_sec = proc.time()[["elapsed"]] - t0,
           error = NA_character_
         )
