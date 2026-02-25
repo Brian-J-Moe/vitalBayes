@@ -63,22 +63,10 @@ precompile_models <- function(models = NULL,
     ))
   }
 
-  # ---- progress
-
-  n <- length(models)
-  pb <- utils::txtProgressBar(min = 0, max = n, style = 3)
-  on.exit(close(pb), add = TRUE)
-
-
   res <- vector("list", n)
 
   for (i in seq_len(n)) {
     m <- models[[i]]
-
-    # update progress
-    utils::setTxtProgressBar(pb, i)
-    message(sprintf("→ [%d/%d] %s", i, n, m))
-
 
     t0 <- proc.time()[["elapsed"]]
 
