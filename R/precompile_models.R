@@ -1,3 +1,5 @@
+
+
 #' Precompile Stan models shipped with vitalBayes
 #'
 #' Compiles one or more Stan models located in `inst/stan/` and caches the
@@ -121,11 +123,7 @@ precompile_models <- function(models = NULL,
         cmdstanr_ver <- as.character(utils::packageVersion("cmdstanr"))
         cmdstan_ver <- tryCatch(as.character(cmdstanr::cmdstan_version()), error = function(e) NA_character_)
 
-        tf <- tempfile(fileext = ".bin")
-        serialize(list(cpp_options = cpp_options, stanc_options = stanc_options), tf, xdr = FALSE)
-        opt_hash <- unname(tools::md5sum(tf))
-        unlink(tf)
-
+        opt_hash <- .vb_hash_object(list(cpp_options = cpp_options, stanc_options = stanc_options))
         key <- paste(stan_hash, cmdstanr_ver, cmdstan_ver, opt_hash, sep = "-")
         exe_ext <- if (.Platform$OS.type == "windows") ".exe" else ""
         exe_dir <- file.path(cache_dir, m, key)
@@ -166,4 +164,15 @@ precompile_models <- function(models = NULL,
   }
 
   data.table::rbindlist(res, use.names = TRUE, fill = TRUE)
+}
+
+
+#' Hash an R object deterministically
+#' @noRd
+.vb_hash_object <- function(x) {
+  raw <- base::serialize(x, connection = NULL, xdr = FALSE)
+  tf <- tempfile(fileext = ".bin")
+  base::writeBin(raw, tf)
+  on.exit(base::unlink(tf), add = TRUE)
+  unname(tools::md5sum(tf))
 }
