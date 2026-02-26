@@ -933,13 +933,6 @@ For those wanting to dive deeper:
   ed.)](https://www.taylorfrancis.com/books/mono/10.1201/b16018/bayesian-data-analysis-david-dunson-donald-rubin-john-carlin-andrew-gelman-hal-stern-aki-vehtari).
   The comprehensive reference for Bayesian analysis.
 
-**Hierarchical Models**:
-
-- [Betancourt & Girolami (2015). “Hamiltonian Monte Carlo for
-  Hierarchical Models.” in *Current Trends in Bayesian Methodology with
-  Applications*](https://www.taylorfrancis.com/chapters/edit/10.1201/b18502-11/hamiltonian-monte-carlo-hierarchical-models-michael-betancourt-mark-girolami).
-  Understanding hierarchical models and non-centered parameterization.
-
 **Growth Models**:
 
 - [Smart et al. (2016). “Multimodel approaches in shark and ray growth
