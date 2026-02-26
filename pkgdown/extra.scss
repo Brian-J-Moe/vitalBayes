@@ -321,10 +321,64 @@ main {
       color: $bayes-blue !important;
       text-shadow: $glow-cyan;
 
+      // Persistent underline bar for active nav items
+      &::after {
+        width: 80%;
+      }
+
       &:hover, &:focus {
         &::after {
           width: 80%;
         }
+      }
+    }
+  }
+
+  // When pkgdown marks the parent .nav-item as active (covers both
+  // plain links like Reference and dropdowns like Articles)
+  .nav-item.active > .nav-link,
+  .nav-item.active > .dropdown-toggle {
+    color: $bayes-blue !important;
+    text-shadow: $glow-cyan;
+
+    &::after {
+      width: 80% !important;
+      height: 2px !important;
+      background: $bayes-blue !important;
+      box-shadow: $glow-cyan !important;
+    }
+  }
+
+  // Override Bootstrap's dropdown-toggle ::after caret so it doesn't
+  // conflict with our underline pseudo-element
+  .dropdown-toggle {
+    // Bootstrap uses ::after for the caret arrow — move the underline
+    // indicator to ::before instead so both can coexist
+    &::before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: $bayes-blue;
+      box-shadow: $glow-cyan;
+      transition: all 0.3s ease;
+      transform: translateX(-50%);
+    }
+
+    &:hover, &:focus {
+      &::before {
+        width: 80%;
+        background: $vital-pink;
+        box-shadow: $glow-pink;
+      }
+    }
+
+    &.active,
+    .nav-item.active > & {
+      &::before {
+        width: 80%;
       }
     }
   }
@@ -566,7 +620,7 @@ pre {
 
 // Inline code
 code {
-  background: rgba($sunset-purple, 0.3);
+  background: rgba($deep-purple, 0.7) !important;
   color: $coral-orange !important;
   padding: 0.2em 0.5em;
   border-radius: 4px;
