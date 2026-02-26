@@ -362,7 +362,7 @@ list_vital_palettes <- function(show_colors = FALSE) {
 #'
 #' @import ggplot2
 #' @export
-theme_vital <- function(base_size = 12, base_family = "", grid = TRUE, dark = FALSE) {
+theme_vital <- function(base_size = 12, base_family = "serif", grid = FALSE, dark = FALSE) {
 
   if (dark) {
     # Dark variant - closer to logo background
@@ -603,7 +603,7 @@ plot_growth_curve <- function(
     sex_col       = "sex",
     sex_labels    = c("1" = "Female", "2" = "Male"),
     age_range     = NULL,
-    n_points      = 100,
+    n_points      = 500,
     show_data     = TRUE,
     show_50_ci    = TRUE,
     data_alpha    = 0.4,
@@ -1097,7 +1097,7 @@ plot_maturity_ogive <- function(
     sex_col        = "sex",
     sex_labels     = c("1" = "Female", "2" = "Male"),
     x_range        = NULL,
-    n_points       = 100,
+    n_points       = 500,
     show_data      = TRUE,
     show_rug       = TRUE,
     show_x50_line  = TRUE,
@@ -1337,7 +1337,7 @@ plot_birth_ogive <- function(
     length_col    = "length",
     status_col    = "status",
     length_range  = NULL,
-    n_points      = 100,
+    n_points      = 500,
     show_data     = TRUE,
     show_rug      = TRUE,
     show_b50_line = TRUE,
