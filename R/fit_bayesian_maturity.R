@@ -351,7 +351,7 @@ fit_bayesian_maturity <- function(
       model <- .vb_cmdstan_model_cached("length_at_maturity_single")
     }
 
-    message("Fitting model...")
+    message("Fitting model with ", chains, " chains...")
     fit_L <- model$sample(
       data            = stan_data,
       seed            = seed,
@@ -466,7 +466,7 @@ fit_bayesian_maturity <- function(
       model <- .vb_cmdstan_model_cached("age_at_maturity_single")
     }
 
-    message("Fitting model...")
+    message("Fitting model with ", chains, " chains...")
     fit_t <- model$sample(
       data            = stan_data,
       seed            = seed,

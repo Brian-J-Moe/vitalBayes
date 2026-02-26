@@ -159,6 +159,10 @@ fit_bayesian_birth <- function(
   n_embryo <- sum(newdat$status == 0)
   n_free <- sum(newdat$status == 1)
 
+  message(paste(rep("-", 50), collapse = ""))
+  message("Fitting Length-at-Maturity Model")
+  message(paste(rep("-", 50), collapse = ""), "\n")
+
   message("Data summary: ", n_embryo, " embryos, ", n_free, " free-swimming")
 
   # =========================================================================
