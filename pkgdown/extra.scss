@@ -284,6 +284,7 @@ main {
     }
   }
 
+  // ---- Shared nav-link base styles ----
   .nav-link {
     color: $text-primary !important;
     font-weight: 500;
@@ -293,6 +294,20 @@ main {
     transition: all 0.3s ease;
     position: relative;
 
+    &:hover, &:focus {
+      color: $vital-pink !important;
+      text-shadow: $glow-pink;
+    }
+
+    &.active,
+    .nav-item.active > & {
+      color: $bayes-blue !important;
+      text-shadow: $glow-cyan;
+    }
+  }
+
+  // ---- Plain nav-links (e.g. Reference): use ::after for underline ----
+  .nav-link:not(.dropdown-toggle) {
     &::after {
       content: "";
       position: absolute;
@@ -307,9 +322,6 @@ main {
     }
 
     &:hover, &:focus {
-      color: $vital-pink !important;
-      text-shadow: $glow-pink;
-
       &::after {
         width: 80%;
         background: $vital-pink;
@@ -317,43 +329,17 @@ main {
       }
     }
 
-    &.active {
-      color: $bayes-blue !important;
-      text-shadow: $glow-cyan;
-
-      // Persistent underline bar for active nav items
+    &.active,
+    .nav-item.active > & {
       &::after {
         width: 80%;
       }
-
-      &:hover, &:focus {
-        &::after {
-          width: 80%;
-        }
-      }
     }
   }
 
-  // When pkgdown marks the parent .nav-item as active (covers both
-  // plain links like Reference and dropdowns like Articles)
-  .nav-item.active > .nav-link,
-  .nav-item.active > .dropdown-toggle {
-    color: $bayes-blue !important;
-    text-shadow: $glow-cyan;
-
-    &::after {
-      width: 80% !important;
-      height: 2px !important;
-      background: $bayes-blue !important;
-      box-shadow: $glow-cyan !important;
-    }
-  }
-
-  // Override Bootstrap's dropdown-toggle ::after caret so it doesn't
-  // conflict with our underline pseudo-element
+  // ---- Dropdown toggles (e.g. Articles): use ::before for underline ----
+  // Bootstrap owns ::after on these for the caret, so we use ::before instead
   .dropdown-toggle {
-    // Bootstrap uses ::after for the caret arrow — move the underline
-    // indicator to ::before instead so both can coexist
     &::before {
       content: "";
       position: absolute;
