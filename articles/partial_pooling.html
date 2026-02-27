@@ -98,7 +98,7 @@ common scenario with 150 females but only 34 males. Fitting separate
 models for each sex leads to wide credible intervals for the sparse sex,
 unstable estimates driven by a few influential observations, and
 inefficient use of information — ignoring the fact that both sexes are
-the same species.</p>
+the same species and thus have shared biology.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Brian-J-Moe/vitalBayes" class="external-link">vitalBayes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
@@ -145,9 +145,9 @@ distribution:</p>
 <p>where <span class="math inline">\(\mu\)</span> is the species-level
 mean and <span class="math inline">\(\tau\)</span> controls between-sex
 variation.</p>
-<p>The key insight is that the model <em>learns</em> <span class="math inline">\(\tau\)</span> from the data. If sexes are similar,
-the estimated <span class="math inline">\(\tau\)</span> will be small
-and estimates shrink together. If sexes are different, <span class="math inline">\(\tau\)</span> will be large and estimates stay
+<p>The model <em>learns</em> <span class="math inline">\(\tau\)</span>
+from the data. If sexes are similar, the estimated <span class="math inline">\(\tau\)</span> will be small and estimates shrink
+together. If sexes are different, <span class="math inline">\(\tau\)</span> will be large and estimates stay
 separated. And when one sex is sparse, it borrows strength from the
 data-rich sex — reducing variance without requiring the assumption that
 both sexes are identical.</p>
@@ -167,8 +167,8 @@ parameterization on the log scale:</p>
 sampling when <span class="math inline">\(\tau\)</span> is small. Under
 centered parameterization, HMC struggles in the “funnel” geometry that
 arises when <span class="math inline">\(\tau\)</span> is near zero — the
-non-centered form eliminates this pathology by sampling on a standard
-normal and rescaling.</p>
+non-centered form eliminates this by sampling on a standard normal and
+rescaling.</p>
 <p>Working on the log scale ensures that parameters remain positive
 (lengths, ages, growth coefficients are all positive quantities) and
 that the hierarchical variation is proportional rather than additive — a
@@ -282,34 +282,12 @@ informative).</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="when-to-use-partial-pooling">When to Use Partial Pooling<a class="anchor" aria-label="anchor" href="#when-to-use-partial-pooling"></a>
-</h2>
-<div class="section level3">
-<h3 id="recommended-use_pooling-true">Recommended (use_pooling = TRUE)<a class="anchor" aria-label="anchor" href="#recommended-use_pooling-true"></a>
-</h3>
-<p>Partial pooling is recommended when sample sizes are imbalanced
-between sexes, when moderate (rather than extreme) differences between
-sexes are expected, when overall sample sizes are small, and when
-downstream use of the estimates (in growth models, population models,
-mortality estimation) will propagate any instability forward.</p>
-</div>
-<div class="section level3">
-<h3 id="optional-use_pooling-false">Optional (use_pooling = FALSE)<a class="anchor" aria-label="anchor" href="#optional-use_pooling-false"></a>
-</h3>
-<p>Separate estimation may be appropriate when sample sizes are balanced
-and adequate for both sexes (like the <code>growth_data</code> example
-with 189F, 176M), when there is strong prior belief that sexes are very
-different, or during exploratory analysis to assess sex differences
-without any shrinkage.</p>
-</div>
-</div>
-<div class="section level2">
 <h2 id="partial-pooling-in-growth-models">Partial Pooling in Growth Models<a class="anchor" aria-label="anchor" href="#partial-pooling-in-growth-models"></a>
 </h2>
 <p>The same hierarchical principles apply to growth parameters. However,
-when the maturity-based parameterization is used, a subtlety arises: if
-the upstream maturity models were themselves fitted with partial
-pooling, the maturity parameters <span class="math inline">\((L_{mat},
+when the maturity-based parameterization is used, if the upstream
+maturity models were themselves fitted with partial pooling, the
+maturity parameters <span class="math inline">\((L_{mat},
 t_{mat})\)</span> already carry pooled information. Pooling them again
 in the growth model creates <strong>double-pooling</strong> that can
 over-shrink sex differences.</p>
@@ -382,12 +360,14 @@ for between-sex SD on the log scale:</p>
 <tr class="even">
 <td>0.2</td>
 <td>Expect modest differences</td>
-<td>Linf, L0, growth models (default)</td>
+<td>
+<code>Linf</code>, <code>L0</code>, growth models (default)</td>
 </tr>
 <tr class="odd">
 <td>0.5</td>
 <td>Expect moderate differences</td>
-<td>L50, t50, maturity models (default)</td>
+<td>
+<code>L50</code>, <code>t50</code>, maturity models (default)</td>
 </tr>
 <tr class="even">
 <td>1.0</td>
@@ -398,9 +378,9 @@ for between-sex SD on the log scale:</p>
 </table>
 <p>Since parameters are modeled on the log scale,
 <code>prior_tau = 0.5</code> corresponds to roughly 50% expected
-variation between sexes before seeing the data. For growth parameters,
-which tend to differ less between sexes than maturity parameters, a
-tighter value (0.2) is often appropriate.</p>
+variation between sexes before seeing the data. For parameters like
+<code>L0</code>, which tend to differ less between sexes than maturity
+parameters, a tighter value (0.2) is often appropriate.</p>
 </div>
 <div class="section level2">
 <h2 id="diagnosing-pooling-behavior">Diagnosing Pooling Behavior<a class="anchor" aria-label="anchor" href="#diagnosing-pooling-behavior"></a>
@@ -436,48 +416,22 @@ independent estimation.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="common-questions">Common Questions<a class="anchor" aria-label="anchor" href="#common-questions"></a>
+<h2 id="should-i-always-use-pooling">Should I always use pooling?<a class="anchor" aria-label="anchor" href="#should-i-always-use-pooling"></a>
 </h2>
-<div class="section level3">
-<h3 id="does-pooling-bias-my-estimates">Does pooling bias my estimates?<a class="anchor" aria-label="anchor" href="#does-pooling-bias-my-estimates"></a>
-</h3>
-<p>No. Partial pooling produces <strong>regularized</strong> estimates
-that trade a small amount of bias for substantial variance reduction.
-For the sparse sex, this trade-off almost always improves mean squared
-error. In the Bayesian framework, this is simply the natural consequence
-of a hierarchical prior — it concentrates posterior mass on plausible
+<p>Partial pooling produces <strong>regularized</strong> estimates that
+trade a small amount of bias for substantial variance reduction. For the
+sparse sex, this trade-off almost always improves mean squared error. In
+the Bayesian framework, this is simply the natural consequence of a
+hierarchical prior — it concentrates posterior mass on plausible
 parameter combinations and reduces the influence of sampling noise.</p>
-</div>
-<div class="section level3">
-<h3 id="can-i-still-detect-sex-differences">Can I still detect sex differences?<a class="anchor" aria-label="anchor" href="#can-i-still-detect-sex-differences"></a>
-</h3>
-<p>Yes. The model estimates difference parameters
-(<code>L50_diff</code>, <code>Linf_diff</code>, <code>k_diff</code>,
-etc.) — the posterior difference between sexes. If sexes truly differ,
-the credible interval for these differences will exclude zero. Pooling
+<p>For two-sex elasmobranch models with typical sample sizes, partial
+pooling is strongly recommended. The only case to avoid pooling is when
+you have abundant, balanced data for both sexes AND strong prior belief
+in very different parameters. Even then, partial pooling with
+appropriate <code>prior_tau</code> rarely harms and often helps. Pooling
 does not prevent the detection of differences; it simply regularizes the
 individual estimates so that the difference is estimated more
 precisely.</p>
-</div>
-<div class="section level3">
-<h3 id="what-if-sexes-are-truly-very-different">What if sexes are truly very different?<a class="anchor" aria-label="anchor" href="#what-if-sexes-are-truly-very-different"></a>
-</h3>
-<p>The model will estimate a large <span class="math inline">\(\tau\)</span>, which reduces shrinkage. In the
-limit of very large <span class="math inline">\(\tau\)</span>, partial
-pooling converges to no pooling. This is the self-correcting property of
-hierarchical models: when the data provide strong evidence of
-between-group differences, the hierarchical prior yields to the
-likelihood.</p>
-</div>
-<div class="section level3">
-<h3 id="should-i-always-use-pooling">Should I always use pooling?<a class="anchor" aria-label="anchor" href="#should-i-always-use-pooling"></a>
-</h3>
-<p>For two-sex elasmobranch models with typical sample sizes, yes. The
-only case to avoid pooling is when you have abundant, balanced data for
-both sexes AND strong prior belief in very different parameters. Even
-then, partial pooling with appropriate <code>prior_tau</code> rarely
-harms and often helps.</p>
-</div>
 </div>
 <div class="section level2">
 <h2 id="example-full-workflow-with-pooling">Example: Full Workflow with Pooling<a class="anchor" aria-label="anchor" href="#example-full-workflow-with-pooling"></a>
