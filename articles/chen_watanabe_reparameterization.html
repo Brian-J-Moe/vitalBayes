@@ -174,12 +174,14 @@ approaches <span class="math inline">\(k\)</span>:</p>
 <p><span class="math display">\[\lim_{t \to \infty} M(t) = \lim_{t \to
 \infty} \frac{k \cdot L_\infty}{L_\infty - (L_\infty - L_0)e^{-kt}} =
 k\]</span></p>
-<p>This makes biological sense. The von Bertalanffy <span class="math inline">\(k\)</span> governs the rate at which an organism
-approaches its asymptotic size; organisms with higher <span class="math inline">\(k\)</span> grow faster but have shorter lifespans
-and higher baseline mortality (Beverton &amp; Holt, 1959; Charnov,
-1993). The CW model formalizes this life history trade-off: <span class="math inline">\(k\)</span> simultaneously determines the growth
-rate (how fast <span class="math inline">\(G(t)\)</span> approaches 1)
-and the floor of the mortality curve.</p>
+<p>The von Bertalanffy <span class="math inline">\(k\)</span> governs
+the rate at which an organism approaches its asymptotic size; organisms
+with higher <span class="math inline">\(k\)</span> grow faster but have
+shorter lifespans and higher baseline mortality (Beverton &amp; Holt,
+1959; Charnov, 1993). The CW model formalizes this life history
+trade-off: <span class="math inline">\(k\)</span> simultaneously
+determines the growth rate (how fast <span class="math inline">\(G(t)\)</span> approaches 1) and the floor of the
+mortality curve.</p>
 <p>Critically, <strong>this relationship holds regardless of which
 growth model was used to fit the data</strong>. The Gompertz and
 Logistic models have their own growth coefficients <span class="math inline">\(k_g\)</span> and <span class="math inline">\(k_l\)</span>, but these are <em>not</em> <span class="math inline">\(M_\infty\)</span>. The CW mortality model was
@@ -228,13 +230,10 @@ t}\right]\]</span></p>
 <p>The Gompertz model describes growth where the <em>rate of
 deceleration</em> itself decelerates — an exponentially declining growth
 rate rather than a linearly declining one. Growth is initially rapid but
-slows earlier and more abruptly than under VB dynamics. The inflection
-point occurs at <span class="math inline">\(L_\infty / e \approx 0.368
-\, L_\infty\)</span>, much earlier than the VB inflection at <span class="math inline">\(0.632 \, L_\infty\)</span>. In terms of mortality,
-the Gompertz <span class="math inline">\(G(t)\)</span> rises faster in
-early life than <span class="math inline">\(G_{VB}(t)\)</span>,
-producing a steeper initial decline in mortality but a slower final
-approach to <span class="math inline">\(M_\infty\)</span>.</p>
+slows earlier and more abruptly than under VB dynamics. In terms of
+mortality, the Gompertz <span class="math inline">\(G(t)\)</span> rises
+faster in early life than <span class="math inline">\(G_{VB}(t)\)</span>, producing a steeper initial
+decline in mortality but a slower final approach to <span class="math inline">\(M_\infty\)</span>.</p>
 </div>
 <div class="section level3">
 <h3 id="logistic">Logistic<a class="anchor" aria-label="anchor" href="#logistic"></a>
@@ -321,11 +320,11 @@ Any Growth Model<a class="anchor" aria-label="anchor" href="#computing-vb-equiva
 <p>Since <span class="math inline">\(M_\infty = k_{VB}\)</span>, users
 who fit a Gompertz or Logistic model need a way to obtain the
 VB-equivalent <span class="math inline">\(k\)</span> without fitting a
-separate VB model. The solution exploits the fact that all three growth
-models estimate the same biological quantities — <span class="math inline">\(L_\infty\)</span>, <span class="math inline">\(L_0\)</span>, <span class="math inline">\(L_{mat}\)</span>, and <span class="math inline">\(t_{mat}\)</span> — regardless of their functional
-form. A shark has a true birth size, a true size at maturity, and a true
-asymptotic size; these do not change based on which equation we use to
-model growth.</p>
+separate VB model. The solution is found in the fact that all three
+growth models estimate the same biological quantities — <span class="math inline">\(L_\infty\)</span>, <span class="math inline">\(L_0\)</span>, <span class="math inline">\(L_{mat}\)</span>, and <span class="math inline">\(t_{mat}\)</span> — regardless of their functional
+form. A shark has a true birth size, a true size and age at maturity,
+and a true asymptotic size; these do not change based on which equation
+we use to model growth.</p>
 <p>Given these shared biological milestones, the VB-equivalent <span class="math inline">\(k\)</span> is the growth coefficient that would
 produce a von Bertalanffy curve passing through <span class="math inline">\((0, L_0)\)</span> and <span class="math inline">\((t_{mat}, L_{mat})\)</span> with asymptote <span class="math inline">\(L_\infty\)</span>. Substituting <span class="math inline">\(L(t_{mat}) = L_{mat}\)</span> into the VB equation
 and solving:</p>
@@ -484,8 +483,10 @@ kink at <span class="math inline">\(t_m\)</span>.</p>
 <p>The growth-model-agnostic framework means researchers no longer face
 a choice between statistical fit and mortality estimation capability. In
 elasmobranch datasets with sparse adult observations, the VB model
-frequently produces biologically implausible <span class="math inline">\(L_\infty\)</span> estimates (sometimes below
-observed maximum lengths) and unstable <span class="math inline">\(k\)</span> values driven by the strong <span class="math inline">\(L_\infty\)</span>-<span class="math inline">\(k\)</span> correlation (Katsanevakis &amp;
+frequently produces biologically implausible <span class="math inline">\(L_\infty\)</span> estimates (below observed
+maximum lengths or far exceeding plausible estimates of a physiological
+asymptotic length) and unstable <span class="math inline">\(k\)</span>
+values driven by the strong <span class="math inline">\(L_\infty\)</span>-<span class="math inline">\(k\)</span> correlation (Katsanevakis &amp;
 Maravelias, 2008). Gompertz and Logistic models often provide more
 reliable fits under these conditions.</p>
 <p>With the reparameterization, the workflow is straightforward: fit all
@@ -521,24 +522,28 @@ practical guidance on all three mortality models.</p>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<p>Beverton, R. J. H., &amp; Holt, S. J. (1959). A review of the
-lifespans and mortality rates of fish in nature, and their relation to
-growth and other physiological characteristics. In G. E. W. Wolstenholme
-&amp; M. O’Connor (Eds.), <em>CIBA Foundation Colloquia on Ageing</em>
-(Vol. 5, pp. 142–180). Churchill.</p>
-<p>Charnov, E. L. (1993). <em>Life History Invariants: Some Explorations
-of Symmetry in Evolutionary Ecology</em>. Oxford University Press.</p>
-<p>Chen, S., &amp; Watanabe, S. (1989). Age dependence of natural
-mortality coefficient in fish population dynamics. <em>Nippon Suisan
-Gakkaishi</em>, 55(2), 205–208.</p>
-<p>Gompertz, B. (1825). On the nature of the function expressive of the
-law of human mortality, and on a new mode of determining the value of
-life contingencies. <em>Philosophical Transactions of the Royal Society
-of London</em>, 115, 513–583.</p>
-<p>Katsanevakis, S., &amp; Maravelias, C. D. (2008). Modelling fish
-growth: multi-model inference as a better alternative to a priori using
-von Bertalanffy equation. <em>Fish and Fisheries</em>, 9(2),
-178–187.</p>
+<p><a href="https://onlinelibrary.wiley.com/doi/10.1002/9780470715253.ch10" class="external-link">Beverton,
+R. J. H., &amp; Holt, S. J. (1959). A review of the lifespans and
+mortality rates of fish in nature, and their relation to growth and
+other physiological characteristics. In G. E. W. Wolstenholme &amp; M.
+O’Connor (Eds.), <em>CIBA Foundation Colloquia on Ageing</em> (Vol. 5,
+pp. 142–180). Churchill.</a></p>
+<p><a href="https://academic.oup.com/book/51200" class="external-link">Charnov, E. L. (1993).
+<em>Life History Invariants: Some Explorations of Symmetry in
+Evolutionary Ecology</em>. Oxford University Press.</a></p>
+<p><a href="https://www.jstage.jst.go.jp/article/suisan1932/55/2/55_2_205/_article" class="external-link">Chen,
+S., &amp; Watanabe, S. (1989). Age dependence of natural mortality
+coefficient in fish population dynamics. <em>Nippon Suisan
+Gakkaishi</em>, 55(2), 205–208.</a></p>
+<p><a href="https://royalsocietypublishing.org/rspl/article/doi/10.1098/rspl.1815.0271/105814/On-the-nature-of-the-function-expressive-of-the" class="external-link">Gompertz,
+B. (1825). On the nature of the function expressive of the law of human
+mortality, and on a new mode of determining the value of life
+contingencies. <em>Philosophical Transactions of the Royal Society of
+London</em>, 115, 513–583.</a></p>
+<p><a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1467-2979.2008.00279.x" class="external-link">Katsanevakis,
+S., &amp; Maravelias, C. D. (2008). Modelling fish growth: multi-model
+inference as a better alternative to a priori using von Bertalanffy
+equation. <em>Fish and Fisheries</em>, 9(2), 178–187.</a></p>
 </div>
 <div class="section level2">
 <h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
