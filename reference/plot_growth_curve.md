@@ -1,7 +1,7 @@
 # Plot Growth Curves
 
-Creates publication-quality growth curve plots with credible intervals.
-Automatically handles single-sex and two-sex models.
+Creates growth curve plots with credible intervals. Automatically
+handles single-sex and two-sex models.
 
 ## Usage
 
@@ -14,7 +14,7 @@ plot_growth_curve(
   sex_col = "sex",
   sex_labels = c(`1` = "Female", `2` = "Male"),
   age_range = NULL,
-  n_points = 100,
+  n_points = 500,
   show_data = TRUE,
   show_50_ci = TRUE,
   data_alpha = 0.4,
@@ -62,10 +62,7 @@ plot_growth_curve(
 - sex_labels:
 
   Named character vector. Labels for sex in plot legend and facets.
-  Default `c("1" = "Female", "2" = "Male")`. Can be customized for other
-  languages, e.g., `c("1" = "Femelle", "2" = "Mâle")` (French),
-  `c("1" = "Hembra", "2" = "Macho")` (Spanish), or
-  `c("1" = "メス", "2" = "オス")` (Japanese).
+  Default `c("1" = "Female", "2" = "Male")`.
 
 - age_range:
 
@@ -74,7 +71,7 @@ plot_growth_curve(
 
 - n_points:
 
-  Integer. Number of points for prediction grid. Default 100.
+  Integer. Number of points for prediction grid. Default 500.
 
 - show_data:
 

@@ -1,6 +1,6 @@
 # Plot Birth Ogive
 
-Creates publication-quality birth transition plots.
+Creates birth transition plots.
 
 ## Usage
 
@@ -11,7 +11,7 @@ plot_birth_ogive(
   length_col = "length",
   status_col = "status",
   length_range = NULL,
-  n_points = 100,
+  n_points = 500,
   show_data = TRUE,
   show_rug = TRUE,
   show_b50_line = TRUE,
@@ -51,7 +51,7 @@ plot_birth_ogive(
 
 - n_points:
 
-  Integer. Number of points. Default 100.
+  Integer. Number of points. Default 500.
 
 - show_data:
 

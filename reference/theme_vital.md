@@ -1,14 +1,13 @@
 # vitalBayes ggplot2 Theme
 
-A publication-ready ggplot2 theme inspired by the vitalBayes retro-wave
-aesthetic. Provides a clean, modern look suitable for scientific
-publications while maintaining visual consistency with the package
-branding.
+A ggplot2 theme inspired by the vitalBayes retro-wave aesthetic.
+Provides a clean, modern look suitable for scientific publications while
+maintaining visual consistency with the package branding.
 
 ## Usage
 
 ``` r
-theme_vital(base_size = 12, base_family = "", grid = TRUE, dark = FALSE)
+theme_vital(base_size = 12, base_family = "serif", grid = FALSE, dark = FALSE)
 ```
 
 ## Arguments

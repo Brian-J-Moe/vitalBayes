@@ -1,7 +1,7 @@
 # Plot Maturity Ogive
 
-Creates publication-quality maturity ogive plots with credible
-intervals. Supports both length-at-maturity and age-at-maturity models.
+Creates maturity ogive plots with credible intervals. Supports both
+length-at-maturity and age-at-maturity models.
 
 ## Usage
 
@@ -15,7 +15,7 @@ plot_maturity_ogive(
   sex_col = "sex",
   sex_labels = c(`1` = "Female", `2` = "Male"),
   x_range = NULL,
-  n_points = 100,
+  n_points = 500,
   show_data = TRUE,
   show_rug = TRUE,
   show_x50_line = TRUE,
@@ -64,9 +64,7 @@ plot_maturity_ogive(
 - sex_labels:
 
   Named character vector. Labels for sex in plot legend and facets.
-  Default `c("1" = "Female", "2" = "Male")`. Can be customized for other
-  languages, e.g., `c("1" = "Femelle", "2" = "Mâle")` (French),
-  `c("1" = "Hembra", "2" = "Macho")` (Spanish).
+  Default `c("1" = "Female", "2" = "Male")`.
 
 - x_range:
 
@@ -74,7 +72,7 @@ plot_maturity_ogive(
 
 - n_points:
 
-  Integer. Number of points for ogive. Default 100.
+  Integer. Number of points for ogive. Default 500.
 
 - show_data:
 
