@@ -1,9 +1,7 @@
 # =============================================================================
 # vitalBayes Visualization Functions
 # =============================================================================
-# Publication-quality plotting functions for growth curves, maturity ogives,
-# and birth models. Uses ggplot2 with customizable theming.
-# =============================================================================
+
 
 #' Vital Package Color Palette
 #'
@@ -460,7 +458,7 @@ theme_vital <- function(base_size = 12, base_family = "serif", grid = FALSE, dar
     sex_code = 1L,
     k_based = FALSE,
     which_model = 1L,
-    n_draws = 500
+    n_draws = 1000
 ) {
 
   # Extract draws
@@ -603,7 +601,7 @@ plot_growth_curve <- function(
     sex_col       = "sex",
     sex_labels    = c("1" = "Female", "2" = "Male"),
     age_range     = NULL,
-    n_points      = 500,
+    n_points      = 1000,
     show_data     = TRUE,
     show_50_ci    = TRUE,
     data_alpha    = 0.4,
@@ -1097,7 +1095,7 @@ plot_maturity_ogive <- function(
     sex_col        = "sex",
     sex_labels     = c("1" = "Female", "2" = "Male"),
     x_range        = NULL,
-    n_points       = 500,
+    n_points       = 1000,
     show_data      = TRUE,
     show_rug       = TRUE,
     show_x50_line  = TRUE,
@@ -1337,7 +1335,7 @@ plot_birth_ogive <- function(
     length_col    = "length",
     status_col    = "status",
     length_range  = NULL,
-    n_points      = 500,
+    n_points      = 1000,
     show_data     = TRUE,
     show_rug      = TRUE,
     show_b50_line = TRUE,
