@@ -339,7 +339,7 @@ list_vital_palettes <- function(show_colors = FALSE) {
 #' vitalBayes ggplot2 Theme
 #'
 #' @description
-#' A publication-ready ggplot2 theme inspired by the vitalBayes retro-wave
+#' A ggplot2 theme inspired by the vitalBayes retro-wave
 #' aesthetic. Provides a clean, modern look suitable for scientific publications
 #' while maintaining visual consistency with the package branding.
 #'
@@ -447,7 +447,7 @@ theme_vital <- function(base_size = 12, base_family = "serif", grid = FALSE, dar
 #' @param sex_code Integer. Sex code (1=female, 2=male) for two-sex models.
 #' @param k_based Logical. Was the model k-based?
 #' @param which_model Integer. 1=VBGM, 2=Gompertz, 3=Logistic.
-#' @param n_draws Integer. Number of posterior draws to use. Default 500.
+#' @param n_draws Integer. Number of posterior draws to use. Default 1000.
 #'
 #' @return data.table with columns: age, median, lower, upper.
 #'
@@ -513,7 +513,7 @@ theme_vital <- function(base_size = 12, base_family = "serif", grid = FALSE, dar
 #' Plot Growth Curves
 #'
 #' @description
-#' Creates publication-quality growth curve plots with credible intervals.
+#' Creates growth curve plots with credible intervals.
 #' Automatically handles single-sex and two-sex models.
 #'
 #' @param fit A CmdStanMCMC object from \code{\link{fit_bayesian_growth}}.
@@ -522,13 +522,10 @@ theme_vital <- function(base_size = 12, base_family = "serif", grid = FALSE, dar
 #' @param length_col Character. Column name for length in \code{data}. Default "length".
 #' @param sex_col Character. Column name for sex in \code{data}. Default "sex".
 #' @param sex_labels Named character vector. Labels for sex in plot legend and facets.
-#'   Default \code{c("1" = "Female", "2" = "Male")}. Can be customized for other
-#'   languages, e.g., \code{c("1" = "Femelle", "2" = "Mâle")} (French),
-#'   \code{c("1" = "Hembra", "2" = "Macho")} (Spanish), or
-#'   \code{c("1" = "メス", "2" = "オス")} (Japanese).
+#'   Default \code{c("1" = "Female", "2" = "Male")}.
 #' @param age_range Numeric vector of length 2. Age range for predictions.
 #'   If \code{NULL}, auto-determined from data or defaults to c(0, 30).
-#' @param n_points Integer. Number of points for prediction grid. Default 100.
+#' @param n_points Integer. Number of points for prediction grid. Default 500.
 #' @param show_data Logical. Overlay observed data points? Default \code{TRUE}.
 #' @param show_50_ci Logical. Show 50% credible interval ribbon? Default \code{TRUE}.
 #' @param data_alpha Numeric. Transparency for data points. Default 0.4.
@@ -601,7 +598,7 @@ plot_growth_curve <- function(
     sex_col       = "sex",
     sex_labels    = c("1" = "Female", "2" = "Male"),
     age_range     = NULL,
-    n_points      = 1000,
+    n_points      = 500,
     show_data     = TRUE,
     show_50_ci    = TRUE,
     data_alpha    = 0.4,
@@ -983,7 +980,7 @@ compare_growth_models <- function(
     x_seq,
     sex_code = 1L,
     type = "length",
-    n_draws = 500
+    n_draws = 1000
 ) {
 
   param_name <- if (type == "length") "L50" else "t50"
@@ -1022,7 +1019,7 @@ compare_growth_models <- function(
 #' Plot Maturity Ogive
 #'
 #' @description
-#' Creates publication-quality maturity ogive plots with credible intervals.
+#' Creates maturity ogive plots with credible intervals.
 #' Supports both length-at-maturity and age-at-maturity models.
 #'
 #' @param fit A CmdStanMCMC object from \code{\link{fit_bayesian_maturity}}.
@@ -1032,7 +1029,7 @@ compare_growth_models <- function(
 #' @param maturity_col Character. Column name for maturity status.
 #' @param sex_col Character. Column name for sex.
 #' @param x_range Numeric vector of length 2. Range for predictions.
-#' @param n_points Integer. Number of points for ogive. Default 100.
+#' @param n_points Integer. Number of points for ogive. Default 500.
 #' @param show_data Logical. Show observed data? Default \code{TRUE}.
 #' @param show_rug Logical. Show rug plot at bottom? Default \code{TRUE}.
 #' @param show_x50_line Logical. Show vertical line at x50? Default \code{TRUE}.
@@ -1045,9 +1042,7 @@ compare_growth_models <- function(
 #' @param x_lab,y_lab Character. Axis labels. Auto-generated if \code{NULL}.
 #' @param title Character. Plot title.
 #' @param sex_labels Named character vector. Labels for sex in plot legend and facets.
-#'   Default \code{c("1" = "Female", "2" = "Male")}. Can be customized for other
-#'   languages, e.g., \code{c("1" = "Femelle", "2" = "Mâle")} (French),
-#'   \code{c("1" = "Hembra", "2" = "Macho")} (Spanish).
+#'   Default \code{c("1" = "Female", "2" = "Male")}.
 #' @param base_size Numeric. Base font size. Default 12.
 #' @param theme_args,additional_layers Lists for customization.
 #'
@@ -1095,7 +1090,7 @@ plot_maturity_ogive <- function(
     sex_col        = "sex",
     sex_labels     = c("1" = "Female", "2" = "Male"),
     x_range        = NULL,
-    n_points       = 1000,
+    n_points       = 500,
     show_data      = TRUE,
     show_rug       = TRUE,
     show_x50_line  = TRUE,
@@ -1306,14 +1301,14 @@ plot_maturity_ogive <- function(
 #' Plot Birth Ogive
 #'
 #' @description
-#' Creates publication-quality birth transition plots.
+#' Creates birth transition plots.
 #'
 #' @param fit A CmdStanMCMC object from \code{\link{fit_bayesian_birth}}.
 #' @param data Optional data.table/data.frame with observed data.
 #' @param length_col Character. Column name for length.
 #' @param status_col Character. Column name for birth status.
 #' @param length_range Numeric vector of length 2.
-#' @param n_points Integer. Number of points. Default 100.
+#' @param n_points Integer. Number of points. Default 500.
 #' @param show_data Logical. Show data? Default \code{TRUE}.
 #' @param show_rug Logical. Show rug? Default \code{TRUE}.
 #' @param show_b50_line Logical. Show b50 line? Default \code{TRUE}.
@@ -1335,7 +1330,7 @@ plot_birth_ogive <- function(
     length_col    = "length",
     status_col    = "status",
     length_range  = NULL,
-    n_points      = 1000,
+    n_points      = 500,
     show_data     = TRUE,
     show_rug      = TRUE,
     show_b50_line = TRUE,
@@ -1367,7 +1362,7 @@ plot_birth_ogive <- function(
   length_seq <- seq(length_range[1], length_range[2], length.out = n_points)
 
   # Subsample draws
-  n_draws <- min(500, length(b50_draws))
+  n_draws <- min(1000, length(b50_draws))
   idx <- sample.int(length(b50_draws), n_draws)
 
   # Compute probabilities (probit link)

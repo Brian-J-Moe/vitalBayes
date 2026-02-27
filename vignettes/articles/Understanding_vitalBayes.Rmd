@@ -639,20 +639,20 @@ For those wanting to dive deeper:
 
 **Bayesian Foundations**:
 
-- [McElreath, R. (2020). *Statistical Rethinking* (2nd ed.)](https://github.com/rmcelreath/rethinking). An introduction to Bayesian thinking which includes tutorials and examples in R.
-- [Gelman et al. (2013). *Bayesian Data Analysis* (3rd ed.)](https://www.taylorfrancis.com/books/mono/10.1201/b16018/bayesian-data-analysis-david-dunson-donald-rubin-john-carlin-andrew-gelman-hal-stern-aki-vehtari). The comprehensive reference for Bayesian analysis.
+- [McElreath, R. (2020). *Statistical Rethinking* (2nd ed.).](https://github.com/rmcelreath/rethinking) 
+- [Gelman et al. (2013). *Bayesian Data Analysis* (3rd ed.).](https://www.taylorfrancis.com/books/mono/10.1201/b16018/bayesian-data-analysis-david-dunson-donald-rubin-john-carlin-andrew-gelman-hal-stern-aki-vehtari)
 
 **Growth Models**:
 
-- [Smart et al. (2016). "Multimodel approaches in shark and ray growth studies." *Fish and Fisheries*](https://onlinelibrary.wiley.com/doi/abs/10.1111/faf.12154). A modern review of growth model selection.
-- [Smart et al. (2021)  "Modernising fish and shark growth curves with Bayesian length-at-age models." *PLoS One*](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0246734). Implementation of Bayesian methods for fitting growth models to shark data.
-- [Cailliet et al. (2006). "Age and growth studies of chondrichthyan fishes." *Environmental Biology of Fishes*](https://link.springer.com/article/10.1007/s10641-006-9105-5). Classic methodology reference.
+- [Smart et al. (2016). "Multimodel approaches in shark and ray growth studies." *Fish and Fisheries*.](https://onlinelibrary.wiley.com/doi/abs/10.1111/faf.12154)
+- [Smart et al. (2021)  "Modernising fish and shark growth curves with Bayesian length-at-age models." *PLoS One*.](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0246734)
+- [Cailliet et al. (2006). "Age and growth studies of chondrichthyan fishes." *Environmental Biology of Fishes*.](https://link.springer.com/article/10.1007/s10641-006-9105-5)
 
 **Natural Mortality**:
 
-- [Chen & Watanabe (1989). "Age dependence of natural mortality coefficient in fish population dynamics." *Nippon Suisan Gakkaishi*](https://www.jstage.jst.go.jp/article/suisan1932/55/2/55_2_205/_article). Foundation for the CW reparameterization.
-- [Lorenzen (1996). "The relationship between body weight and natural mortality in juvenile and adult fish: a comparison of natural ecosystems and aquaculture." *Journal of Fish Biology*](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1095-8649.1996.tb00060.x). Weight-based mortality estimator.
-- [Then et al. (2015). "Evaluating the predictive performance of estimators of natural mortality rate." *Methods in Ecology and Evolution*](https://academic.oup.com/icesjms/article/72/1/82/2804320). Empirical comparison of mortality estimators.
+- [Chen & Watanabe (1989). "Age dependence of natural mortality coefficient in fish population dynamics." *Nippon Suisan Gakkaishi*.](https://www.jstage.jst.go.jp/article/suisan1932/55/2/55_2_205/_article)
+- [Lorenzen (1996). "The relationship between body weight and natural mortality in juvenile and adult fish: a comparison of natural ecosystems and aquaculture." *Journal of Fish Biology*.](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1095-8649.1996.tb00060.x)
+- [Then et al. (2015). "Evaluating the predictive performance of estimators of natural mortality rate." *Methods in Ecology and Evolution*.](https://academic.oup.com/icesjms/article/72/1/82/2804320)
 
 **Stan and cmdstanr**:
 

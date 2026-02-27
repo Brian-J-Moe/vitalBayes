@@ -31,7 +31,7 @@ vitalBayes implements an integrated four-stage workflow where posterior distribu
 
 ```
 Birth  ──▶  Maturity  ──▶  Growth  ──▶  Mortality/Survival
-(L₀)       (L₅₀, t₅₀)    (L∞, k)         (M, S(t))
+(L₀)       (L₅₀, t₅₀)      (L∞, k)         (M, S(t))
 ```
 
 ```r
@@ -122,16 +122,6 @@ Prior uncertainty is specified via coefficient of variation—intuitive, scale-i
 | `imbalanced_data` | 150F, 34M | Partial pooling demonstrations |
 | `limited_data` | 24F, 18M | Prior sensitivity analysis |
 
-## Visualization
-
-Publication-ready plots with a signature synthwave palette:
-
-```r
-plot_growth_curve(growth_fit, data = gdata, age_col = "age", length_col = "fl", sex_col = "sex")
-plot_maturity_ogive(L50_fit, type = "length", data = mat_data)
-```
-
-Multilingual axis labels and automatic sex code detection (English, Spanish, Portuguese, French, German, Japanese, Chinese, Russian).
 
 ## Vignettes
 
@@ -150,7 +140,7 @@ Multilingual axis labels and automatic sex code detection (English, Spanish, Por
 
 ```bibtex
 @manual{vitalBayes,
-  title = {vitalBayes: Bayesian Vital Rate Estimation for Elasmobranchs},
+  title = {{vitalBayes}: Bayesian Vital Rate Estimation for Elasmobranchs},
   author = {Brian J Moe},
   year = {2025},
   note = {R package version 0.4.0},

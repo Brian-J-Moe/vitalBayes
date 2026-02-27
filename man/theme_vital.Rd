@@ -4,7 +4,7 @@
 \alias{theme_vital}
 \title{vitalBayes ggplot2 Theme}
 \usage{
-theme_vital(base_size = 12, base_family = "", grid = TRUE, dark = FALSE)
+theme_vital(base_size = 12, base_family = "serif", grid = FALSE, dark = FALSE)
 }
 \arguments{
 \item{base_size}{Numeric. Base font size. Default 12.}
@@ -19,7 +19,7 @@ theme_vital(base_size = 12, base_family = "", grid = TRUE, dark = FALSE)
 A ggplot2 theme object.
 }
 \description{
-A publication-ready ggplot2 theme inspired by the vitalBayes retro-wave
+A ggplot2 theme inspired by the vitalBayes retro-wave
 aesthetic. Provides a clean, modern look suitable for scientific publications
 while maintaining visual consistency with the package branding.
 }
