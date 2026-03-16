@@ -64,11 +64,6 @@ maternal condition, or environmental factors. If we could measure
 “developmental readiness” on some continuous scale, we’d expect it to
 vary across individuals in a roughly normal distribution.
 
-**Think about it**: If an individual is born when its “readiness”
-crosses some threshold, and readiness varies normally across
-individuals, what would the relationship between size and birth
-probability look like?
-
 This intuition leads us to the **latent variable formulation**. We
 imagine each individual has a latent (unobserved) readiness score:
 
@@ -180,21 +175,6 @@ individual:
 This data-derived prior center helps chains start in reasonable
 parameter space while remaining appropriately vague.
 
-### Practical Considerations
-
-#### What if there’s no overlap?
-
-In some datasets, the largest embryo is smaller than the smallest
-free-swimmer. This actually makes estimation easier—the transition is
-clearly constrained to fall in that gap.
-
-#### What if there’s substantial overlap?
-
-This suggests high individual variation in birth timing, which manifests
-as a shallow slope \\\beta\\ and wide transition zone. The model will
-estimate this appropriately, though you may want to consider whether the
-observed “overlap” might reflect misclassification.
-
 ## Maturity Estimation
 
 Maturity ogives are fundamental to elasmobranch population dynamics. The
@@ -274,7 +254,7 @@ For our imbalanced sex example with 150 females and 34 males:
 This appropriately uses biological knowledge (that conspecific sexes are
 related) to improve inference.
 
-### The Non-Centered Parameterization: A Technical But Important Detail
+### The Non-Centered Parameterization
 
 Why specify the model as \\\mu + \tau \cdot \eta\\ instead of just
 sampling \\\log(L\_{50,s}) \sim \mathcal{N}(\mu, \tau^2)\\ directly?
@@ -337,7 +317,7 @@ biologically nonsensical “theoretical age at length zero”). This means
 priors can be set from embryo or neonate measurements rather than from a
 mathematical abstraction.
 
-#### von Bertalanffy Growth Model (VBGM)
+#### von Bertalanffy Growth Model
 
 \\L(t) = L\_\infty - (L\_\infty - L_0) e^{-kt}\\
 
@@ -383,8 +363,6 @@ size faster than either VB or Gompertz for equivalent parameter values.
 
 This is an issue that seems technical at first but has deep biological
 implications.
-
-#### The Problem
 
 When we fit a growth curve without constraints, the estimation algorithm
 finds parameter values that minimize prediction error across the
@@ -436,7 +414,7 @@ model.
 When the prior mean is close to the truncation point (e.g., \\1.05
 \times L\_{max}\\), the truncated lognormal piles up density right at
 the boundary creating a flat region in the posterior surface resulting
-in parameter poor exploration and slow mixing. This is especially
+in poor parameter exploration and slow mixing. This is especially
 pronounced for the logistic growth model, which approaches the asymptote
 faster than VB and can genuinely prefer \\L\_\infty\\ very close to
 \\L\_{max}\\.
@@ -454,23 +432,14 @@ and `CV_delta`:
 \frac{1}{\mu\_\delta \times CV\_\delta^2}\\
 
 Note that `CV_delta` controls uncertainty about the *excess*
-\\\delta_L\\, not about \\L\_\infty\\ itself. This is an important
-distinction. If we applied a CV intended for \\L\_\infty\\ (a large
-number, say ~105 cm) to \\\delta_L\\ (a small number, ~5 cm), the prior
-would be dramatically tighter than intended — the SD would reflect 20%
-of 5 cm rather than a meaningful uncertainty band, an order-of-magnitude
-error. By using a dedicated `CV_delta`, the user directly expresses
-uncertainty about the quantity being modeled: “how sure am I about the
-excess above \\L\_{max}\\?”
-
-At the default settings (`Linf_multiplier = 1.05`, `CV_delta = 0.50`),
-this produces a gamma with mean \\0.05 \times L\_{max}\\, shape
-parameter \\\alpha = 4\\, and \\SD(\delta_L) = 0.5 \times 0.05 \times
-L\_{max}\\. For a species with \\L\_{max} = 100\\ cm, this means
-\\\delta_L = 5 \pm 2.5\\ cm, so \\L\_\infty \approx 105 \pm 2.5\\ cm.
-The gamma has a proper mode (since \\\alpha \> 1\\), well-behaved HMC
-geometry, and allows the data to pull \\\delta_L\\ down toward smaller
-values or push it higher as warranted.
+\\\delta_L\\, not about \\L\_\infty\\ itself. At the default settings
+(`Linf_multiplier = 1.05`, `CV_delta = 0.50`), this produces a gamma
+with mean \\0.05 \times L\_{max}\\, shape parameter \\\alpha = 4\\, and
+\\SD(\delta_L) = 0.5 \times 0.05 \times L\_{max}\\. For a species with
+\\L\_{max} = 100\\ cm, this means \\\delta_L = 5 \pm 2.5\\ cm, so
+\\L\_\infty \approx 105 \pm 2.5\\ cm. The gamma has a proper mode (since
+\\\alpha \> 1\\), well-behaved HMC geometry, and allows the data to pull
+\\\delta_L\\ down toward smaller values or push it higher as warranted.
 
 This approach eliminates boundary pile-ups (because \\\delta_L\\ lives
 on \\(0, \infty)\\ with no truncation), provides natural positive skew
@@ -478,16 +447,6 @@ on \\(0, \infty)\\ with no truncation), provides natural positive skew
 tail accommodates uncertainty), and produces a lighter right tail than
 lognormal (preventing biologically unreasonable asymptotic lengths while
 still allowing flexibility).
-
-**Why gamma rather than lognormal for \\\delta_L\\?** The gamma’s
-lighter right tail is appropriate here: \\\delta_L\\ represents a modest
-biological excess, and placing too much prior mass on very large values
-of \\\delta_L\\ would allow \\L\_\infty\\ to drift far above
-observations without data support. The gamma concentrates more mass near
-its mode while still being flexible enough to accommodate data-driven
-deviations. At the default `CV_delta = 0.50`, the shape parameter
-\\\alpha = 4\\ produces a gamma with a well-defined mode slightly below
-the mean.”
 
 ### The Maturity-Based Parameterization
 
@@ -507,10 +466,9 @@ An individual that matures at length \\L\_{mat}\\ and age \\t\_{mat}\\
 must, by definition, lie on the growth curve at the point \\(t\_{mat},
 L\_{mat})\\.
 
-If we know (or can estimate) the maturity milestone, we can substitute
-it into the growth equation and solve for \\k\\. The derivation is
-model-specific, because each growth function has a different functional
-form.
+If we can estimate the maturity milestone, we can substitute it into the
+growth equation and solve for \\k\\. The derivation is model-specific,
+because each growth function has a different functional form.
 
 **Derivation for the von Bertalanffy model**:
 
@@ -523,7 +481,7 @@ Rearranging: \\\frac{L\_\infty - L\_{mat}}{L\_\infty - L_0} = e^{-k
 Taking logs: \\-k \cdot t\_{mat} = \ln\left(\frac{L\_\infty -
 L\_{mat}}{L\_\infty - L_0}\right)\\
 
-Solving for \\k\\: \\k\_{VB} = \frac{1}{t\_{mat}}
+Solving for \\k\\: \\k\_{vb} = \frac{1}{t\_{mat}}
 \ln\left(\frac{L\_\infty - L_0}{L\_\infty - L\_{mat}}\right)\\
 
 #### Gompertz and Logistic Derivations
@@ -548,7 +506,7 @@ eliminates the need to specify a prior on \\k\\ directly and breaks the
 
 An important note: \\k\\ has different meanings across the three models
 and should not be directly compared between them. For example, Gompertz
-\\k_g\\ is generally larger than VB \\k\_{VB}\\ for the same species,
+\\k_g\\ is generally larger than VB \\k\_{vb}\\ for the same species,
 because the Gompertz’s exponentially declining growth rate requires a
 faster initial rate constant to reach the same asymptote. What matters
 for biological inference is the resulting growth trajectory, not the
@@ -811,7 +769,7 @@ at maximum body size) and \\G(t)\\ is the growth measure. As an
 individual grows, its mortality declines in inverse proportion to its
 length—large fish die at lower rates than small fish.
 
-The critical insight is that \\M\_\infty = k\_{VB}\\, where \\k\_{VB}\\
+The critical insight is that \\M\_\infty = k\_{vb}\\, where \\k\_{vb}\\
 is the von Bertalanffy growth coefficient. Chen and Watanabe derived
 this relationship under VB assumptions: as \\t \to \infty\\, \\L(t) \to
 L\_\infty\\ and \\M(t) \to k\\. This means the growth coefficient
@@ -825,7 +783,7 @@ supported growth models. By defining the normalized growth coefficient
 as \\G(t) = L(t) / L\_\infty\\, \\G(t)\\ can take a different functional
 form for each growth model but produce the same mortality behavior: high
 mortality at young ages that declines as the organism grows. Because
-\\M\_\infty = k\_{VB}\\ regardless of which growth model fits the data,
+\\M\_\infty = k\_{vb}\\ regardless of which growth model fits the data,
 non-VB models compute a VB-equivalent \\k\\ from their own biological
 milestones. For the full mathematical framework, see
 `vignette("chen_watanabe_reparameterization")`.

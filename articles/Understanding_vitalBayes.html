@@ -229,12 +229,6 @@ development rate, maternal condition, or environmental factors. If we
 could measure “developmental readiness” on some continuous scale, we’d
 expect it to vary across individuals in a roughly normal
 distribution.</p>
-<div class="thinking-question">
-<p><strong>Think about it</strong>: If an individual is born when its
-“readiness” crosses some threshold, and readiness varies normally across
-individuals, what would the relationship between size and birth
-probability look like?</p>
-</div>
 <p>This intuition leads us to the <strong>latent variable
 formulation</strong>. We imagine each individual has a latent
 (unobserved) readiness score:</p>
@@ -353,26 +347,6 @@ y_i = 0\} + \min\{L_i : y_i = 1\}}{2}\]</span></p>
 <p>This data-derived prior center helps chains start in reasonable
 parameter space while remaining appropriately vague.</p>
 </div>
-<div class="section level3">
-<h3 id="practical-considerations">Practical Considerations<a class="anchor" aria-label="anchor" href="#practical-considerations"></a>
-</h3>
-<div class="section level4">
-<h4 id="what-if-theres-no-overlap">What if there’s no overlap?<a class="anchor" aria-label="anchor" href="#what-if-theres-no-overlap"></a>
-</h4>
-<p>In some datasets, the largest embryo is smaller than the smallest
-free-swimmer. This actually makes estimation easier—the transition is
-clearly constrained to fall in that gap.</p>
-</div>
-<div class="section level4">
-<h4 id="what-if-theres-substantial-overlap">What if there’s substantial overlap?<a class="anchor" aria-label="anchor" href="#what-if-theres-substantial-overlap"></a>
-</h4>
-<p>This suggests high individual variation in birth timing, which
-manifests as a shallow slope <span class="math inline">\(\beta\)</span>
-and wide transition zone. The model will estimate this appropriately,
-though you may want to consider whether the observed “overlap” might
-reflect misclassification.</p>
-</div>
-</div>
 </div>
 <div class="section level2">
 <h2 id="maturity">Maturity Estimation<a class="anchor" aria-label="anchor" href="#maturity"></a>
@@ -476,8 +450,7 @@ are related) to improve inference.</p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="the-non-centered-parameterization-a-technical-but-important-detail">The Non-Centered Parameterization: A Technical But Important
-Detail<a class="anchor" aria-label="anchor" href="#the-non-centered-parameterization-a-technical-but-important-detail"></a>
+<h3 id="the-non-centered-parameterization">The Non-Centered Parameterization<a class="anchor" aria-label="anchor" href="#the-non-centered-parameterization"></a>
 </h3>
 <p>Why specify the model as <span class="math inline">\(\mu + \tau \cdot
 \eta\)</span> instead of just sampling <span class="math inline">\(\log(L_{50,s}) \sim \mathcal{N}(\mu,
@@ -541,7 +514,7 @@ as the biologically nonsensical “theoretical age at length zero”). This
 means priors can be set from embryo or neonate measurements rather than
 from a mathematical abstraction.</p>
 <div class="section level4">
-<h4 id="vb">von Bertalanffy Growth Model (VBGM)<a class="anchor" aria-label="anchor" href="#vb"></a>
+<h4 id="vb">von Bertalanffy Growth Model<a class="anchor" aria-label="anchor" href="#vb"></a>
 </h4>
 <p><span class="math display">\[L(t) = L_\infty - (L_\infty - L_0)
 e^{-kt}\]</span></p>
@@ -591,9 +564,6 @@ Maximum Observed Length<a class="anchor" aria-label="anchor" href="#linf"></a>
 </h3>
 <p>This is an issue that seems technical at first but has deep
 biological implications.</p>
-<div class="section level4">
-<h4 id="the-problem">The Problem<a class="anchor" aria-label="anchor" href="#the-problem"></a>
-</h4>
 <p>When we fit a growth curve without constraints, the estimation
 algorithm finds parameter values that minimize prediction error across
 the dataset. For <span class="math inline">\(L_\infty\)</span>, this
@@ -607,7 +577,6 @@ upper tail of this distribution.</p>
 <em>below</em> these largest individuals, we’re saying they’ve already
 exceeded their theoretical maximum size. That’s biologically
 nonsensical!</p>
-</div>
 <div class="section level4">
 <h4 id="the-correct-interpretation">The Correct Interpretation<a class="anchor" aria-label="anchor" href="#the-correct-interpretation"></a>
 </h4>
@@ -645,7 +614,7 @@ directly with a hard lower bound at <span class="math inline">\(L_{max}\)</span>
 <p><strong>Why not a truncated lognormal?</strong></p>
 <p>When the prior mean is close to the truncation point (e.g., <span class="math inline">\(1.05 \times L_{max}\)</span>), the truncated
 lognormal piles up density right at the boundary creating a flat region
-in the posterior surface resulting in parameter poor exploration and
+in the posterior surface resulting in poor parameter exploration and
 slow mixing. This is especially pronounced for the logistic growth
 model, which approaches the asymptote faster than VB and can genuinely
 prefer <span class="math inline">\(L_\infty\)</span> very close to <span class="math inline">\(L_{max}\)</span>.</p>
@@ -663,15 +632,8 @@ prefer <span class="math inline">\(L_\infty\)</span> very close to <span class="
 CV_\delta^2}\]</span></p>
 <p>Note that <code>CV_delta</code> controls uncertainty about the
 <em>excess</em> <span class="math inline">\(\delta_L\)</span>, not about
-<span class="math inline">\(L_\infty\)</span> itself. This is an
-important distinction. If we applied a CV intended for <span class="math inline">\(L_\infty\)</span> (a large number, say ~105 cm) to
-<span class="math inline">\(\delta_L\)</span> (a small number, ~5 cm),
-the prior would be dramatically tighter than intended — the SD would
-reflect 20% of 5 cm rather than a meaningful uncertainty band, an
-order-of-magnitude error. By using a dedicated <code>CV_delta</code>,
-the user directly expresses uncertainty about the quantity being
-modeled: “how sure am I about the excess above <span class="math inline">\(L_{max}\)</span>?”</p>
-<p>At the default settings (<code>Linf_multiplier = 1.05</code>,
+<span class="math inline">\(L_\infty\)</span> itself. At the default
+settings (<code>Linf_multiplier = 1.05</code>,
 <code>CV_delta = 0.50</code>), this produces a gamma with mean <span class="math inline">\(0.05 \times L_{max}\)</span>, shape parameter
 <span class="math inline">\(\alpha = 4\)</span>, and <span class="math inline">\(SD(\delta_L) = 0.5 \times 0.05 \times
 L_{max}\)</span>. For a species with <span class="math inline">\(L_{max}
@@ -685,15 +647,6 @@ natural positive skew (small excesses are more probable than large ones,
 but the gamma’s right tail accommodates uncertainty), and produces a
 lighter right tail than lognormal (preventing biologically unreasonable
 asymptotic lengths while still allowing flexibility).</p>
-<div class="thinking-question">
-<p><strong>Why gamma rather than lognormal for <span class="math inline">\(\delta_L\)</span>?</strong> The gamma’s lighter
-right tail is appropriate here: <span class="math inline">\(\delta_L\)</span> represents a modest biological
-excess, and placing too much prior mass on very large values of <span class="math inline">\(\delta_L\)</span> would allow <span class="math inline">\(L_\infty\)</span> to drift far above observations
-without data support. The gamma concentrates more mass near its mode
-while still being flexible enough to accommodate data-driven deviations.
-At the default <code>CV_delta = 0.50</code>, the shape parameter <span class="math inline">\(\alpha = 4\)</span> produces a gamma with a
-well-defined mode slightly below the mean.”</p>
-</div>
 </div>
 </div>
 <div class="section level3">
@@ -712,8 +665,8 @@ small, and old individuals (near the asymptote) are rare.</p>
 <p>An individual that matures at length <span class="math inline">\(L_{mat}\)</span> and age <span class="math inline">\(t_{mat}\)</span> must, by definition, lie on the
 growth curve at the point <span class="math inline">\((t_{mat},
 L_{mat})\)</span>.</p>
-<p>If we know (or can estimate) the maturity milestone, we can
-substitute it into the growth equation and solve for <span class="math inline">\(k\)</span>. The derivation is model-specific,
+<p>If we can estimate the maturity milestone, we can substitute it into
+the growth equation and solve for <span class="math inline">\(k\)</span>. The derivation is model-specific,
 because each growth function has a different functional form.</p>
 <div class="math-note">
 <p><strong>Derivation for the von Bertalanffy model</strong>:</p>
@@ -723,7 +676,7 @@ because each growth function has a different functional form.</p>
 L_{mat}}{L_\infty - L_0} = e^{-k \cdot t_{mat}}\]</span></p>
 <p>Taking logs: <span class="math display">\[-k \cdot t_{mat} =
 \ln\left(\frac{L_\infty - L_{mat}}{L_\infty - L_0}\right)\]</span></p>
-<p>Solving for <span class="math inline">\(k\)</span>: <span class="math display">\[k_{VB} = \frac{1}{t_{mat}}
+<p>Solving for <span class="math inline">\(k\)</span>: <span class="math display">\[k_{vb} = \frac{1}{t_{mat}}
 \ln\left(\frac{L_\infty - L_0}{L_\infty - L_{mat}}\right)\]</span></p>
 </div>
 </div>
@@ -748,7 +701,7 @@ in the Stan model or informed by upstream birth and maturity fits. This
 eliminates the need to specify a prior on <span class="math inline">\(k\)</span> directly and breaks the <span class="math inline">\(L_\infty\)</span>-<span class="math inline">\(k\)</span> posterior correlation.</p>
 <p>An important note: <span class="math inline">\(k\)</span> has
 different meanings across the three models and should not be directly
-compared between them. For example, Gompertz <span class="math inline">\(k_g\)</span> is generally larger than VB <span class="math inline">\(k_{VB}\)</span> for the same species, because the
+compared between them. For example, Gompertz <span class="math inline">\(k_g\)</span> is generally larger than VB <span class="math inline">\(k_{vb}\)</span> for the same species, because the
 Gompertz’s exponentially declining growth rate requires a faster initial
 rate constant to reach the same asymptote. What matters for biological
 inference is the resulting growth trajectory, not the numerical value of
@@ -1047,7 +1000,7 @@ mortality rate (the mortality rate at maximum body size) and <span class="math i
 individual grows, its mortality declines in inverse proportion to its
 length—large fish die at lower rates than small fish.</p>
 <p>The critical insight is that <span class="math inline">\(M_\infty =
-k_{VB}\)</span>, where <span class="math inline">\(k_{VB}\)</span> is
+k_{vb}\)</span>, where <span class="math inline">\(k_{vb}\)</span> is
 the von Bertalanffy growth coefficient. Chen and Watanabe derived this
 relationship under VB assumptions: as <span class="math inline">\(t \to
 \infty\)</span>, <span class="math inline">\(L(t) \to L_\infty\)</span>
@@ -1064,7 +1017,7 @@ supported growth models. By defining the normalized growth coefficient
 as <span class="math inline">\(G(t) = L(t) / L_\infty\)</span>, <span class="math inline">\(G(t)\)</span> can take a different functional form
 for each growth model but produce the same mortality behavior: high
 mortality at young ages that declines as the organism grows. Because
-<span class="math inline">\(M_\infty = k_{VB}\)</span> regardless of
+<span class="math inline">\(M_\infty = k_{vb}\)</span> regardless of
 which growth model fits the data, non-VB models compute a VB-equivalent
 <span class="math inline">\(k\)</span> from their own biological
 milestones. For the full mathematical framework, see
