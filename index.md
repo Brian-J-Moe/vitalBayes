@@ -164,8 +164,3 @@ L∞”).
 ## License
 
 [MIT](https://brian-j-moe.github.io/vitalBayes/LICENSE.md)
-
-------------------------------------------------------------------------
-
-*Developed for the elasmobranch research community to support robust,
-reproducible vital rate analyses.*
