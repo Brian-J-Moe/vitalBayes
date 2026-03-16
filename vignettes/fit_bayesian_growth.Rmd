@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-The `fit_bayesian_growth()` function fits von Bertalanffy, Gompertz, or Logistic growth models using Bayesian methods. A central design choice is the **maturity-based parameterization**, which derives the growth coefficient $k$ from observable maturity metrics rather than estimating it directly. This breaks the notorious $(L_\infty, k)$ correlation, anchors the growth curve to biologically interpretable quantities, and propagates uncertainty from upstream maturity estimates into the growth posterior.
+The `fit_bayesian_growth()` function fits von Bertalanffy, Gompertz, or Logistic growth models using Bayesian methods. A central design choice is the **maturity-based parameterization**, which derives the growth coefficient $k$ from observable maturity metrics rather than estimating it directly. This anchors the growth curve to biologically interpretable quantities and propagates uncertainty from upstream maturity estimates into the growth posterior.
 
 ## Growth Model Equations
 
@@ -139,7 +139,7 @@ growth_mat <- fit_bayesian_growth(
 growth_mat$summary(c("Linf", "L0", "Lmat", "tmat", "k", "sigma"))
 ```
 
-**Why maturity-based?** The maturity-based parameterization offers several advantages. First, it reduces posterior correlation: $(L_\infty, k)$ are notoriously correlated under traditional parameterization, and replacing $k$ with $(L_{mat}, t_{mat})$ breaks this collinearity. Second, it provides observable anchoring: maturity milestones fall within the observed data range, unlike $L_\infty$ which is an extrapolation beyond the largest individuals. Third, prior information from upstream maturity models propagates directly into growth estimates, providing informative regularization for both sexes. Fourth, it enforces biological coherence: the fitted growth curve necessarily passes through $(t_{mat}, L_{mat})$, which is a real biological constraint rather than a mathematical convenience.
+**Why maturity-based?** The maturity-based parameterization offers several advantages. First, it reduces posterior correlation: $(L_\infty, k)$ are typically heavily correlated under traditional parameterization, and replacing $k$ with $(L_{mat}, t_{mat})$ breaks this collinearity. Second, it provides observable anchoring: maturity milestones fall within the observed data range, unlike $L_\infty$ which is an extrapolation beyond the largest individuals. Third, prior information from upstream maturity models propagates directly into growth estimates, providing informative regularization for both sexes. Fourth, it enforces biological coherence: the fitted growth curve necessarily passes through $(t_{mat}, L_{mat})$, which is a real biological constraint rather than a mathematical convenience.
 
 For the full derivation, see the model equations reference or the Stan source code.
 
@@ -248,7 +248,7 @@ growth_full <- fit_bayesian_growth(
 
 ### Manual Priors (Auto-Detects Full Pooling)
 
-When providing manual priors instead of vitalBayes fits, full pooling is the default since there's no prior pooling to double:
+When providing manual priors instead of vitalBayes fits, pooling across all parameters is the default since there's no prior pooling to double:
 
 ```{r manual-priors}
 # Manual priors: pool_maturity defaults to TRUE
@@ -457,3 +457,7 @@ create_parameter_table(
 - `vignette("model_diagnostics")` --- LOO-CV model comparison and convergence checks
 - `plot_growth_curve()`, `compare_growth_models()` --- Visualization
 - `compute_loo()`, `compare_loo()` --- Model comparison
+
+---
+
+*This document is part of the vitalBayes R package. For bug reports, feature requests, or questions, please visit the GitHub repository.*

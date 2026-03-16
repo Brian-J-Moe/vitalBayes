@@ -66,11 +66,6 @@ birth_fit$summary(c("b50", "slope", "transition_width"))
 birth_fit$summary(c("mean_p_embryo", "mean_p_freeswim", "prop_correct_rep"))
 ```
 
-**Key diagnostics to check:**
-
-- `mean_p_embryo`: Should be low (~0.1-0.3) — embryos have low probability of being classified as free-swimming
-- `mean_p_freeswim`: Should be high (~0.7-0.9) — free-swimmers have high probability
-- `prop_correct_rep`: Overall classification accuracy (aim for >80%)
 
 ## Customizing Priors
 
