@@ -96,10 +96,9 @@
 Gompertz, or Logistic growth models using Bayesian methods. A central
 design choice is the <strong>maturity-based parameterization</strong>,
 which derives the growth coefficient <span class="math inline">\(k\)</span> from observable maturity metrics rather
-than estimating it directly. This breaks the notorious <span class="math inline">\((L_\infty, k)\)</span> correlation, anchors the
-growth curve to biologically interpretable quantities, and propagates
-uncertainty from upstream maturity estimates into the growth
-posterior.</p>
+than estimating it directly. This anchors the growth curve to
+biologically interpretable quantities and propagates uncertainty from
+upstream maturity estimates into the growth posterior.</p>
 </div>
 <div class="section level2">
 <h2 id="growth-model-equations">Growth Model Equations<a class="anchor" aria-label="anchor" href="#growth-model-equations"></a>
@@ -270,8 +269,8 @@ the numerical value of <span class="math inline">\(k\)</span>.</p>
 <p><strong>Why maturity-based?</strong> The maturity-based
 parameterization offers several advantages. First, it reduces posterior
 correlation: <span class="math inline">\((L_\infty, k)\)</span> are
-notoriously correlated under traditional parameterization, and replacing
-<span class="math inline">\(k\)</span> with <span class="math inline">\((L_{mat}, t_{mat})\)</span> breaks this
+typically heavily correlated under traditional parameterization, and
+replacing <span class="math inline">\(k\)</span> with <span class="math inline">\((L_{mat}, t_{mat})\)</span> breaks this
 collinearity. Second, it provides observable anchoring: maturity
 milestones fall within the observed data range, unlike <span class="math inline">\(L_\infty\)</span> which is an extrapolation beyond
 the largest individuals. Third, prior information from upstream maturity
@@ -436,8 +435,9 @@ over-constraint:</p>
 <div class="section level3">
 <h3 id="manual-priors-auto-detects-full-pooling">Manual Priors (Auto-Detects Full Pooling)<a class="anchor" aria-label="anchor" href="#manual-priors-auto-detects-full-pooling"></a>
 </h3>
-<p>When providing manual priors instead of vitalBayes fits, full pooling
-is the default since there’s no prior pooling to double:</p>
+<p>When providing manual priors instead of vitalBayes fits, pooling
+across all parameters is the default since there’s no prior pooling to
+double:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Manual priors: pool_maturity defaults to TRUE</span></span>
 <span><span class="va">growth_manual</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
@@ -749,6 +749,10 @@ and convergence checks</li>
 <code><a href="../reference/compute_loo.html">compute_loo()</a></code>, <code><a href="../reference/compare_loo.html">compare_loo()</a></code> — Model
 comparison</li>
 </ul>
+<hr>
+<p><em>This document is part of the vitalBayes R package. For bug
+reports, feature requests, or questions, please visit the GitHub
+repository.</em></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

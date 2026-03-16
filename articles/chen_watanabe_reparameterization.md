@@ -8,7 +8,7 @@ mortality model. Two methodological design choices distinguish this
 implementation from standard practice:
 
 1.  **\\L_0\\ parameterization**: Expressing the CW model directly in
-    terms of predicted body length \\L(t)\\ and asymptotic length
+    terms of length at birth \\L_0\\ and asymptotic length
     \\L\_\infty\\, eliminating dependence on the theoretical parameter
     \\t_0\\.
 
@@ -30,17 +30,14 @@ model equations themselves, see
 ### \\L_0\\-Parameterized Form
 
 The Chen & Watanabe (1989) model relates instantaneous natural mortality
-\\M(t)\\ to the von Bertalanffy growth coefficient \\k\\. After
-reparameterizing from \\t_0\\ to \\L_0\\ (the algebraic steps are
-detailed in
-[`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)),
-the CW model simplifies to:
+\\M(t)\\ to the von Bertalanffy growth coefficient \\k\\:
 
 \\M(t) = \frac{k \cdot L\_\infty}{L(t)}\\
 
 where \\L(t) = L\_\infty - (L\_\infty - L_0)e^{-kt}\\ is the von
-Bertalanffy predicted length at age \\t\\, \\L\_\infty\\ is asymptotic
-length, and \\k\\ is the VB growth coefficient.
+Bertalanffy predicted length at age \\t\\, \\L_0\\ is the length at
+birth, \\L\_\infty\\ is asymptotic length, and \\k\\ is the VB growth
+coefficient.
 
 This compact form reveals the core biological mechanism: **mortality is
 inversely proportional to body size**. Small, young individuals are more
@@ -56,9 +53,9 @@ to define the **normalized growth coefficient**:
 \\G(t) = \frac{L(t)}{L\_\infty}\\
 
 This is the fraction of asymptotic size achieved at age \\t\\. At birth
-(\\t = 0\\), \\G(0) = L_0 / L\_\infty\\, which is some small fraction.
-As \\t \to \infty\\, \\G(t) \to 1\\ for all three growth models — the
-organism approaches its asymptotic size.
+(\\t = 0\\), \\G(0) = L_0 / L\_\infty\\. As \\t \to \infty\\, \\G(t) \to
+1\\ for all three growth models — the organism approaches its asymptotic
+size.
 
 Using \\G(t)\\, the CW model becomes:
 
@@ -90,12 +87,10 @@ trade-off: \\k\\ simultaneously determines the growth rate (how fast
 Critically, **this relationship holds regardless of which growth model
 was used to fit the data**. The Gompertz and Logistic models have their
 own growth coefficients \\k_g\\ and \\k_l\\, but these are *not*
-\\M\_\infty\\. The CW mortality model was derived under VB assumptions,
-and the parameter \\k\\ in the CW equation is specifically the VB growth
-coefficient. When we use Gompertz or Logistic fits, we do not substitute
-their native \\k\\ into the CW equation — instead, we compute the
-VB-equivalent \\k\\ that encodes the same biological growth information
-(described below).
+\\M\_\infty\\. When we use Gompertz or Logistic fits, we do not
+substitute their native \\k\\ into the CW equation — instead, we compute
+the VB-equivalent \\k\\ that encodes the same biological growth
+information (described below).
 
 ## Growth-Specific \\G(t)\\ Functions
 
@@ -158,9 +153,8 @@ in a relatively narrow size window.
 
 The three \\G(t)\\ functions all share the same boundary conditions
 (\\G(0) = L_0/L\_\infty\\ and \\G(\infty) = 1\\), but they differ in how
-they traverse the interval between these bounds. Because \\M(t) =
-M\_\infty / G(t)\\, the shape of \\G(t)\\ directly determines the
-mortality schedule:
+they behave between these bounds. Because \\M(t) = M\_\infty / G(t)\\,
+the shape of \\G(t)\\ directly determines the mortality schedule:
 
 - **VB**: Steady exponential approach. Mortality declines fastest at
   young ages and progressively slows.
@@ -227,14 +221,6 @@ equation and solving:
 
 \\k\_{VB}^{equiv} = \frac{1}{t\_{mat}} \ln\\\left(\frac{L\_\infty -
 L_0}{L\_\infty - L\_{mat}}\right)\\
-
-This formula is applied draw-by-draw to the posterior of any growth
-model. When the growth model *is* von Bertalanffy with maturity-based
-parameterization, \\k\_{VB}^{equiv}\\ exactly reproduces the fitted
-\\k\\ by construction. For Gompertz and Logistic fits,
-\\k\_{VB}^{equiv}\\ will differ from their native \\k\\ values, since
-the three models define \\k\\ differently. But \\k\_{VB}^{equiv}\\ is
-the correct input for the CW mortality model regardless.
 
 In vitalBayes,
 [`compute_k_vb_equivalent()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_k_vb_equivalent.md)

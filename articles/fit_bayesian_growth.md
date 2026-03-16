@@ -8,9 +8,9 @@ function fits von Bertalanffy, Gompertz, or Logistic growth models using
 Bayesian methods. A central design choice is the **maturity-based
 parameterization**, which derives the growth coefficient \\k\\ from
 observable maturity metrics rather than estimating it directly. This
-breaks the notorious \\(L\_\infty, k)\\ correlation, anchors the growth
-curve to biologically interpretable quantities, and propagates
-uncertainty from upstream maturity estimates into the growth posterior.
+anchors the growth curve to biologically interpretable quantities and
+propagates uncertainty from upstream maturity estimates into the growth
+posterior.
 
 ## Growth Model Equations
 
@@ -187,7 +187,7 @@ growth_mat$summary(c("Linf", "L0", "Lmat", "tmat", "k", "sigma"))
 
 **Why maturity-based?** The maturity-based parameterization offers
 several advantages. First, it reduces posterior correlation:
-\\(L\_\infty, k)\\ are notoriously correlated under traditional
+\\(L\_\infty, k)\\ are typically heavily correlated under traditional
 parameterization, and replacing \\k\\ with \\(L\_{mat}, t\_{mat})\\
 breaks this collinearity. Second, it provides observable anchoring:
 maturity milestones fall within the observed data range, unlike
@@ -335,8 +335,8 @@ growth_full <- fit_bayesian_growth(
 
 ### Manual Priors (Auto-Detects Full Pooling)
 
-When providing manual priors instead of vitalBayes fits, full pooling is
-the default since there’s no prior pooling to double:
+When providing manual priors instead of vitalBayes fits, pooling across
+all parameters is the default since there’s no prior pooling to double:
 
 ``` r
 # Manual priors: pool_maturity defaults to TRUE
@@ -567,3 +567,8 @@ create_parameter_table(
 - [`compute_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compute_loo.md),
   [`compare_loo()`](https://brian-j-moe.github.io/vitalBayes/reference/compare_loo.md)
   — Model comparison
+
+------------------------------------------------------------------------
+
+*This document is part of the vitalBayes R package. For bug reports,
+feature requests, or questions, please visit the GitHub repository.*

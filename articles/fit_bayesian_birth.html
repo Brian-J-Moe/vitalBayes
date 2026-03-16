@@ -154,18 +154,6 @@ section</a> in the Statistical Methods guide.</p>
 <span></span>
 <span><span class="co"># Posterior predictive checks</span></span>
 <span><span class="va">birth_fit</span><span class="op">$</span><span class="fu">summary</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean_p_embryo"</span>, <span class="st">"mean_p_freeswim"</span>, <span class="st">"prop_correct_rep"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><strong>Key diagnostics to check:</strong></p>
-<ul>
-<li>
-<code>mean_p_embryo</code>: Should be low (~0.1-0.3) — embryos have
-low probability of being classified as free-swimming</li>
-<li>
-<code>mean_p_freeswim</code>: Should be high (~0.7-0.9) —
-free-swimmers have high probability</li>
-<li>
-<code>prop_correct_rep</code>: Overall classification accuracy (aim
-for &gt;80%)</li>
-</ul>
 </div>
 <div class="section level2">
 <h2 id="customizing-priors">Customizing Priors<a class="anchor" aria-label="anchor" href="#customizing-priors"></a>

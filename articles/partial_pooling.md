@@ -294,23 +294,6 @@ compare_loo(
 # - True sex differences are modest
 ```
 
-## Should I always use pooling?
-
-Partial pooling produces **regularized** estimates that trade a small
-amount of bias for substantial variance reduction. For the sparse sex,
-this trade-off almost always improves mean squared error. In the
-Bayesian framework, this is simply the natural consequence of a
-hierarchical prior — it concentrates posterior mass on plausible
-parameter combinations and reduces the influence of sampling noise.
-
-For two-sex elasmobranch models with typical sample sizes, partial
-pooling is strongly recommended. The only case to avoid pooling is when
-you have abundant, balanced data for both sexes AND strong prior belief
-in very different parameters. Even then, partial pooling with
-appropriate `prior_tau` rarely harms and often helps. Pooling does not
-prevent the detection of differences; it simply regularizes the
-individual estimates so that the difference is estimated more precisely.
-
 ## Example: Full Workflow with Pooling
 
 ``` r
