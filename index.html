@@ -88,14 +88,14 @@
 </h2>
 <!-- badges: start -->
 
-<p><code>vitalBayes</code> provides a coherent Bayesian framework for estimating vital rates in elasmobranchs—from birth and maturity through growth to natural mortality and survival. The package implements hierarchical models via <a href="https://mc-stan.org/" class="external-link">Stan</a> with precompiled models for fast, reliable inference.</p>
+<p><code>vitalBayes</code> provides a coherent Bayesian framework for estimating vital rates in elasmobranchs—from birth and maturity through growth to natural mortality and survival. The package implements hierarchical models using <a href="https://mc-stan.org/" class="external-link">Stan software</a> via the <a href="https://mc-stan.org/cmdstanr/reference/cmdstanr-package.html" class="external-link">CmdStan R package</a>. For fast and reliable inference, the user will precompile several Stan models upon instillation.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install dependencies</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, <span class="st">"instantiate"</span>, <span class="st">"data.table"</span>, <span class="st">"ggplot2"</span>, <span class="st">"loo"</span>, <span class="st">"pracma"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cmdstanr"</span>, <span class="st">"data.table"</span>, <span class="st">"ggplot2"</span>, <span class="st">"loo"</span>, <span class="st">"pracma"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Install cmdstan (if not already installed)</span></span>
 <span><span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html" class="external-link">install_cmdstan</a></span><span class="op">(</span><span class="op">)</span></span>

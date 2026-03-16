@@ -4,15 +4,17 @@
 
 `vitalBayes` provides a coherent Bayesian framework for estimating vital
 rates in elasmobranchs—from birth and maturity through growth to natural
-mortality and survival. The package implements hierarchical models via
-[Stan](https://mc-stan.org/) with precompiled models for fast, reliable
-inference.
+mortality and survival. The package implements hierarchical models using
+[Stan software](https://mc-stan.org/) via the [CmdStan R
+package](https://mc-stan.org/cmdstanr/reference/cmdstanr-package.html).
+For fast and reliable inference, the user will precompile several Stan
+models upon instillation.
 
 ## Installation
 
 ``` r
 # Install dependencies
-install.packages(c("cmdstanr", "instantiate", "data.table", "ggplot2", "loo", "pracma"))
+install.packages(c("cmdstanr", "data.table", "ggplot2", "loo", "pracma"))
 
 # Install cmdstan (if not already installed)
 cmdstanr::install_cmdstan()
