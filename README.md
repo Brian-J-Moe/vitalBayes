@@ -3,7 +3,6 @@
 ## Bayesian Vital Rates for Elasmobranchs
 
 <!-- badges: start -->
-[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen.svg)](https://github.com/Brian-J-Moe/vitalBayes)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
@@ -141,9 +140,9 @@ Prior uncertainty is specified via coefficient of variation—intuitive, scale-i
 ```bibtex
 @manual{vitalBayes,
   title = {{vitalBayes}: Bayesian Vital Rate Estimation for Elasmobranchs},
-  author = {Brian J Moe},
+  author = {Brian J. Moe},
   year = {2025},
-  note = {R package version 0.4.0},
+  note = {R package version 0.7.0},
   url = {https://github.com/Brian-J-Moe/vitalBayes}
 }
 ```
