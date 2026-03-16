@@ -154,9 +154,9 @@ L∞”).
 ``` bibtex
 @manual{vitalBayes,
   title = {{vitalBayes}: Bayesian Vital Rate Estimation for Elasmobranchs},
-  author = {Brian J Moe},
+  author = {Brian J. Moe},
   year = {2025},
-  note = {R package version 0.4.0},
+  note = {R package version 0.7.0},
   url = {https://github.com/Brian-J-Moe/vitalBayes}
 }
 ```
