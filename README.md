@@ -152,6 +152,4 @@ Prior uncertainty is specified via coefficient of variation—intuitive, scale-i
 
 [MIT](LICENSE.md)
 
----
 
-*Developed for the elasmobranch research community to support robust, reproducible vital rate analyses.*
