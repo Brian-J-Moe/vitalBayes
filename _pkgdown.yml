@@ -25,6 +25,7 @@ template:
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+      <meta name="google-site-verification" content="nh39mDKw8gCdoWa6T_l7NpIJi3iUoHtHCkAA-shjrz0" />
     after_body: |
       <script>
       document.addEventListener('DOMContentLoaded', function() {
