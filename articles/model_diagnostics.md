@@ -14,6 +14,7 @@ Before interpreting results, verify that MCMC chains have converged.
 ### Built-in cmdstanr Diagnostics
 
 ``` r
+
 library(vitalBayes)
 library(data.table)
 
@@ -52,6 +53,7 @@ growth_fit$summary(c("Linf", "L0", "k", "sigma"))
 ### Addressing Problems
 
 ``` r
+
 # Increase adapt_delta for divergences
 growth_fit <- fit_bayesian_growth(
  lt = "fl", age = "age", data = gdata,
@@ -82,6 +84,7 @@ Do model predictions match observed data patterns?
 ### Using ppc_summary()
 
 ``` r
+
 # First fit all required models
 birth_fit <- fit_bayesian_birth(
  embryo_lts = growth_data[embryo == TRUE, fl],
@@ -129,6 +132,7 @@ summary(ppc)
 Each model computes PPC metrics internally:
 
 ``` r
+
 # Birth model
 birth_fit$summary(c(
  "mean_p_embryo",      # Should be low (~0.1-0.3)
@@ -154,6 +158,7 @@ growth_fit$summary(c(
 ### Residual Diagnostics
 
 ``` r
+
 # Visual residual checks
 plot_residuals(
  fit = growth_fit,
@@ -188,6 +193,7 @@ importance sampling (PSIS-LOO) for efficient computation.
 ### Computing LOO
 
 ``` r
+
 # Fit additional models for comparison
 growth_logis <- fit_bayesian_growth(
  lt = "fl", age = "age", sex = "sex", data = gdata,
@@ -211,6 +217,7 @@ print(loo_vb)
 ### Comparing Models
 
 ``` r
+
 # Compare multiple models
 compare_loo(
  "von Bertalanffy" = loo_vb,
@@ -227,6 +234,7 @@ compare_loo(
 ### Creating Summary Tables
 
 ``` r
+
 # Publication-ready table
 loo_table <- create_loo_table(
  "von Bertalanffy" = loo_vb,
@@ -245,6 +253,7 @@ For two-sex models, compare partial pooling vs no pooling to assess
 whether hierarchical structure improves estimation:
 
 ``` r
+
 # Use the imbalanced dataset where pooling matters most
 data(imbalanced_data)
 gdata_imbal <- imbalanced_data[embryo == FALSE & !is.na(age)]
@@ -286,6 +295,7 @@ including the underlying mathematics and practical guidance, see
 ### Single Model
 
 ``` r
+
 # Extract formatted parameter estimates
 growth_fit$summary(c("Linf", "L0", "k", "sigma"))
 ```
@@ -293,6 +303,7 @@ growth_fit$summary(c("Linf", "L0", "k", "sigma"))
 ### Multiple Models
 
 ``` r
+
 # Comprehensive table across workflow stages
 param_table <- create_parameter_table(
  birth = birth_fit,
@@ -312,6 +323,7 @@ data.table::fwrite(param_table, "Table1_parameters.csv")
 ## Complete Diagnostic Workflow
 
 ``` r
+
 # ---- Load data ----
 data(growth_data)
 gdata <- growth_data[embryo == FALSE & !is.na(age)]

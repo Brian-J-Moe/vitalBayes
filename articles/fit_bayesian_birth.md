@@ -33,6 +33,7 @@ in the Statistical Methods guide.
 ## Basic Usage
 
 ``` r
+
 library(vitalBayes)
 library(data.table)
 
@@ -55,6 +56,7 @@ birth_fit <- fit_bayesian_birth(
 ## Examining Results
 
 ``` r
+
 # Core parameter estimates
 birth_fit$summary(c("b50", "slope", "transition_width"))
 
@@ -68,6 +70,7 @@ The function automatically derives prior centers from the data, but you
 can override:
 
 ``` r
+
 birth_fit <- fit_bayesian_birth(
  embryo_lts        = embryo_lengths,
  free_swimming_lts = freeswim_lengths,
@@ -82,6 +85,7 @@ birth_fit <- fit_bayesian_birth(
 ## Visualization
 
 ``` r
+
 # Quick visualization
 plot_birth_ogive(birth_fit, embryo_lengths, freeswim_lengths)
 
@@ -97,6 +101,7 @@ The \\b\_{50}\\ estimate serves as the prior for birth length (\\L_0\\)
 in growth models:
 
 ``` r
+
 # The birth fit can be passed directly to growth models
 growth_fit <- fit_bayesian_growth(
  lt        = "fl",
@@ -113,6 +118,7 @@ For datasets with few embryos, consider using the `limited_data` example
 dataset to explore prior sensitivity:
 
 ``` r
+
 # Load the small sample dataset (24F, 18M, 5 embryos)
 data(limited_data)
 
@@ -126,11 +132,11 @@ birth_fit_limited <- fit_bayesian_birth(
 
 ## Troubleshooting
 
-| Issue                   | Solution                                                 |
-|-------------------------|----------------------------------------------------------|
-| Divergent transitions   | Increase `adapt_delta` (0.95 → 0.99)                     |
+| Issue | Solution |
+|----|----|
+| Divergent transitions | Increase `adapt_delta` (0.95 → 0.99) |
 | Wide credible intervals | Check for data overlap; consider more informative priors |
-| Poor classification     | Verify embryo/free-swimming labels in data               |
+| Poor classification | Verify embryo/free-swimming labels in data |
 
 ## See Also
 

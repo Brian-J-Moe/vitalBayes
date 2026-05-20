@@ -51,6 +51,7 @@ d_t}{\sum_t d_t}\\
 ### With Stanfit Objects
 
 ``` r
+
 library(vitalBayes)
 library(data.table)
 
@@ -85,6 +86,7 @@ surv$Aggregate$Survival_to_tmax
 ### With Manual Parameters
 
 ``` r
+
 # Generate mortality with specified correlation
 mort <- get_stochastic_mortality(
   method       = "CW",
@@ -108,6 +110,7 @@ surv <- simulate_survivorship(
 ## Output Structure
 
 ``` r
+
 names(surv)
 #> [1] "Aggregate" "Per_Set"   "Raw"       "Plot"
 
@@ -129,6 +132,7 @@ head(surv$Raw)
 ### Random Sampling
 
 ``` r
+
 surv <- simulate_survivorship(
   mc_object = mort,
   n         = 50000,
@@ -140,6 +144,7 @@ surv <- simulate_survivorship(
 ### Per-Set Mode
 
 ``` r
+
 surv_perset <- simulate_survivorship(
   mc_object = mort,
   n         = 50000,
@@ -156,6 +161,7 @@ surv_perset$Per_Set$Age_of_Death
 ### Mean Age at Death
 
 ``` r
+
 surv$Aggregate$Age_of_Death
 #>     mean    sd  lower  upper
 #>    <num> <num>  <num>  <num>
@@ -165,6 +171,7 @@ surv$Aggregate$Age_of_Death
 ### Survival to Maturity
 
 ``` r
+
 surv$Aggregate$Survival_to_tmat
 #>     mean      sd   lower   upper
 #>    <num>   <num>   <num>   <num>
@@ -174,6 +181,7 @@ surv$Aggregate$Survival_to_tmat
 ### Survival to Maximum Age
 
 ``` r
+
 surv$Aggregate$Survival_to_tmax
 #>       mean      sd    lower    upper
 #>      <num>   <num>    <num>    <num>
@@ -185,6 +193,7 @@ surv$Aggregate$Survival_to_tmax
 ### Default Plot
 
 ``` r
+
 surv <- simulate_survivorship(
   mc_object = mort,
   n         = 50000,
@@ -196,6 +205,7 @@ surv <- simulate_survivorship(
 ### Custom Aesthetics
 
 ``` r
+
 surv <- simulate_survivorship(
   mc_object    = mort,
   n            = 50000,
@@ -211,6 +221,7 @@ surv <- simulate_survivorship(
 ### Custom X-Axis Breaks
 
 ``` r
+
 surv <- simulate_survivorship(
   mc_object = mort,
   n_iter    = 2000,
@@ -221,6 +232,7 @@ surv <- simulate_survivorship(
 ## Sex-Specific Comparisons
 
 ``` r
+
 # Females
 mort_f <- get_stochastic_mortality(
   method = "CW", growth_fit = growth_fit, sex = 1,
@@ -254,6 +266,7 @@ ggplot(combined, aes(x = age, y = mean_surv, color = sex, fill = sex)) +
 ### Cohort Size
 
 ``` r
+
 # Small cohort: More demographic stochasticity
 surv_small <- simulate_survivorship(mc_object = mort, n = 1000, n_iter = 2000,
                                     print_plot = FALSE)
@@ -268,6 +281,7 @@ For most applications, `n = 50000` provides a good balance.
 ### Iteration Count
 
 ``` r
+
 # Quick exploratory
 surv_quick <- simulate_survivorship(mc_object = mort, n_iter = 500,
                                     print_plot = FALSE)
@@ -280,6 +294,7 @@ surv_final <- simulate_survivorship(mc_object = mort, n_iter = 5000,
 ## Sensitivity Analysis
 
 ``` r
+
 per_set_data <- surv$Per_Set$Age_of_Death
 per_set_merged <- merge(per_set_data, mort$Parameters, by = "set_id")
 
@@ -290,12 +305,12 @@ cor_matrix["mean_age", ]
 
 ## Troubleshooting
 
-| Issue                    | Cause                 | Solution                      |
-|--------------------------|-----------------------|-------------------------------|
-| Slow computation         | Too many iterations   | Reduce n_iter for exploration |
-| Survival = 0 or 1        | Age beyond schedule   | Extend age_seq in mortality   |
-| Missing Survival_to_tmat | No tmat in Parameters | Ensure tmat provided          |
-| NaN values               | Negative mortality    | Check mortality schedules     |
+| Issue | Cause | Solution |
+|----|----|----|
+| Slow computation | Too many iterations | Reduce n_iter for exploration |
+| Survival = 0 or 1 | Age beyond schedule | Extend age_seq in mortality |
+| Missing Survival_to_tmat | No tmat in Parameters | Ensure tmat provided |
+| NaN values | Negative mortality | Check mortality schedules |
 
 ## See Also
 

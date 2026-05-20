@@ -173,6 +173,7 @@ mortality curve (where \\G(t)\\ values are small and thus \\M(t)\\
 values are large) than on mid- to late-life mortality.
 
 ``` r
+
 library(ggplot2)
 library(data.table)
 
@@ -236,6 +237,7 @@ parameterization, \\k\_{VB}^{equiv}\\ is algebraically identical to the
 estimated \\k\\. This serves as an internal consistency check:
 
 ``` r
+
 library(vitalBayes)
 
 # Extract VB posterior draws
@@ -250,6 +252,7 @@ For Gompertz and Logistic fits, the VB-equivalent \\k\\ and native \\k\\
 will be correlated but not identical:
 
 ``` r
+
 params_gomp <- extract_growth_parameters(gomp_fit, sex = 1, n_draws = 2000)
 
 # Native Gompertz k vs VB-equivalent k
@@ -327,6 +330,7 @@ This ensures a smooth, differentiable transition rather than a sharp
 kink at \\t_m\\.
 
 ``` r
+
 ages <- seq(0.1, 35, by = 0.25)
 
 # Single-phase: monotonic decline

@@ -211,6 +211,7 @@ interpreted as the lifespan-averaged rate (\\H\_{target} = 0.15 \times
 t\_{max}\\).
 
 ``` r
+
 library(vitalBayes)
 
 # Survival probability scaling (0.1% survive to tmax)
@@ -241,6 +242,7 @@ The typical workflow begins with growth (and optionally maturity) model
 fitting, then feeds posteriors into mortality estimation:
 
 ``` r
+
 library(vitalBayes)
 library(data.table)
 
@@ -274,6 +276,7 @@ posterior sampling preserves parameter correlations.
 ### Output Structure
 
 ``` r
+
 names(mort)
 #> [1] "Schedules"  "Parameters" "Summary"    "Plot"
 
@@ -314,6 +317,7 @@ via derivative matching at birth and uses the native growth equation for
 \\L(t)\\ prediction.
 
 ``` r
+
 # VB parameters (backward-compatible: k IS the VB k)
 mort_vb <- get_stochastic_mortality(
   method = "CW",
@@ -357,6 +361,7 @@ VB-equivalent \\k\\ is then *derived* from the sampled milestones
 directly.
 
 ``` r
+
 mort_mat <- get_stochastic_mortality(
   method        = "CW",
   Linf          = c(100, 8),
@@ -403,6 +408,7 @@ Comparing mortality estimates from different theoretical frameworks
 provides a measure of structural uncertainty:
 
 ``` r
+
 # Chen-Watanabe
 mort_cw <- get_stochastic_mortality(
   method = "CW", growth_fit = growth_fit, sex = 1,
@@ -454,6 +460,7 @@ A complementary diagnostic tests whether mortality estimates are robust
 to the choice of growth model:
 
 ``` r
+
 # Fit all three growth models
 # vb_fit   <- fit_bayesian_growth(..., model = "v")
 # gomp_fit <- fit_bayesian_growth(..., model = "g")
@@ -504,6 +511,7 @@ For applications outside the Monte Carlo framework vitalBayes exports
 the individual mortality model functions:
 
 ``` r
+
 ages <- seq(0.5, 30, by = 0.5)
 
 # Chen-Watanabe with VB (k serves both roles)
@@ -557,6 +565,7 @@ feed directly into
 for cohort survival analysis:
 
 ``` r
+
 surv <- simulate_survivorship(
   mc_object = mort,
   n         = 50000,    # Starting cohort size
@@ -583,14 +592,14 @@ and interpretation.
 
 ## Troubleshooting
 
-| Issue                       | Possible Cause                               | Solution                                                                                |
-|-----------------------------|----------------------------------------------|-----------------------------------------------------------------------------------------|
-| Negative mortality values   | CW two-phase Taylor expansion breakdown      | Function automatically caps at 0; consider single-phase or different `late_model`       |
-| Very wide uncertainty bands | Weak growth model posterior                  | Check growth model convergence and parameter correlations                               |
-| Unrealistic tmax estimates  | `Linf_factor` too extreme                    | Reduce from 0.99 to 0.95 for exploratory analysis                                       |
-| Missing tmat error          | CW needs age-at-maturity                     | Provide `maturity_fit`, manual `tmat`, or both `Lmat` and `tmat` for bivariate sampling |
-| `lw_fun` error              | PW/Lorenzen weight-based needs length-weight | Provide function: `lw_fun = function(L) a * L^b`                                        |
-| CW and PW disagree strongly | Different theoretical assumptions            | Report both; consider which assumptions best match your species                         |
+| Issue | Possible Cause | Solution |
+|----|----|----|
+| Negative mortality values | CW two-phase Taylor expansion breakdown | Function automatically caps at 0; consider single-phase or different `late_model` |
+| Very wide uncertainty bands | Weak growth model posterior | Check growth model convergence and parameter correlations |
+| Unrealistic tmax estimates | `Linf_factor` too extreme | Reduce from 0.99 to 0.95 for exploratory analysis |
+| Missing tmat error | CW needs age-at-maturity | Provide `maturity_fit`, manual `tmat`, or both `Lmat` and `tmat` for bivariate sampling |
+| `lw_fun` error | PW/Lorenzen weight-based needs length-weight | Provide function: `lw_fun = function(L) a * L^b` |
+| CW and PW disagree strongly | Different theoretical assumptions | Report both; consider which assumptions best match your species |
 
 ## References
 

@@ -46,7 +46,7 @@ with 5 columns:
 
   Logical. `TRUE` for embryo observations; `FALSE` otherwise.
 
-An object of class `data.table` (inherits from `data.frame`) with 197
+An object of class `data.table` (inherits from `data.frame`) with 227
 rows and 5 columns.
 
 An object of class `data.table` (inherits from `data.frame`) with 391
@@ -72,7 +72,7 @@ Dataset-specific sizes:
 
   Default call to
   [`simulate_vb_growth_data()`](https://brian-j-moe.github.io/vitalBayes/reference/simulate_vb_growth_data.md)
-  (defaults: 150 females, 34 males, 13 embryos).
+  (defaults: 150 females, 64 males, 13 embryos).
 
 - `growth_data`:
 

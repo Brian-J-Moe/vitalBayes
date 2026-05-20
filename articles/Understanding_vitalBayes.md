@@ -622,14 +622,14 @@ that mean).
 
 **Default CVs in vitalBayes**:
 
-| Parameter                                | Default CV | Context                                                         |
-|:-----------------------------------------|:-----------|:----------------------------------------------------------------|
-| \\\delta_L\\ (excess above \\L\_{max}\\) | 0.50       | Growth model; controls \\L\_\infty\\ prior spread               |
-| \\L_0\\                                  | 0.30       | Growth model; fewer neonatal observations                       |
-| \\k\\                                    | 0.50       | Growth model (k-based only); often poorly constrained           |
-| \\L\_{mat}\\                             | 0.20       | Growth model (maturity-based); well-estimated from maturity fit |
-| \\t\_{mat}\\                             | 0.30       | Growth model (maturity-based); more uncertain than \\L\_{mat}\\ |
-| \\b\_{50}\\, \\L\_{50}\\, \\t\_{50}\\    | 0.30       | Birth and maturity models                                       |
+| Parameter | Default CV | Context |
+|:---|:---|:---|
+| \\\delta_L\\ (excess above \\L\_{max}\\) | 0.50 | Growth model; controls \\L\_\infty\\ prior spread |
+| \\L_0\\ | 0.30 | Growth model; fewer neonatal observations |
+| \\k\\ | 0.50 | Growth model (k-based only); often poorly constrained |
+| \\L\_{mat}\\ | 0.20 | Growth model (maturity-based); well-estimated from maturity fit |
+| \\t\_{mat}\\ | 0.30 | Growth model (maturity-based); more uncertain than \\L\_{mat}\\ |
+| \\b\_{50}\\, \\L\_{50}\\, \\t\_{50}\\ | 0.30 | Birth and maturity models |
 
 These defaults encode reasonable beliefs for data-limited species but
 can be adjusted based on prior knowledge. When upstream model fits are

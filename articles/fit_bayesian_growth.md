@@ -86,6 +86,7 @@ length.
 Directly estimates the growth coefficient \\k\\:
 
 ``` r
+
 library(vitalBayes)
 library(data.table)
 
@@ -146,6 +147,7 @@ matters for biological inference is the resulting growth trajectory, not
 the numerical value of \\k\\.
 
 ``` r
+
 # First, fit maturity models
 mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
@@ -211,6 +213,7 @@ biologically impossible. vitalBayes enforces \\L\_\infty \> L\_{max}\\
 maximum observed length).
 
 ``` r
+
 # Lmax is auto-detected from data (including rows without age)
 growth_fit <- fit_bayesian_growth(
   lt   = "fl",
@@ -246,6 +249,7 @@ For datasets with outliers or heavy-tailed residuals, the
 downweights extreme observations:
 
 ``` r
+
 growth_robust <- fit_bayesian_growth(
   lt = "fl", age = "age", sex = "sex",
   data = gdata,
@@ -277,6 +281,7 @@ The `pool_maturity` argument controls whether maturity parameters enter
 the hierarchical structure:
 
 ``` r
+
 # When both maturity fits are CmdStanMCMC objects from vitalBayes,
 # pool_maturity auto-detects to FALSE (selective pooling)
 growth_2sex <- fit_bayesian_growth(
@@ -315,6 +320,7 @@ function uses **widened anchoring priors** (3\\\times\\ original SD) to
 prevent over-constraint:
 
 ``` r
+
 # Force full pooling explicitly
 growth_full <- fit_bayesian_growth(
   lt          = "fl",
@@ -339,6 +345,7 @@ When providing manual priors instead of vitalBayes fits, pooling across
 all parameters is the default since there’s no prior pooling to double:
 
 ``` r
+
 # Manual priors: pool_maturity defaults to TRUE
 growth_manual <- fit_bayesian_growth(
   lt          = "fl",
@@ -356,12 +363,12 @@ growth_manual <- fit_bayesian_growth(
 
 ### Decision Guide
 
-| Scenario                                                     | `pool_maturity`   | Rationale                                         |
-|--------------------------------------------------------------|-------------------|---------------------------------------------------|
-| vitalBayes maturity fits + `use_pooling = TRUE` in maturity  | `FALSE` (auto)    | Avoid double-pooling                              |
-| vitalBayes maturity fits + `use_pooling = FALSE` in maturity | Could use `TRUE`  | Single pooling stage is safe                      |
-| Manual priors                                                | `TRUE` (auto)     | No prior pooling to compound                      |
-| Want maximum shrinkage                                       | `TRUE` (explicit) | Accept tighter CIs, check for dimorphism reversal |
+| Scenario | `pool_maturity` | Rationale |
+|----|----|----|
+| vitalBayes maturity fits + `use_pooling = TRUE` in maturity | `FALSE` (auto) | Avoid double-pooling |
+| vitalBayes maturity fits + `use_pooling = FALSE` in maturity | Could use `TRUE` | Single pooling stage is safe |
+| Manual priors | `TRUE` (auto) | No prior pooling to compound |
+| Want maximum shrinkage | `TRUE` (explicit) | Accept tighter CIs, check for dimorphism reversal |
 
 ## Comparing Growth Models
 
@@ -370,6 +377,7 @@ workflow. All three models can be fit with the same data and prior
 structure, then compared via LOO-CV:
 
 ``` r
+
 # Fit all three models
 vb_fit <- fit_bayesian_growth(
   lt = "fl", age = "age", sex = "sex", data = gdata,
@@ -412,6 +420,7 @@ Priors are specified via coefficient of variation for intuitive,
 scale-invariant control:
 
 ``` r
+
 growth_fit <- fit_bayesian_growth(
   lt   = "fl",
   age  = "age",
@@ -442,6 +451,7 @@ concentrated the prior is around that mean.
 ## Visualization
 
 ``` r
+
 # Basic growth curve
 plot_growth_curve(
   fit        = growth_2sex,
@@ -474,6 +484,7 @@ compare_growth_models(
 ## Posterior Predictive Checks
 
 ``` r
+
 # Built-in PPC metrics
 growth_2sex$summary(c("rmse_f", "rmse_m", "mean_residual_f", "mean_residual_m"))
 
@@ -490,6 +501,7 @@ plot_residuals(
 ## Complete Workflow Example
 
 ``` r
+
 # Load data
 data(growth_data)
 
@@ -541,15 +553,15 @@ create_parameter_table(
 
 ## Troubleshooting
 
-| Issue                                                             | Solution                                                                                        |
-|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
-| Divergent transitions                                             | Increase `adapt_delta` (0.95 → 0.99)                                                            |
-| \\k\\ hitting boundaries                                          | Check that \\L\_{mat} \< L\_\infty\\ and \\L_0 \< L\_{mat}\\                                    |
-| \\L\_\infty\\ too low                                             | Increase `Lmax` or `Linf_multiplier`                                                            |
+| Issue | Solution |
+|----|----|
+| Divergent transitions | Increase `adapt_delta` (0.95 → 0.99) |
+| \\k\\ hitting boundaries | Check that \\L\_{mat} \< L\_\infty\\ and \\L_0 \< L\_{mat}\\ |
+| \\L\_\infty\\ too low | Increase `Lmax` or `Linf_multiplier` |
 | \\L\_\infty\\ boundary pile-up (posterior median at \\L\_{max}\\) | Increase `CV_delta` or try a different growth model (logistic naturally prefers smaller excess) |
-| Poor fit at young ages                                            | Consider different growth model (Gompertz often better for juveniles)                           |
-| Sex differences reversed                                          | Check `pool_maturity`; try `pool_maturity = FALSE`                                              |
-| Over-tight credible intervals                                     | May indicate double-pooling; use selective pooling                                              |
+| Poor fit at young ages | Consider different growth model (Gompertz often better for juveniles) |
+| Sex differences reversed | Check `pool_maturity`; try `pool_maturity = FALSE` |
+| Over-tight credible intervals | May indicate double-pooling; use selective pooling |
 
 ## See Also
 

@@ -11,6 +11,7 @@ of information — ignoring the fact that both sexes are the same species
 and thus have shared biology.
 
 ``` r
+
 library(vitalBayes)
 library(data.table)
 
@@ -102,6 +103,7 @@ of half-Cauchy that can cause divergences in Stan.
 ### Enabling Partial Pooling
 
 ``` r
+
 # Prepare maturity data from the imbalanced dataset
 mat_data <- imbalanced_data[embryo == FALSE & !is.na(mat)]
 
@@ -128,6 +130,7 @@ L50_unpooled <- fit_bayesian_maturity(
 ### Comparing Results
 
 ``` r
+
 # Pooled estimates
 L50_pooled$summary("L50")
 
@@ -147,6 +150,7 @@ Use
 to quantify the difference:
 
 ``` r
+
 compare_pooling(
   pooled   = L50_pooled,
   unpooled = L50_unpooled,
@@ -171,6 +175,7 @@ more shrinkage, since extreme values are less informative).
 ### Visualizing Shrinkage
 
 ``` r
+
 library(ggplot2)
 
 # Extract posteriors
@@ -208,6 +213,7 @@ maturity fit objects are provided. See
 for the complete treatment.
 
 ``` r
+
 # Prepare growth data from imbalanced dataset
 gdata <- imbalanced_data[embryo == FALSE & !is.na(age)]
 
@@ -249,12 +255,12 @@ growth_pooled$summary(c("Linf_diff", "k_diff"))
 The `prior_tau` argument controls the half-normal scale for between-sex
 SD on the log scale:
 
-| Value | Interpretation                 | Use Case                                |
-|-------|--------------------------------|-----------------------------------------|
-| 0.1   | Expect very similar sexes      | Growth rate, measurement error          |
-| 0.2   | Expect modest differences      | `Linf`, `L0`, growth models (default)   |
-| 0.5   | Expect moderate differences    | `L50`, `t50`, maturity models (default) |
-| 1.0   | Expect substantial differences | Rare; consider no pooling               |
+| Value | Interpretation | Use Case |
+|----|----|----|
+| 0.1 | Expect very similar sexes | Growth rate, measurement error |
+| 0.2 | Expect modest differences | `Linf`, `L0`, growth models (default) |
+| 0.5 | Expect moderate differences | `L50`, `t50`, maturity models (default) |
+| 1.0 | Expect substantial differences | Rare; consider no pooling |
 
 Since parameters are modeled on the log scale, `prior_tau = 0.5`
 corresponds to roughly 50% expected variation between sexes before
@@ -267,6 +273,7 @@ appropriate.
 ### Check the Estimated \\\tau\\
 
 ``` r
+
 # Large tau = sexes are different (less shrinkage)
 # Small tau = sexes are similar (more shrinkage)
 L50_pooled$summary("tau_L50")
@@ -281,6 +288,7 @@ approaching independent estimation.
 ### Compare LOO-CV
 
 ``` r
+
 loo_pooled <- compute_loo(L50_pooled)
 loo_unpooled <- compute_loo(L50_unpooled)
 
@@ -297,6 +305,7 @@ compare_loo(
 ## Example: Full Workflow with Pooling
 
 ``` r
+
 # ---- Data Prep ----
 # Use the imbalanced dataset to demonstrate pooling benefits
 data(imbalanced_data)
@@ -346,6 +355,7 @@ growth_fit$summary(c("Linf_diff", "k_diff"))
 The package includes datasets that illustrate when pooling matters most:
 
 ``` r
+
 # Imbalanced data (150F, 34M) - pooling helps substantially
 data(imbalanced_data)
 imbalanced_data[embryo == FALSE, .N, by = sex]

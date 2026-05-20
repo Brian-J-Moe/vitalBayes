@@ -25,6 +25,7 @@ the value at which 50% of individuals are mature.
 ## Basic Usage: Single-Sex Model
 
 ``` r
+
 library(vitalBayes)
 library(data.table)
 
@@ -52,6 +53,7 @@ L50_fit$summary(c("L50", "slope", "L05", "L95", "transition_width"))
 When sex data are available, fit both sexes simultaneously:
 
 ``` r
+
 # Prepare data (both sexes)
 mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
@@ -99,6 +101,7 @@ in the Statistical Methods guide.
 ## Fitting Both Length and Age Maturity
 
 ``` r
+
 # Filter to individuals with both maturity and age data
 mat_aged <- growth_data[embryo == FALSE & !is.na(mat) & !is.na(age)]
 
@@ -122,6 +125,7 @@ mat_fits$age$summary("t50")
 The function auto-detects common sex coding conventions:
 
 ``` r
+
 # All of these work automatically:
 # sex = c("F", "M")           # English
 # sex = c("Female", "Male")   # English full
@@ -147,6 +151,7 @@ fit <- fit_bayesian_maturity(
 Priors use a CV-based approach for intuitive specification:
 
 ``` r
+
 # Custom priors
 L50_fit <- fit_bayesian_maturity(
  maturity   = "mat",
@@ -162,6 +167,7 @@ L50_fit <- fit_bayesian_maturity(
 ## Visualization
 
 ``` r
+
 # Basic maturity ogive
 plot_maturity_ogive(
  fit  = L50_fit_2sex,
@@ -186,6 +192,7 @@ plot_maturity_ogive(
 ## Posterior Predictive Checks
 
 ``` r
+
 # Classification accuracy
 L50_fit_2sex$summary("prop_correct_rep")
 
@@ -200,6 +207,7 @@ The \\L\_{50}\\ and \\t\_{50}\\ estimates become informative priors for
 the maturity-based growth parameterization:
 
 ``` r
+
 # Fit t50 for age-at-maturity
 t50_fit <- fit_bayesian_maturity(
  maturity = "mat",
@@ -222,12 +230,12 @@ growth_fit <- fit_bayesian_growth(
 
 ## Troubleshooting
 
-| Issue                       | Solution                                                |
-|-----------------------------|---------------------------------------------------------|
-| Divergent transitions       | Increase `adapt_delta`; check for separation in data    |
+| Issue | Solution |
+|----|----|
+| Divergent transitions | Increase `adapt_delta`; check for separation in data |
 | Very wide \\\tau\\ estimate | Data may not support pooling; try `use_pooling = FALSE` |
-| Poor classification         | Check maturity coding (must be 0/1)                     |
-| Sex detection fails         | Use explicit `female`/`male` arguments                  |
+| Poor classification | Check maturity coding (must be 0/1) |
+| Sex detection fails | Use explicit `female`/`male` arguments |
 
 ## See Also
 

@@ -9,6 +9,7 @@ multilingual labels.
 ## Color Palettes
 
 ``` r
+
 library(vitalBayes)
 
 # List available palettes
@@ -38,6 +39,7 @@ All plots use
 a clean ggplot2 theme optimized for publications:
 
 ``` r
+
 library(ggplot2)
 
 # Use standalone
@@ -59,6 +61,7 @@ ggplot(mtcars, aes(mpg, wt)) +
 Visualize birth size transition probability:
 
 ``` r
+
 library(data.table)
 
 # Load simulated data
@@ -97,6 +100,7 @@ plot_birth_ogive(
 Visualize maturity probability curves:
 
 ``` r
+
 # Prepare maturity data
 mat_data <- growth_data[embryo == FALSE & !is.na(mat)]
 
@@ -123,6 +127,7 @@ plot_maturity_ogive(
 ### Maturity Ogive Arguments
 
 ``` r
+
 plot_maturity_ogive(
  fit = L50_fit,
  type = "length",           # or "age"
@@ -153,6 +158,7 @@ plot_maturity_ogive(
 ### Multilingual Labels
 
 ``` r
+
 # French
 plot_maturity_ogive(
  fit = L50_fit,
@@ -191,6 +197,7 @@ plot_maturity_ogive(
 Visualize fitted growth curves with uncertainty:
 
 ``` r
+
 # Prepare growth data
 gdata <- growth_data[embryo == FALSE & !is.na(age)]
 
@@ -218,6 +225,7 @@ plot_growth_curve(
 ### Growth Curve Arguments
 
 ``` r
+
 plot_growth_curve(
  fit = growth_fit,
  data = gdata,
@@ -260,6 +268,7 @@ plot_growth_curve(
 Add custom ggplot2 layers:
 
 ``` r
+
 library(ggplot2)
 
 plot_growth_curve(
@@ -285,6 +294,7 @@ plot_growth_curve(
 Side-by-side comparison of multiple growth models:
 
 ``` r
+
 # Fit multiple models
 mat_aged <- growth_data[embryo == FALSE & !is.na(mat) & !is.na(age)]
 
@@ -337,6 +347,7 @@ compare_growth_models(
 Diagnostic residual plots for growth models:
 
 ``` r
+
 # All diagnostic plots
 plot_residuals(
  fit = growth_fit,
@@ -359,6 +370,7 @@ plot_residuals(fit = growth_fit, data = gdata, type = "age")
 ## Saving Publication Figures
 
 ``` r
+
 library(patchwork)
 
 # Create multi-panel figure
@@ -378,6 +390,7 @@ The package includes multiple datasets for different visualization
 needs:
 
 ``` r
+
 # Balanced data (growth_data) - best for general demonstrations
 data(growth_data)
 

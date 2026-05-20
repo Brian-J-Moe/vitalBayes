@@ -13,6 +13,7 @@ models upon instillation.
 ## Installation
 
 ``` r
+
 # Install dependencies
 install.packages(c("cmdstanr", "data.table", "ggplot2", "loo", "pracma"))
 
@@ -35,6 +36,7 @@ distributions flow forward through life stages:
     (L₀)       (L₅₀, t₅₀)      (L∞, k)         (M, S(t))
 
 ``` r
+
 library(vitalBayes)
 library(data.table)
 
@@ -122,11 +124,11 @@ L∞”).
 
 ## Supported Models
 
-| Component     | Options                                                                           |
-|---------------|-----------------------------------------------------------------------------------|
-| **Growth**    | von Bertalanffy, Gompertz, Logistic                                               |
+| Component | Options |
+|----|----|
+| **Growth** | von Bertalanffy, Gompertz, Logistic |
 | **Mortality** | Chen-Watanabe (with optional two-phase senescence), Peterson-Wroblewski, Lorenzen |
-| **Pooling**   | None, partial (hierarchical), or selective                                        |
+| **Pooling** | None, partial (hierarchical), or selective |
 
 ## Example Datasets
 
@@ -138,16 +140,16 @@ L∞”).
 
 ## Vignettes
 
-| Topic                | Vignette                                                                                                              |
-|----------------------|-----------------------------------------------------------------------------------------------------------------------|
-| Birth size           | [`vignette("fit_bayesian_birth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_birth.md)           |
-| Maturity ogives      | [`vignette("fit_bayesian_maturity")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md)     |
-| Growth models        | [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md)         |
-| Partial pooling      | `vignette("partial_pooling")`                                                                                         |
-| Mortality estimation | [`vignette("mortality_estimation")`](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md)       |
-| Mortality framework  | `vignette("chen_watanabe_reparameterization")`                                                                        |
-| Survival simulation  | [`vignette("survivorship_simulation")`](https://brian-j-moe.github.io/vitalBayes/articles/survivorship_simulation.md) |
-| Diagnostics          | [`vignette("model_diagnostics")`](https://brian-j-moe.github.io/vitalBayes/articles/model_diagnostics.md)             |
+| Topic | Vignette |
+|----|----|
+| Birth size | [`vignette("fit_bayesian_birth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_birth.md) |
+| Maturity ogives | [`vignette("fit_bayesian_maturity")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_maturity.md) |
+| Growth models | [`vignette("fit_bayesian_growth")`](https://brian-j-moe.github.io/vitalBayes/articles/fit_bayesian_growth.md) |
+| Partial pooling | `vignette("partial_pooling")` |
+| Mortality estimation | [`vignette("mortality_estimation")`](https://brian-j-moe.github.io/vitalBayes/articles/mortality_estimation.md) |
+| Mortality framework | `vignette("chen_watanabe_reparameterization")` |
+| Survival simulation | [`vignette("survivorship_simulation")`](https://brian-j-moe.github.io/vitalBayes/articles/survivorship_simulation.md) |
+| Diagnostics | [`vignette("model_diagnostics")`](https://brian-j-moe.github.io/vitalBayes/articles/model_diagnostics.md) |
 
 ## Citation
 
