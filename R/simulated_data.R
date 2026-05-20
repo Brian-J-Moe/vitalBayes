@@ -23,7 +23,7 @@
 #'
 #' Dataset-specific sizes:
 #' \describe{
-#'   \item{\code{imbalanced_data}}{Default call to [simulate_vb_growth_data()] (defaults: 150 females, 34 males, 13 embryos).}
+#'   \item{\code{imbalanced_data}}{Default call to [simulate_vb_growth_data()] (defaults: 150 females, 64 males, 13 embryos).}
 #'   \item{\code{growth_data}}{Larger dataset (189 females, 176 males, 26 embryos; \code{seed = 1234}).}
 #'   \item{\code{limited_data}}{Small dataset (24 females, 18 males, 5 embryos; \code{seed = 12345}).}
 #' }

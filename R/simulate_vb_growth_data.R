@@ -20,25 +20,21 @@
 #' @param sigma_fl Numeric. SD of observation error (cm) added to VB mean length.
 #' @param mat_w95_female Numeric. Female ogive width (cm) between 5% and 95% maturity.
 #' @param mat_w95_male Numeric. Male ogive width (cm) between 5% and 95% maturity.
-#' @param embryo_mean Numeric. Mean embryo FL (cm).
-#' @param embryo_sd Numeric. SD embryo FL (cm).
 #' @param seed Integer or NULL. RNG seed for reproducibility.
 #' @param round_digits Integer or NULL. If not NULL, round fl and age to this many digits.
 #'
 #' @return data.table with columns: sex, mat, fl, age, embryo
 #' @export
 simulate_vb_growth_data <- function(n_female = 150L,
-                                    n_male   = 34L,
-                                    n_embryo = 13L,
-                                    age_max_female = 30,
-                                    age_max_male   = 25,
-                                    age_tail_frac  = 0.80,
-                                    age_tail_prob  = 0.02,
-                                    sigma_fl = 6,
+                                    n_male   = 120L,
+                                    n_embryo = 26L,
+                                    age_max_female = 35,
+                                    age_max_male   = 31,
+                                    age_tail_frac  = 0.70,
+                                    age_tail_prob  = 0.30,
+                                    sigma_fl = 12,
                                     mat_w95_female = 20,
                                     mat_w95_male   = 18,
-                                    embryo_mean = 33,
-                                    embryo_sd   = 2.5,
                                     seed = 123,
                                     round_digits = 1L) {
 
@@ -81,8 +77,8 @@ simulate_vb_growth_data <- function(n_female = 150L,
   .enforce_constraints <- function(L0, Lmat, tmat, Linf,
                                    Lmat_mean, Lmat_sd,
                                    Linf_mean, Linf_sd,
-                                   gap_L0_Lmat = 5,
-                                   gap_Lmat_Linf = 5,
+                                   gap_L0_Lmat = 20,
+                                   gap_Lmat_Linf = 50,
                                    max_iter = 500L) {
 
     it <- 0L
@@ -127,12 +123,13 @@ simulate_vb_growth_data <- function(n_female = 150L,
   #' Simulate one sex group
   #' @keywords internal
   .simulate_sex <- function(sex, n,
+                            L0_mean,   L0_sd,
                             Lmat_mean, Lmat_sd,
                             tmat_mean, tmat_sd,
                             Linf_mean, Linf_sd,
-                            age_max, mat_w95) {
+                            age_max,   mat_w95) {
 
-    L0   <- .rtnorm(n, mean = 65, sd = 2.8, lower = 1)
+    L0   <- .rtnorm(n, mean = L0_mean,   sd = L0_sd, lower = 1)
     Lmat <- .rtnorm(n, mean = Lmat_mean, sd = Lmat_sd, lower = 1)
     tmat <- .rtnorm(n, mean = tmat_mean, sd = tmat_sd, lower = 0.1)
     Linf <- .rtnorm(n, mean = Linf_mean, sd = Linf_sd, lower = 1)
@@ -164,6 +161,7 @@ simulate_vb_growth_data <- function(n_female = 150L,
   # ---- simulate sexes ----
   female_dt <- .simulate_sex(
     sex = "female", n = as.integer(n_female),
+    L0_mean   = 47,    L0_sd   = 16.8,
     Lmat_mean = 167,   Lmat_sd = 12.4,
     tmat_mean = 14.6,  tmat_sd = 1.7,
     Linf_mean = 236.3, Linf_sd = 20.2,
@@ -173,6 +171,7 @@ simulate_vb_growth_data <- function(n_female = 150L,
 
   male_dt <- .simulate_sex(
     sex = "male", n = as.integer(n_male),
+    L0_mean   = 45,    L0_sd   = 11.3,
     Lmat_mean = 142,   Lmat_sd = 8.7,
     tmat_mean = 12.1,  tmat_sd = 1.4,
     Linf_mean = 202.9, Linf_sd = 15.8,
@@ -184,7 +183,7 @@ simulate_vb_growth_data <- function(n_female = 150L,
   embryo_dt <- data.table::data.table(
     sex    = NA_character_,
     mat    = NA_real_,
-    fl     = .rtnorm(as.integer(n_embryo), mean = embryo_mean, sd = embryo_sd, lower = 0.1),
+    fl     = .rtnorm(as.integer(n_embryo), mean = 46.2, sd = 30.5, lower = 22, upper = 52),
     age    = NA_real_,
     embryo = TRUE
   )

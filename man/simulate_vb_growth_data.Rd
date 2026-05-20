@@ -7,17 +7,15 @@ and sex-specific logistic maturity ogives}
 \usage{
 simulate_vb_growth_data(
   n_female = 150L,
-  n_male = 34L,
-  n_embryo = 13L,
-  age_max_female = 30,
-  age_max_male = 25,
-  age_tail_frac = 0.8,
-  age_tail_prob = 0.02,
-  sigma_fl = 6,
+  n_male = 120L,
+  n_embryo = 26L,
+  age_max_female = 35,
+  age_max_male = 31,
+  age_tail_frac = 0.7,
+  age_tail_prob = 0.3,
+  sigma_fl = 12,
   mat_w95_female = 20,
   mat_w95_male = 18,
-  embryo_mean = 33,
-  embryo_sd = 2.5,
   seed = 123,
   round_digits = 1L
 )
@@ -42,10 +40,6 @@ simulate_vb_growth_data(
 \item{mat_w95_female}{Numeric. Female ogive width (cm) between 5\% and 95\% maturity.}
 
 \item{mat_w95_male}{Numeric. Male ogive width (cm) between 5\% and 95\% maturity.}
-
-\item{embryo_mean}{Numeric. Mean embryo FL (cm).}
-
-\item{embryo_sd}{Numeric. SD embryo FL (cm).}
 
 \item{seed}{Integer or NULL. RNG seed for reproducibility.}
 

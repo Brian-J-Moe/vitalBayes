@@ -17,7 +17,7 @@ A \link[data.table:data.table]{data.table::data.table} with 5 columns:
 \item{embryo}{Logical. \code{TRUE} for embryo observations; \code{FALSE} otherwise.}
 }
 
-An object of class \code{data.table} (inherits from \code{data.frame}) with 197 rows and 5 columns.
+An object of class \code{data.table} (inherits from \code{data.frame}) with 227 rows and 5 columns.
 
 An object of class \code{data.table} (inherits from \code{data.frame}) with 391 rows and 5 columns.
 
@@ -45,7 +45,7 @@ on observed length. Embryo rows include lengths only and are flagged with \code{
 
 Dataset-specific sizes:
 \describe{
-\item{\code{imbalanced_data}}{Default call to \code{\link[=simulate_vb_growth_data]{simulate_vb_growth_data()}} (defaults: 150 females, 34 males, 13 embryos).}
+\item{\code{imbalanced_data}}{Default call to \code{\link[=simulate_vb_growth_data]{simulate_vb_growth_data()}} (defaults: 150 females, 64 males, 13 embryos).}
 \item{\code{growth_data}}{Larger dataset (189 females, 176 males, 26 embryos; \code{seed = 1234}).}
 \item{\code{limited_data}}{Small dataset (24 females, 18 males, 5 embryos; \code{seed = 12345}).}
 }
