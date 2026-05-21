@@ -228,6 +228,9 @@ extract_growth_parameters <- function(
     growth_model = growth_model
   )
 
+  data.table::setnames(result, c("draws", "Linf", "L0",
+                                 "Lmat", "tmat", "k",
+                                 "k_vb_equiv", "growth_model"))
   # Subsample if requested
   if (!is.null(n_draws) && n_draws < n_total) {
     set.seed(seed)
