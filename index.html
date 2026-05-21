@@ -142,7 +142,7 @@
 <span><span class="va">growth_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fit_bayesian_growth.html">fit_bayesian_growth</a></span><span class="op">(</span></span>
 <span>  lt <span class="op">=</span> <span class="st">"fl"</span>, age <span class="op">=</span> <span class="st">"age"</span>, sex <span class="op">=</span> <span class="st">"sex"</span>,</span>
 <span>  data <span class="op">=</span> <span class="va">growth_data</span><span class="op">[</span><span class="va">embryo</span> <span class="op">==</span> <span class="cn">FALSE</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  model   <span class="op">=</span> <span class="st">"vb"</span>,</span>
+<span>  model   <span class="op">=</span> <span class="st">"v"</span>,</span>
 <span>  k_based <span class="op">=</span> <span class="cn">FALSE</span>,      <span class="co"># Maturity-based parameterization</span></span>
 <span>  birth_stanfit         <span class="op">=</span> <span class="va">birth_fit</span>,</span>
 <span>  length.mature_stanfit <span class="op">=</span> <span class="va">L50_fit</span>,</span>

@@ -65,7 +65,7 @@ t50_fit <- fit_bayesian_maturity(
 growth_fit <- fit_bayesian_growth(
   lt = "fl", age = "age", sex = "sex",
   data = growth_data[embryo == FALSE & !is.na(age)],
-  model   = "vb",
+  model   = "v",
   k_based = FALSE,      # Maturity-based parameterization
   birth_stanfit         = birth_fit,
   length.mature_stanfit = L50_fit,
