@@ -32,7 +32,7 @@ simulate_vb_growth_data <- function(n_female = 150L,
                                     age_max_male   = 31,
                                     age_tail_frac  = 0.70,
                                     age_tail_prob  = 0.30,
-                                    sigma_fl = 12,
+                                    sigma_fl = 1.5,
                                     mat_w95_female = 20,
                                     mat_w95_male   = 18,
                                     seed = 123,
@@ -144,7 +144,7 @@ simulate_vb_growth_data <- function(n_female = 150L,
     age  <- .rtruncexp(n = n, rate = rate, max_age = age_max)
 
     mu <- .vb_mu(age = age, L0 = pars$L0, Lmat = pars$Lmat, tmat = pars$tmat, Linf = pars$Linf)
-    fl <- stats::rnorm(n, mean = mu, sd = sigma_fl)
+    fl <- .rtnorm(n, mean = mu, sd = sigma_fl, lower = L0_mean * 0.9)
     fl <- pmax(fl, 0.1)
 
     mat <- .sample_mat_logistic(fl = fl, Lmat = pars$Lmat, w95 = mat_w95)
@@ -200,5 +200,3 @@ simulate_vb_growth_data <- function(n_female = 150L,
 
   growth_data[]
 }
-
-
