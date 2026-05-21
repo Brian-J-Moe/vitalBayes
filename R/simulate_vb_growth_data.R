@@ -129,10 +129,10 @@ simulate_vb_growth_data <- function(n_female = 150L,
                             Linf_mean, Linf_sd,
                             age_max,   mat_w95) {
 
-    L0   <- .rtnorm(n, mean = L0_mean,   sd = L0_sd, lower = 1)
-    Lmat <- .rtnorm(n, mean = Lmat_mean, sd = Lmat_sd, lower = 1)
-    tmat <- .rtnorm(n, mean = tmat_mean, sd = tmat_sd, lower = 0.1)
-    Linf <- .rtnorm(n, mean = Linf_mean, sd = Linf_sd, lower = 1)
+    L0   <- .rtnorm(n, mean = L0_mean,   sd = L0_sd, lower = L0_mean * 0.9)
+    Lmat <- .rtnorm(n, mean = Lmat_mean, sd = Lmat_sd, lower = Lmat_mean * 0.8)
+    tmat <- .rtnorm(n, mean = tmat_mean, sd = tmat_sd, lower = tmat_mean * 0.8)
+    Linf <- .rtnorm(n, mean = Linf_mean, sd = Linf_sd, lower = Linf_mean * 0.8)
 
     pars <- .enforce_constraints(
       L0 = L0, Lmat = Lmat, tmat = tmat, Linf = Linf,
@@ -161,7 +161,7 @@ simulate_vb_growth_data <- function(n_female = 150L,
   # ---- simulate sexes ----
   female_dt <- .simulate_sex(
     sex = "female", n = as.integer(n_female),
-    L0_mean   = 47,    L0_sd   = 16.8,
+    L0_mean   = 47,    L0_sd   = 2.3,
     Lmat_mean = 167,   Lmat_sd = 12.4,
     tmat_mean = 14.6,  tmat_sd = 1.7,
     Linf_mean = 236.3, Linf_sd = 20.2,
@@ -171,7 +171,7 @@ simulate_vb_growth_data <- function(n_female = 150L,
 
   male_dt <- .simulate_sex(
     sex = "male", n = as.integer(n_male),
-    L0_mean   = 45,    L0_sd   = 11.3,
+    L0_mean   = 45,    L0_sd   = 2.3,
     Lmat_mean = 142,   Lmat_sd = 8.7,
     tmat_mean = 12.1,  tmat_sd = 1.4,
     Linf_mean = 202.9, Linf_sd = 15.8,
