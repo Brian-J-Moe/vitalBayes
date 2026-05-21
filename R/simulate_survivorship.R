@@ -101,7 +101,7 @@ simulate_survivorship <- function(
   if (!"set_id" %in% names(Schedules)) stop("`mc_object$Schedules` must include `set_id`.")
 
   set_ids <- sort(unique(Params$set_id))
-  tmax_max <- max(Params$tmax, na.rm = TRUE)
+  tmax <- max(Params$tmax, na.rm = TRUE)
 
   # Set title
   if (is.null(title)) {
@@ -120,7 +120,7 @@ simulate_survivorship <- function(
 
     for (k in 2:n_ages) {
       idx <- mc_df$age <= ages[k]
-      integral_M <- pracma::trapz(mc_df$age[idx], mc_df$M[idx])
+      integral_M <- pracma::trapz(mc_df$age[idx], mc_df$M_scaled[idx])
       cum_survival[k] <- exp(-integral_M)
     }
 
@@ -262,7 +262,7 @@ simulate_survivorship <- function(
   if (show_progress) message("Generating plot...")
 
   # Get colors
-  pal <- vital_palette(n = 6, type = palette)
+  pal <- vitalBayes::vital_palette(n = 6, type = palette)
   if (is.null(bar_fill)) bar_fill <- pal[5]
   if (is.null(bar_color)) bar_color <- pal[4]
   if (is.null(vline_color)) vline_color <- pal[1]
@@ -277,7 +277,7 @@ simulate_survivorship <- function(
     fmt(surv_tmax_agg$mean), fmt(surv_tmax_agg$lower), fmt(surv_tmax_agg$upper)
   )
 
-  x_brk <- x_breaks(tmax_max)
+  x_brk <- x_breaks(tmax)
 
   plot_obj <- ggplot2::ggplot(agg_survival, ggplot2::aes(x = age, y = mean_surv)) +
     ggplot2::geom_col(fill = bar_fill, color = bar_color, alpha = bar_alpha) +
