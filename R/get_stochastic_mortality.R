@@ -515,7 +515,7 @@ get_stochastic_mortality <- function(
 
   if (show_progress) message("Computing summary statistics...")
 
-  schedules[, age_round := round(age, 1)]
+  schedules[, age_round := round(age, 2)]
 
   summary_dt <- schedules[, .(
     M_median = stats::median(M_scaled, na.rm = TRUE),
