@@ -153,7 +153,7 @@ get_stochastic_mortality <- function(
     scaled = TRUE,
     M_target = NULL,
     p = 0.001,
-    two_phase = TRUE,
+    two_phase = FALSE,
     late_model = c("gompertz", "logistic"),
     tm_factor = 2/3,
     M_mult = 2,
